@@ -18,7 +18,8 @@ describe('Testing panic.js', () => {
 		process.exit = originalExit;
 		process.stderr.write = originalWrite;
 	});
-	test('panic(message, errorCode)', () => {
+
+	test('Testing panic(message, errorCode)', () => {
 		const message = 'Error message';
 		const errorCode = 42;
 
