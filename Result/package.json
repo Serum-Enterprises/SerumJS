@@ -11,8 +11,15 @@
 		"build": "tsc",
 		"test": "jest"
 	},
-	"author": "Philipp Steckenbauer",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Serum-Enterprises/SerumJS.git"
+	},
+	"author": "Philipp Steckenbauer <philipp@serum.enterprises>",
 	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/Serum-Enterprises/SerumJS/issues"
+	},
 	"devDependencies": {
 		"@types/jest": "^29.5.14",
 		"@types/node": "^22.10.5",
