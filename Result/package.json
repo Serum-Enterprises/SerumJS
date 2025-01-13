@@ -1,0 +1,22 @@
+{
+	"name": "@serum-enterprises/result",
+	"version": "1.0.0",
+	"engines": {
+		"node": ">=14.0.0"
+	},
+	"description": "Rust-like Result for TS/JS Projects",
+	"main": "./build/Result.js",
+	"types": "./types/Result.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"test": "jest"
+	},
+	"author": "Philipp Steckenbauer",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/jest": "^29.5.14",
+		"@types/node": "^22.10.5",
+		"jest": "^29.7.0",
+		"typescript": "^5.7.3"
+	}
+}
