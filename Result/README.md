@@ -1,4 +1,3 @@
-
 # Result
 
 Rust-like Result for TS/JS Projects
