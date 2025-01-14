@@ -5,294 +5,158 @@ export class InvalidPathError extends Error { };
 export class PropertyNotFoundError extends Error { };
 export class IndexNotfoundError extends Error { };
 
-export class Path {
-	static isPath(value: unknown): value is (JSON.Integer | JSON.String)[] {
-		return JSON.isShallowArray(value) && value.every((element) => JSON.isInteger(element) || JSON.isString(element));
-	}
+export type PathElement = (JSON.Integer | JSON.String);
+export type Path = PathElement[];
 
-	#path: (JSON.Integer | JSON.String)[];
-	#mutateData: boolean;
-	#createContainers: boolean;
+export function isPath(value: unknown): value is Path {
+	return JSON.isShallowArray(value) && value.every((element) => JSON.isInteger(element) || JSON.isString(element));
+}
 
-	constructor(path: (JSON.Integer | JSON.String)[], mutateData: boolean = false, createContainers: boolean = false) {
-		this.#path = path;
-		this.#mutateData = mutateData;
-		this.#createContainers = createContainers;
-	}
+function walk(target: JSON.JSON, path: Path, createContainers: boolean = false): Result<{ parent: JSON.Container, key: PathElement }, Error> {
+	let currentTarget: JSON.JSON = target;
 
-	get path(): (JSON.Integer | JSON.String)[] {
-		return JSON.clone(this.#path);
-	}
+	for (let i = 0; i < path.length; i++) {
+		if (JSON.isArray(currentTarget)) {
+			if (!Number.isSafeInteger(path[i]))
+				return Result.Err(new InvalidPathError(`Expected path[${i}] to be an Integer`));
 
-	get mutateData(): boolean {
-		return this.#mutateData;
-	}
+			const pathElement = path[i] as number;
 
-	get createContainers(): boolean {
-		return this.#createContainers;
-	}
+			if (i === path.length - 1) {
+				return Result.Ok({ parent: currentTarget, key: pathElement });
+			}
+			else {
+				if (!createContainers && (pathElement < 0 || pathElement >= currentTarget.length))
+					return Result.Err(new IndexNotfoundError(`Index ${pathElement} out of Bounds at ${toString(path, i)}`));
 
-	get length(): number {
-		return this.#path.length;
-	}
+				if (pathElement < 0) {
+					currentTarget.unshift(...(new Array(Math.abs(pathElement)).fill(null)));
+					currentTarget[0] = typeof path[i + 1] === 'string' ? {} : [];
+				}
+				else if (pathElement >= currentTarget.length) {
+					currentTarget.push(...(new Array(pathElement - currentTarget.length).fill(null)));
+					currentTarget.push(typeof path[i + 1] === 'string' ? {} : []);
+				}
 
-	prefix(prefix: (JSON.Integer | JSON.String)[]): Path {
-		return new Path([...prefix, ...this.#path], this.#mutateData, this.#createContainers);
-	}
+				currentTarget = currentTarget[pathElement] as JSON.JSON;
+			}
+		}
+		else if (JSON.isShallowObject(currentTarget)) {
+			if (typeof path[i] !== 'string')
+				return Result.Err(new InvalidPathError(`Expected path[${i}] to be a String`));
 
-	suffix(suffix: (JSON.Integer | JSON.String)[]): Path {
-		return new Path([...this.#path, ...suffix], this.#mutateData, this.#createContainers);
-	}
+			const pathElement = path[i] as string;
 
-	_walk(target: JSON.JSON, createContainers: boolean = false): Result<{ parent: JSON.JSON, key: JSON.Integer | JSON.String }, Error> {
-		let currentTarget: JSON.JSON = target;
-
-		for (let i = 0; i < this.#path.length; i++) {
-			const pathElement = this.#path[i];
-
-			if (JSON.isArray(currentTarget)) {
-				if (!JSON.isInteger(pathElement))
-					return Result.Err(new InvalidPathError(`Expected path[${i}] to be an Integer`));
-
-				const index = pathElement as number;
-
-				if (i === this.#path.length - 1)
-					return Result.Ok({ parent: currentTarget, key: index });
-
-				if (index < 0 || index >= currentTarget.length) {
+			if (i === path.length - 1)
+				return Result.Ok({ parent: currentTarget, key: pathElement });
+			else {
+				if (!(pathElement in currentTarget)) {
 					if (!createContainers)
-						return Result.Err(new IndexNotfoundError(`Index ${index} out of bounds at ${this.toString(i)}`));
+						return Result.Err(new PropertyNotFoundError(`Property ${pathElement} not found at ${toString(path, i)}`));
 
-					currentTarget[index] = typeof this.#path[i + 1] === 'string' ? {} : [];
+					currentTarget[pathElement] = typeof path[i + 1] === 'string' ? {} : [];
 				}
 
-				currentTarget = currentTarget[index] as JSON.JSON;
+				currentTarget = currentTarget[pathElement] as JSON.JSON;
 			}
-			else if (JSON.isShallowObject(currentTarget)) {
-				if (!JSON.isString(pathElement))
-					return Result.Err(new InvalidPathError(`Expected path[${i}] to be a String`));
-
-				const key = pathElement as string;
-
-				if (i === this.#path.length - 1)
-					return Result.Ok({ parent: currentTarget, key });
-
-				if (!(key in currentTarget)) {
-					if (!createContainers)
-						return Result.Err(new PropertyNotFoundError(`Property ${key} not found at ${this.toString(i)}`));
-
-					currentTarget[key] = typeof this.#path[i + 1] === 'string' ? {} : [];
-				}
-
-				currentTarget = currentTarget[key] as JSON.JSON;
-			}
-			else
-				return Result.Err(new TypeError(`Expected target at path ${this.toString(i)} to be an Array or an Object`));
 		}
-
-		return Result.Err(new Error('Path traversal reached an unexpected end'));
+		else
+			return Result.Err(new TypeError(`Expected target at path ${toString(path, i)} to be an Array or an Object`));
 	}
 
-	set(target: JSON.JSON, data: JSON.JSON): Result<JSON.JSON, Error> {
-		let currentTarget: JSON.JSON = target;
+	return Result.Err(new Error('Path not found'));
+}
 
-		for (let i = 0; i < this.#path.length; i++) {
-			if (JSON.isArray(currentTarget)) {
-				if (!Number.isSafeInteger(this.#path[i]))
-					return Result.Err(new InvalidPathError(`Expected path[${i}] to be an Integer`));
-
-				const pathElement = this.#path[i] as number;
-
-				if (i === this.#path.length - 1) {
-					if (pathElement < 0) {
-						currentTarget.unshift(...(new Array(Math.abs(pathElement)).fill(null)));
-						currentTarget[0] = data;
-					}
-					else if (pathElement >= currentTarget.length) {
-						currentTarget.push(...(new Array(pathElement - currentTarget.length).fill(null)));
-						currentTarget.push(data);
-					}
-					else
-						currentTarget[pathElement] = data;
-				}
-				else {
-					if (!this.#createContainers && (pathElement < 0 || pathElement >= currentTarget.length))
-						return Result.Err(new IndexNotfoundError(`Index ${pathElement} out of Bounds at ${this.toString(i)}`));
-
-					if (pathElement < 0) {
-						currentTarget.unshift(...(new Array(Math.abs(pathElement)).fill(null)));
-						currentTarget[0] = typeof this.#path[i + 1] === 'string' ? {} : [];
-					}
-					else if (pathElement >= currentTarget.length) {
-						currentTarget.push(...(new Array(pathElement - currentTarget.length).fill(null)));
-						currentTarget.push(typeof this.#path[i + 1] === 'string' ? {} : []);
-					}
-					else
-						currentTarget = currentTarget[pathElement] as JSON.JSON;
-				}
-			}
-			else if (JSON.isShallowObject(currentTarget)) {
-				if (typeof this.#path[i] !== 'string')
-					return Result.Err(new InvalidPathError(`Expected path[${i}] to be a String`));
-
-				const pathElement = this.#path[i] as string;
-
-				if (i === this.#path.length - 1)
-					currentTarget[pathElement] = data;
-				else {
-					if (!(pathElement in currentTarget)) {
-						if (!this.#createContainers)
-							return Result.Err(new PropertyNotFoundError(`Property ${pathElement} not found at ${this.toString(i)}`));
-
-						currentTarget[pathElement] = typeof this.#path[i + 1] === 'string' ? {} : [];
-					}
-
-					currentTarget = currentTarget[pathElement] as JSON.JSON;
-				}
-			}
+export function set(target: JSON.JSON, path: Path, data: JSON.JSON, mutate: boolean = false, createContainers: boolean = false): Result<JSON.JSON, Error> {
+	return walk(mutate ? JSON.clone(target) : target, path, createContainers)
+		.mapOk(({ parent, key }) => {
+			if (JSON.isArray(parent))
+				parent[key as number] = data;
 			else
-				return Result.Err(new TypeError(`Expected target at path ${this.toString(i)} to be an Array or an Object`));
-		}
+				parent[key as string] = data;
 
-		return Result.Ok(target);
-	}
+			return target;
+		});
+}
 
-	get(target: JSON.JSON): Result<JSON.JSON, Error> {
-		let currentTarget: JSON.JSON = target;
+export function get(target: JSON.JSON, path: Path): Result<JSON.JSON, Error> {
+	return walk(target, path, false).match(
+		value => {
+			if (JSON.isArray(value.parent)) {
+				if (!JSON.isInteger(value.key))
+					return Result.Err(new InvalidPathError(`Expected key to be an Integer at ${toString(path)}`));
 
-		for (let i = 0; i < this.#path.length; i++) {
-			if (JSON.isArray(currentTarget)) {
-				if (!Number.isSafeInteger(this.#path[i]))
-					return Result.Err(new InvalidPathError(`Expected path[${i}] to be an Integer`));
+				if (value.key < 0 || value.key >= value.parent.length)
+					return Result.Err(new IndexNotfoundError(`Index ${value.key} out of Bounds at ${toString(path)}`));
 
-				const pathElement = this.#path[i] as number;
-
-				if (pathElement < 0 || pathElement >= currentTarget.length)
-					return Result.Err(new IndexNotfoundError('Index out of bounds'));
-
-				currentTarget = currentTarget[pathElement] as JSON.JSON;
+				return Result.Ok(value.parent[value.key as number] as JSON.JSON);
 			}
-			else if (JSON.isShallowObject(currentTarget)) {
-				if (typeof this.#path[i] !== 'string')
-					return Result.Err(new InvalidPathError(`Expected path[${i}] to be a String`));
+			else {
+				if (!JSON.isString(value.key))
+					return Result.Err(new InvalidPathError(`Expected key to be a String at ${toString(path)}`));
 
-				const pathElement = this.#path[i] as string;
+				if (!(value.key in value.parent))
+					return Result.Err(new PropertyNotFoundError(`Property ${value.key} not found at ${toString(path)}`));
 
-				if (!(pathElement in currentTarget))
-					return Result.Err(new PropertyNotFoundError('Property not found'));
-
-				currentTarget = currentTarget[pathElement] as JSON.JSON;
+				return Result.Ok(value.parent[value.key as string] as JSON.JSON);
 			}
-			else
-				return Result.Err(new TypeError(`Expected target at path ${this.toString(i)} to be an Array or an Object`));
-		}
+		},
+		error => Result.Err(error)
+	);
+}
 
-		return Result.Ok(currentTarget);
-	}
-
-	has(target: JSON.JSON): boolean {
-		let currentTarget: JSON.JSON = target;
-
-		for (let i = 0; i < this.#path.length; i++) {
-			if (JSON.isArray(currentTarget)) {
-				if (!Number.isSafeInteger(this.#path[i]))
+export function has(target: JSON.JSON, path: Path): boolean {
+	return walk(target, path, false).match(
+		value => {
+			if (JSON.isArray(value.parent)) {
+				if (!JSON.isInteger(value.key))
 					return false;
 
-				const pathElement = this.#path[i] as number;
-
-				if (pathElement < 0 || pathElement >= currentTarget.length)
+				if (value.key < 0 || value.key >= parent.length)
 					return false;
 
-				currentTarget = currentTarget[pathElement] as JSON.JSON;
+				return true;
 			}
-			else if (JSON.isShallowObject(currentTarget)) {
-				if (typeof this.#path[i] !== 'string')
+			else {
+				if (!JSON.isString(value.key))
 					return false;
 
-				const pathElement = this.#path[i] as string;
-
-				if (!(pathElement in currentTarget))
+				if (!(value.key in parent))
 					return false;
 
-				currentTarget = currentTarget[pathElement] as JSON.JSON;
+				return true;
 			}
-			else
-				return false;
-		}
+		},
+		_ => false
+	)
+}
+
+export function remove(target: JSON.JSON, path: Path, mutate: boolean = false): boolean {
+	return walk(mutate ? JSON.clone(target) : target, path, false).onOk(({ parent, key }) => {
+		if (JSON.isArray(parent))
+			parent.splice(key as number, 1);
+		else
+			delete parent[key as string];
 
 		return true;
-	}
+	}).isOk();
+}
 
-	remove(target: JSON.JSON): boolean {
-		let currentTarget: JSON.JSON = target;
+export function equals(path1: Path, path2: Path): boolean {
+	if (path1.length !== path2.length)
+		return false;
 
-		for (let i = 0; i < this.#path.length; i++) {
-			if (JSON.isArray(currentTarget)) {
-				if (!Number.isSafeInteger(this.#path[i]))
-					return false;
-
-				const pathElement = this.#path[i] as number;
-
-				if (i === this.#path.length - 1) {
-					if (pathElement < 0 || pathElement >= currentTarget.length)
-						return false;
-
-					currentTarget.splice(pathElement, 1);
-				}
-				else {
-					if (pathElement < 0 || pathElement >= currentTarget.length)
-						return false;
-
-					currentTarget = currentTarget[pathElement] as JSON.JSON;
-				}
-			}
-			else if (JSON.isShallowObject(currentTarget)) {
-				if (typeof this.#path[i] !== 'string')
-					return false;
-
-				const pathElement = this.#path[i] as string;
-
-				if (!(pathElement in currentTarget))
-					return false;
-
-				if (i === this.#path.length - 1) {
-					if (!(pathElement in currentTarget))
-						return false;
-
-					delete currentTarget[pathElement];
-				}
-				else {
-					currentTarget = currentTarget[pathElement] as JSON.JSON;
-				}
-			}
-			else
-				return false;
-		}
-
-		return true;
-	}
-
-	equals(path: Path): boolean {
-		// Get the Path Array here because the path getter always clones the internal Path Array
-		const pathArray = path.path;
-
-		if (this.#path.length !== pathArray.length)
+	for (let i = 0; i < path1.length; i++) {
+		if (path1[i] !== path2[i])
 			return false;
-
-		for (let i = 0; i < this.#path.length; i++) {
-			if (this.#path[i] !== pathArray[i])
-				return false;
-		}
-
-		return true;
 	}
 
-	toJSON(): JSON.JSON {
-		return this.#path;
-	}
+	return true;
+}
 
-	toString(index: number = -1): string {
-		return (index < 0 ? this.#path : this.#path.slice(index)).reduce<string>((acc, element, i) => {
+export function toString(path: Path, index: number = -1): string {
+	return (index < 0 ? path : path.slice(index))
+		.reduce<string>((acc, element, i) => {
 			if (i === 0)
 				return `${element}`;
 
@@ -301,5 +165,4 @@ export class Path {
 
 			return `${acc}[${element}]`;
 		}, '');
-	}
 }
