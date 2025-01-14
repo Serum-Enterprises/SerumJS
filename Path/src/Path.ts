@@ -67,11 +67,21 @@ function walk(target: JSON.JSON, path: Path, createContainers: boolean = false):
 	return Result.Err(new Error('Path not found'));
 }
 
-export function set(target: JSON.JSON, path: Path, data: JSON.JSON, mutate: boolean = false, createContainers: boolean = false): Result<JSON.JSON, Error> {
-	return walk(mutate ? JSON.clone(target) : target, path, createContainers)
+export function set(target: JSON.JSON, path: Path, data: JSON.JSON): Result<JSON.JSON, Error> {
+	return walk(target, path, true)
 		.mapOk(({ parent, key }) => {
-			if (JSON.isArray(parent))
-				parent[key as number] = data;
+			if (JSON.isArray(parent)) {
+				if ((key as number) < 0) {
+					parent.unshift(...(new Array(Math.abs(key as number)).fill(null)));
+					parent[0] = data;
+				}
+				else if ((key as number) >= parent.length) {
+					parent.push(...(new Array((key as number) - parent.length).fill(null)));
+					parent.push(data);
+				}
+				else
+					parent[key as number] = data;
+			}
 			else
 				parent[key as string] = data;
 
@@ -112,7 +122,7 @@ export function has(target: JSON.JSON, path: Path): boolean {
 				if (!JSON.isInteger(value.key))
 					return false;
 
-				if (value.key < 0 || value.key >= parent.length)
+				if (value.key < 0 || value.key >= value.parent.length)
 					return false;
 
 				return true;
@@ -121,7 +131,7 @@ export function has(target: JSON.JSON, path: Path): boolean {
 				if (!JSON.isString(value.key))
 					return false;
 
-				if (!(value.key in parent))
+				if (!(value.key in value.parent))
 					return false;
 
 				return true;
@@ -131,8 +141,8 @@ export function has(target: JSON.JSON, path: Path): boolean {
 	)
 }
 
-export function remove(target: JSON.JSON, path: Path, mutate: boolean = false): boolean {
-	return walk(mutate ? JSON.clone(target) : target, path, false).onOk(({ parent, key }) => {
+export function remove(target: JSON.JSON, path: Path): boolean {
+	return walk(target, path, false).onOk(({ parent, key }) => {
 		if (JSON.isArray(parent))
 			parent.splice(key as number, 1);
 		else
