@@ -1,6 +1,6 @@
 {
 	"name": "@serum-enterprises/schema",
-	"version": "2.0.1",
+	"version": "2.0.1-beta.0",
 	"engines": {
 		"node": ">=14.0.0"
 	},
