@@ -493,7 +493,7 @@ class ArrayValidator extends Schema {
 	}
 
 	#nullable: { flag: boolean };
-	#every: { flag: boolean; validator: Schema; };
+	#every: { flag: boolean; value: Schema; };
 	#min: { flag: boolean; value: number; };
 	#max: { flag: boolean; value: number; };
 	#tuple: { flag: boolean; value: Schema[]; };
@@ -501,7 +501,7 @@ class ArrayValidator extends Schema {
 	constructor() {
 		super();
 		this.#nullable = { flag: false };
-		this.#every = { flag: false, validator: new AnyValidator() };
+		this.#every = { flag: false, value: new AnyValidator() };
 		this.#min = { flag: false, value: 0 };
 		this.#max = { flag: false, value: 0 };
 		this.#tuple = { flag: false, value: [] };
@@ -526,7 +526,7 @@ class ArrayValidator extends Schema {
 	}
 
 	every(validator: Schema): this {
-		this.#every = { flag: true, validator };
+		this.#every = { flag: true, value: validator };
 
 		return this;
 	}
@@ -547,7 +547,7 @@ class ArrayValidator extends Schema {
 
 			if (this.#every.flag) {
 				const errors: ValidationError[] = data
-					.map((value, index) => this.#every.validator.validate(value, `${path}[${index}]`))
+					.map((value, index) => this.#every.value.validate(value, `${path}[${index}]`))
 					.filter(value => value.isErr())
 					.map(value => value.error);
 
@@ -592,7 +592,7 @@ class ArrayValidator extends Schema {
 			schema['max'] = this.#max.value;
 
 		if (this.#every.flag)
-			schema['every'] = this.#every.validator.toJSON();
+			schema['every'] = this.#every.value.toJSON();
 
 		if (this.#tuple.flag)
 			schema['tuple'] = this.#tuple.value.map(validator => validator.toJSON());
