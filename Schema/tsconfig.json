@@ -2,6 +2,7 @@
 	"compilerOptions": {
 		"target": "ES2024", /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
 		"module": "Node16", /* Specify what module code is generated. */
+		"lib": ["ES2024"], /* Specify library files to be included in the compilation. */
 		"rootDir": "./src", /* Specify the root folder within your source files. */
 		"outDir": "./build", /* Specify an output folder for all emitted files. */
 		"declaration": true, /* Generate .d.ts files from TypeScript and JavaScript files in your project. */
