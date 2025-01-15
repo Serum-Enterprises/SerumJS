@@ -41,7 +41,7 @@ Please check [Path.d.ts](./types/Path.d.ts) for the full API.
 
 MIT License
 
-Copyright (c) [2025] [Serum Enterprises L.L.C-FZ]
+Copyright (c) 2025 Serum Enterprises L.L.C-FZ
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
