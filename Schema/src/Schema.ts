@@ -63,7 +63,7 @@ export abstract class Schema {
 		return (registry.get(schema['type']) as typeof Schema).fromJSON(schema, path, registry);
 	}
 
-	abstract validate(data: unknown, path?: string): Result<JSON.JSON, ValidationError>;
+	abstract validate(data: unknown, path?: string): Result<void, ValidationError>;
 
 	abstract toJSON(): JSON.Object;
 }
@@ -82,11 +82,11 @@ class AnyValidator extends Schema {
 		super();
 	}
 
-	validate(data: unknown, path: string = 'data'): Result<JSON.JSON, ValidationError> {
+	validate(data: unknown, path: string = 'data'): Result<void, ValidationError> {
 		if (!JSON.isJSON(data))
 			return Result.Err(new ValidationError(`Expected ${path} to be JSON`));
 
-		return Result.Ok(data);
+		return Result.Ok(void 0);
 	}
 
 	toJSON(): JSON.Object {
@@ -141,16 +141,16 @@ class BooleanValidator extends Schema {
 		return this;
 	}
 
-	validate(data: unknown, path: string = 'data'): Result<JSON.Boolean | JSON.Null, ValidationError> {
+	validate(data: unknown, path: string = 'data'): Result<void, ValidationError> {
 		if (JSON.isBoolean(data)) {
 			if (this.#equals.flag && this.#equals.value !== data)
 				return Result.Err(new ValidationError(`Expected ${path} to be ${this.#equals.value}${this.#nullable.flag ? '' : ' or Null'}`));
 
-			return Result.Ok(data);
+			return Result.Ok(void 0);
 		}
 
 		if (this.#nullable.flag && JSON.isNull(data))
-			return Result.Ok(data);
+			return Result.Ok(void 0);
 
 		return Result.Err(new ValidationError(`Expected ${path} to be a Boolean${this.#nullable.flag ? '' : ' or Null'}`));
 	}
@@ -260,7 +260,7 @@ class NumberValidator extends Schema {
 		return this;
 	}
 
-	validate(data: unknown, path: string = 'data'): Result<JSON.Number | JSON.Null, ValidationError> {
+	validate(data: unknown, path: string = 'data'): Result<void, ValidationError> {
 		if (JSON.isNumber(data)) {
 			if (this.#equals.flag && this.#equals.value !== data)
 				return Result.Err(new ValidationError(`Expected ${path} to be ${this.#equals.value}`));
@@ -274,11 +274,11 @@ class NumberValidator extends Schema {
 			if (this.#max.flag && this.#max.value < data)
 				return Result.Err(new ValidationError(`Expected ${path} to be at most ${this.#max.value}`));
 
-			return Result.Ok(data);
+			return Result.Ok(void 0);
 		}
 
 		if (this.#nullable.flag && JSON.isNull(data))
-			return Result.Ok(data);
+			return Result.Ok(void 0);
 
 		return Result.Err(new ValidationError(`Expected ${path} to be a Number${this.#nullable.flag ? '' : ' or Null'}`));
 	}
@@ -382,7 +382,7 @@ class StringValidator extends Schema {
 		return this;
 	}
 
-	validate(data: unknown, path: string = 'data'): Result<JSON.String | JSON.Null, ValidationError> {
+	validate(data: unknown, path: string = 'data'): Result<void, ValidationError> {
 		if (JSON.isString(data)) {
 			if (this.#equals.flag && this.#equals.value !== data)
 				return Result.Err(new ValidationError(`Expected ${path} to be ${this.#equals.value}`));
@@ -393,11 +393,11 @@ class StringValidator extends Schema {
 			if (this.#max.flag && this.#max.value < data.length)
 				return Result.Err(new ValidationError(`Expected ${path} to be at most ${this.#max.value} characters long`));
 
-			return Result.Ok(data);
+			return Result.Ok(void 0);
 		}
 
 		if (this.#nullable.flag && JSON.isNull(data))
-			return Result.Ok(data);
+			return Result.Ok(void 0);
 
 		return Result.Err(new ValidationError(`Expected ${path} to be a String${this.#nullable.flag ? '' : ' or Null'}`));
 
@@ -537,10 +537,8 @@ class ArrayValidator extends Schema {
 		return this;
 	}
 
-	validate(data: unknown, path: string = 'data'): Result<JSON.Array | JSON.Null, ValidationError> {
+	validate(data: unknown, path: string = 'data'): Result<void, ValidationError> {
 		if (JSON.isArray(data)) {
-			let result: JSON.Array = data;
-
 			if (this.#min.flag && this.#min.value > data.length)
 				return Result.Err(new ValidationError(`Expected ${path} to be at least ${this.#min.value} Elements long`));
 
@@ -548,49 +546,33 @@ class ArrayValidator extends Schema {
 				return Result.Err(new ValidationError(`Expected ${path} to be at most ${this.#max.value} Elements long`));
 
 			if (this.#item.flag) {
-				let validatorResults: [JSON.JSON[], ValidationError[]] = [[], []];
-
-				validatorResults = data
+				const errors: ValidationError[] = data
 					.map((value, index) => this.#item.validator.validate(value, `${path}[${index}]`))
-					.reduce<[JSON.JSON[], ValidationError[]]>((acc, value) => {
-						return value.match(
-							value => [[...acc[0], value], acc[1]],
-							error => [acc[0], [...acc[1], error]]
-						);
-					}, [[], []]);
+					.filter(value => value.isErr())
+					.map(value => value.error);
 
-				if (validatorResults[1].length > 0)
-					return Result.Err(new ValidationError(`Expected ${path} to be an Array where every Element matches the item Validator`, { cause: result[1] }));
-				else
-					result = validatorResults[0];
+				if (errors.length > 0)
+					return Result.Err(new ValidationError(`Expected ${path} to be an Array where every Element matches the item Validator`, { cause: errors }));
 			}
 
 			if (this.#tuple.flag) {
 				if (this.#tuple.value.length !== data.length)
 					return Result.Err(new ValidationError(`Expected ${path} to have exactly ${this.#tuple.value.length} Elements`));
 
-				let validatorResults: [JSON.JSON[], ValidationError[]] = [[], []];
-
-				validatorResults = this.#tuple.value
+				const errors: ValidationError[] = this.#tuple.value
 					.map((validator, index) => validator.validate(data[index], `${path}[${index}]`))
-					.reduce<[JSON.JSON[], ValidationError[]]>((acc, value) => {
-						return value.match(
-							value => [[...acc[0], value], acc[1]],
-							error => [acc[0], [...acc[1], error]]
-						);
-					}, [[], []]);
+					.filter(value => value.isErr())
+					.map(value => value.error);
 
-				if (validatorResults[1].length > 0)
-					return Result.Err(new ValidationError(`Expected ${path} to be a Tuple where every Element matches its respective Validator`, { cause: result[1] }));
-				else
-					result = validatorResults[0];
+				if (errors.length > 0)
+					return Result.Err(new ValidationError(`Expected ${path} to be a Tuple where every Element matches its respective Validator`, { cause: errors }));
 			}
 
-			return Result.Ok(result);
+			return Result.Ok(void 0);
 		}
 
 		if (this.#nullable.flag && JSON.isNull(data))
-			return Result.Ok(data);
+			return Result.Ok(void 0);
 
 		return Result.Err(new ValidationError(`Expected ${path} to be an Array${this.#nullable.flag ? '' : ' or Null'}`));
 	}
@@ -655,11 +637,11 @@ class ObjectValidator extends Schema {
 			validator.schema(validatorResults[0]);
 		}
 
-		if ('preserve' in schema) {
-			if (!JSON.isBoolean(schema['preserve']))
-				return Result.Err(new SchemaError(`Expected ${path}.preserve to be a Boolean`));
+		if ('inclusive' in schema) {
+			if (!JSON.isBoolean(schema['inclusive']))
+				return Result.Err(new SchemaError(`Expected ${path}.inclusive to be a Boolean`));
 
-			validator.preserve(schema['preserve']);
+			validator.inclusive(schema['inclusive']);
 		}
 
 		return Result.Ok(validator);
@@ -667,13 +649,13 @@ class ObjectValidator extends Schema {
 
 	#nullable: { flag: boolean };
 	#schema: { flag: boolean; value: { [key: string]: Schema; } };
-	#preserve: { flag: boolean; };
+	#inclusive: { flag: boolean; };
 
 	constructor() {
 		super();
 		this.#nullable = { flag: false };
 		this.#schema = { flag: false, value: {} };
-		this.#preserve = { flag: false };
+		this.#inclusive = { flag: false };
 	}
 
 	nullable(flag: boolean = true): this {
@@ -682,8 +664,8 @@ class ObjectValidator extends Schema {
 		return this;
 	}
 
-	preserve(flag: boolean = true): this {
-		this.#preserve = { flag };
+	inclusive(flag: boolean = true): this {
+		this.#inclusive = { flag };
 
 		return this;
 	}
@@ -694,39 +676,36 @@ class ObjectValidator extends Schema {
 		return this;
 	}
 
-	validate(data: unknown, path: string = 'data'): Result<JSON.Object | JSON.Null, ValidationError> {
+	validate(data: unknown, path: string = 'data'): Result<void, ValidationError> {
 		if (JSON.isObject(data)) {
-			let result: [{ [key: string]: JSON.JSON }, { [key: string]: ValidationError }] = [{}, {}];
-
 			if (this.#schema.flag) {
-				// Run all Validators in the Schema (i.e. map this.#schema.value into [key, Result<JSON.JSON, ValidationError>])
-				// Then reduce the Result<JSON.JSON, ValidationError> into a Tuple of Pair Arrays (i.e. [[string, JSON.JSON][], [string, ValidationError][]])
-				// If the second Array is empty, return the first Array as an Object, otherwise return the second Array as an Error
-				for (let [key, validator] of Object.entries(this.#schema.value)) {
-					const value = validator.validate(data[key], `${path}.${key}`);
+				const errors: { [key: string]: ValidationError } = {};
 
-					value.match(
-						value => { result[0][key] = value },
-						error => { result[1][key] = error }
-					);
+				for (let [key, validator] of Object.entries(this.#schema.value)) {
+					const result = validator.validate(data[key], `${path}.${key}`);
+
+					if (result.isErr())
+						errors[key] = result.error;
 				}
 
-				if (Object.keys(result[1]).length > 0)
-					return Result.Err(new ValidationError(`Expected ${path} to be an Object where every Property matches the Schema Constraint`, { cause: result[1] }));
+				if (Object.keys(errors).length > 0)
+					return Result.Err(new ValidationError(`Expected ${path} to be an Object where every Property matches the Schema Constraint`, { cause: errors }));
 
-				if (this.#preserve.flag) {
-					for (let [key, value] of Object.entries(data)) {
-						if (!(key in this.#schema.value))
-							result[0][key] = value;
-					}
+				// If inclusive is not set and the Object has more Properties than the Schema, return an Error
+				if (!this.#inclusive.flag && Object.keys(data).length !== Object.keys(this.#schema.value).length) {
+					const schemaKeys = Object.keys(this.#schema.value);
+					const errors = Object.keys(data).filter(key => !schemaKeys.includes(key))
+						.map(key => new ValidationError(`Expected ${path}.${key} not to exist on this Schema`));
+
+					return Result.Err(new ValidationError(`Expected ${path} to have only the Properties defined in the Schema`, { cause: errors }));
 				}
 			}
 
-			return Result.Ok(result[0]);
+			return Result.Ok(void 0);
 		}
 
 		if (this.#nullable.flag && JSON.isNull(data))
-			return Result.Ok(data);
+			return Result.Ok(void 0);
 
 		return Result.Err(new ValidationError(`Expected ${path} to be an Object${this.#nullable.flag ? '' : ' or Null'}`));
 	}
@@ -742,8 +721,8 @@ class ObjectValidator extends Schema {
 		if (this.#schema.flag)
 			schema['schema'] = Object.fromEntries(Object.entries(this.#schema.value).map(([key, value]) => [key, value.toJSON()]));
 
-		if (this.#preserve.flag)
-			schema['preserve'] = this.#preserve.flag;
+		if (this.#inclusive.flag)
+			schema['inclusive'] = this.#inclusive.flag;
 
 		return schema;
 	}
@@ -791,7 +770,7 @@ class OrValidator extends Schema {
 		return this;
 	}
 
-	validate(data: unknown, path: string = 'data'): Result<JSON.JSON, ValidationError> {
+	validate(data: unknown, path: string = 'data'): Result<void, ValidationError> {
 		if (!JSON.isJSON(data))
 			return Result.Err(new ValidationError(`Expected ${path} to be JSON`));
 
@@ -808,10 +787,10 @@ class OrValidator extends Schema {
 			if (errors.length === this.#oneOf.value.length)
 				return Result.Err(new ValidationError(`Expected ${path} to match at least one of the OneOf Validators`, { cause: errors }));
 
-			return Result.Ok(data);
+			return Result.Ok(void 0);
 		}
 
-		return Result.Ok(data);
+		return Result.Ok(void 0);
 	}
 
 	toJSON(): JSON.Object {
@@ -873,7 +852,7 @@ class AndValidator extends Schema {
 		return this;
 	}
 
-	validate(data: unknown, path?: string): Result<JSON.JSON, ValidationError> {
+	validate(data: unknown, path?: string): Result<void, ValidationError> {
 		if (!JSON.isJSON(data))
 			return Result.Err(new ValidationError(`Expected ${path} to be JSON`));
 
@@ -891,7 +870,7 @@ class AndValidator extends Schema {
 				return Result.Err(new ValidationError(`Expected ${path} to match all of the AllOf Validators`, { cause: errors }));
 		}
 
-		return Result.Ok(data);
+		return Result.Ok(void 0);
 
 	}
 
