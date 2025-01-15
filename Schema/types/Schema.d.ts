@@ -15,13 +15,13 @@ export declare abstract class Schema {
     static get And(): AndValidator;
     static get defaultRegistry(): Map<string, typeof Schema>;
     static fromJSON(schema: JSON.JSON, path?: string, registry?: Map<string, typeof Schema>): Result<Schema, SchemaError>;
-    abstract validate(data: unknown, path?: string): Result<JSON.JSON, ValidationError>;
+    abstract validate(data: unknown, path?: string): Result<void, ValidationError>;
     abstract toJSON(): JSON.Object;
 }
 declare class AnyValidator extends Schema {
     static fromJSON(schema: JSON.JSON, path?: string): Result<AnyValidator, SchemaError>;
     constructor();
-    validate(data: unknown, path?: string): Result<JSON.JSON, ValidationError>;
+    validate(data: unknown, path?: string): Result<void, ValidationError>;
     toJSON(): JSON.Object;
 }
 declare class BooleanValidator extends Schema {
@@ -30,7 +30,7 @@ declare class BooleanValidator extends Schema {
     constructor();
     nullable(flag: boolean): this;
     equals(value: boolean): this;
-    validate(data: unknown, path?: string): Result<JSON.Boolean | JSON.Null, ValidationError>;
+    validate(data: unknown, path?: string): Result<void, ValidationError>;
     toJSON(): JSON.Object;
 }
 declare class NumberValidator extends Schema {
@@ -42,7 +42,7 @@ declare class NumberValidator extends Schema {
     integer(flag?: boolean): this;
     min(value: number): this;
     max(value: number): this;
-    validate(data: unknown, path?: string): Result<JSON.Number | JSON.Null, ValidationError>;
+    validate(data: unknown, path?: string): Result<void, ValidationError>;
     toJSON(): JSON.Object;
 }
 declare class StringValidator extends Schema {
@@ -53,7 +53,7 @@ declare class StringValidator extends Schema {
     equals(value: string): this;
     min(value: number): this;
     max(value: number): this;
-    validate(data: unknown, path?: string): Result<JSON.String | JSON.Null, ValidationError>;
+    validate(data: unknown, path?: string): Result<void, ValidationError>;
     toJSON(): JSON.Object;
 }
 declare class ArrayValidator extends Schema {
@@ -63,9 +63,9 @@ declare class ArrayValidator extends Schema {
     nullable(flag?: boolean): this;
     min(value: number): this;
     max(value: number): this;
-    item(validator: Schema): this;
+    every(validator: Schema): this;
     tuple(validators: Schema[]): this;
-    validate(data: unknown, path?: string): Result<JSON.Array | JSON.Null, ValidationError>;
+    validate(data: unknown, path?: string): Result<void, ValidationError>;
     toJSON(): JSON.Object;
 }
 declare class ObjectValidator extends Schema {
@@ -73,11 +73,11 @@ declare class ObjectValidator extends Schema {
     static fromJSON(schema: JSON.JSON, path?: string, registry?: Map<string, typeof Schema>): Result<ObjectValidator, SchemaError>;
     constructor();
     nullable(flag?: boolean): this;
-    preserve(flag?: boolean): this;
+    inclusive(flag?: boolean): this;
     schema(value: {
         [key: string]: Schema;
     }, flag?: boolean): this;
-    validate(data: unknown, path?: string): Result<JSON.Object | JSON.Null, ValidationError>;
+    validate(data: unknown, path?: string): Result<void, ValidationError>;
     toJSON(): JSON.Object;
 }
 declare class OrValidator extends Schema {
@@ -85,7 +85,7 @@ declare class OrValidator extends Schema {
     static fromJSON(schema: JSON.JSON, path?: string, registry?: Map<string, typeof Schema>): Result<OrValidator, SchemaError>;
     constructor();
     oneOf(validators: Schema[]): this;
-    validate(data: unknown, path?: string): Result<JSON.JSON, ValidationError>;
+    validate(data: unknown, path?: string): Result<void, ValidationError>;
     toJSON(): JSON.Object;
 }
 declare class AndValidator extends Schema {
@@ -93,7 +93,7 @@ declare class AndValidator extends Schema {
     static fromJSON(schema: JSON.JSON, path?: string, registry?: Map<string, typeof Schema>): Result<AndValidator, SchemaError>;
     constructor();
     allOf(validators: Schema[]): this;
-    validate(data: unknown, path?: string): Result<JSON.JSON, ValidationError>;
+    validate(data: unknown, path?: string): Result<void, ValidationError>;
     toJSON(): JSON.Object;
 }
 export {};
