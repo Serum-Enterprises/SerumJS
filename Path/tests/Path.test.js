@@ -32,6 +32,7 @@ describe('Testing Path', () => {
 		const appendArrayResult = Path.set({ a: {} }, ['a', 'b', 1], "Hello");
 		const arrayResult = Path.set({ a: {} }, ['a', 'b', 0], "Hello");
 		const objectResult = Path.set({ a: {} }, ['a', 'b', 'c'], "Hello");
+		const emptyPathResult = Path.set({}, [], "Hello");
 
 		expect(prependArrayResult.isOk()).toBe(true);
 		expect(prependArrayResult.value).toStrictEqual({ a: { b: ["Hello"] } });
@@ -44,32 +45,43 @@ describe('Testing Path', () => {
 
 		expect(objectResult.isOk()).toBe(true);
 		expect(objectResult.value).toStrictEqual({ a: { b: { c: "Hello" } } });
+
+		expect(emptyPathResult.isOk()).toBe(true);
+		expect(emptyPathResult.value).toBe("Hello");
 	});
 
 	test('Testing get', () => {
 		const arrayResult = Path.get({ a: { b: ["Hello"] } }, ['a', 'b', 0]);
 		const objectResult = Path.get({ a: { b: { c: "Hello" } } }, ['a', 'b', 'c']);
+		const emptyPathResult = Path.get("Hello", []);
 
 		expect(arrayResult.isOk()).toBe(true);
 		expect(arrayResult.value).toBe("Hello");
 
 		expect(objectResult.isOk()).toBe(true);
 		expect(objectResult.value).toBe("Hello");
+
+		expect(emptyPathResult.isOk()).toBe(true);
+		expect(emptyPathResult.value).toBe("Hello");
 	});
 
 	test('Testing has', () => {
 		const hasArrayResult = Path.has({ a: { b: ["Hello"] } }, ['a', 'b', 0]);
 		const hasObjectResult = Path.has({ a: { b: { c: "Hello" } } }, ['a', 'b', 'c']);
+		const emptyPathResult = Path.has("Hello", []);
 
 		expect(hasArrayResult).toBe(true);
 		expect(hasObjectResult).toBe(true);
+		expect(emptyPathResult).toBe(true);
 	});
 
 	test('Testing remove', () => {
 		const arrayResult = Path.remove({ a: { b: ["Hello"] } }, ['a', 'b', 0]);
 		const objectResult = Path.remove({ a: { b: { c: "Hello" } } }, ['a', 'b', 'c']);
+		const emptyPathResult = Path.remove("Hello", []);
 
 		expect(arrayResult).toBe(true);
 		expect(objectResult).toBe(true);
+		expect(emptyPathResult).toBe(false);
 	});
 });

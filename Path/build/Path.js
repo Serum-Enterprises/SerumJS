@@ -59,6 +59,8 @@ function isPath(value) {
     return JSON.isShallowArray(value) && value.every((element) => JSON.isInteger(element) || JSON.isString(element));
 }
 function walk(target, path, createContainers = false) {
+    if (path.length === 0)
+        return result_1.Result.Err(new InvalidPathError('Expected path to have at least one Element'));
     let currentTarget = target;
     for (let i = 0; i < path.length; i++) {
         if (JSON.isArray(currentTarget)) {
@@ -103,6 +105,8 @@ function walk(target, path, createContainers = false) {
     return result_1.Result.Err(new Error('Path not found'));
 }
 function set(target, path, data) {
+    if (path.length === 0)
+        return result_1.Result.Ok(data);
     return walk(target, path, true)
         .mapOk(({ parent, key }) => {
         if (JSON.isArray(parent)) {
@@ -123,6 +127,8 @@ function set(target, path, data) {
     });
 }
 function get(target, path) {
+    if (path.length === 0)
+        return result_1.Result.Ok(target);
     return walk(target, path, false).match(value => {
         if (JSON.isArray(value.parent)) {
             if (!JSON.isInteger(value.key))
@@ -141,6 +147,8 @@ function get(target, path) {
     }, error => result_1.Result.Err(error));
 }
 function has(target, path) {
+    if (path.length === 0)
+        return true;
     return walk(target, path, false).match(value => {
         if (JSON.isArray(value.parent)) {
             if (!JSON.isInteger(value.key))
@@ -159,6 +167,8 @@ function has(target, path) {
     }, _ => false);
 }
 function remove(target, path) {
+    if (path.length === 0)
+        return false;
     return walk(target, path, false).onOk(({ parent, key }) => {
         if (JSON.isArray(parent))
             parent.splice(key, 1);
