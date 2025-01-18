@@ -13,9 +13,6 @@ export function isPath(value: unknown): value is Path {
 }
 
 function walk(target: JSON.JSON, path: Path, createContainers: boolean = false): Result<{ parent: JSON.Container, key: PathElement }, Error> {
-	if (path.length === 0)
-		return Result.Err(new InvalidPathError('Expected path to have at least one Element'));
-
 	let currentTarget: JSON.JSON = target;
 
 	for (let i = 0; i < path.length; i++) {
@@ -71,9 +68,6 @@ function walk(target: JSON.JSON, path: Path, createContainers: boolean = false):
 }
 
 export function set(target: JSON.JSON, path: Path, data: JSON.JSON): Result<JSON.JSON, Error> {
-	if (path.length === 0)
-		return Result.Ok(data);
-
 	return walk(target, path, true)
 		.mapOk(({ parent, key }) => {
 			if (JSON.isArray(parent)) {
@@ -96,9 +90,6 @@ export function set(target: JSON.JSON, path: Path, data: JSON.JSON): Result<JSON
 }
 
 export function get(target: JSON.JSON, path: Path): Result<JSON.JSON, Error> {
-	if (path.length === 0)
-		return Result.Ok(target);
-
 	return walk(target, path, false).match(
 		value => {
 			if (JSON.isArray(value.parent)) {
@@ -125,9 +116,6 @@ export function get(target: JSON.JSON, path: Path): Result<JSON.JSON, Error> {
 }
 
 export function has(target: JSON.JSON, path: Path): boolean {
-	if (path.length === 0)
-		return true;
-
 	return walk(target, path, false).match(
 		value => {
 			if (JSON.isArray(value.parent)) {
@@ -154,9 +142,6 @@ export function has(target: JSON.JSON, path: Path): boolean {
 }
 
 export function remove(target: JSON.JSON, path: Path): boolean {
-	if (path.length === 0)
-		return false;
-
 	return walk(target, path, false).onOk(({ parent, key }) => {
 		if (JSON.isArray(parent))
 			parent.splice(key as number, 1);
