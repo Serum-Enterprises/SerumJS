@@ -1,6 +1,17 @@
 const { Result } = require('../build/Result');
 
 describe('Testing Result.js', () => {
+	test('Testing Result.attempt', () => {
+		const value = 42;
+		const okResult = Result.attempt(() => value);
+		const errResult = Result.attempt(() => { throw 'Error Message' });
+
+		expect(okResult.isOk()).toBe(true);
+		expect(okResult.value).toBe(value);
+		expect(errResult.isErr()).toBe(true);
+		expect(errResult.error).toBe('Error Message');
+	});
+
 	test('Testing Result.Ok', () => {
 		const value = 42;
 		const result = Result.Ok(value);

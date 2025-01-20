@@ -1,4 +1,12 @@
 export abstract class Result<T, E> {
+	static attempt<T, E>(fn: () => T): Result<T, E> {
+		try {
+			return Result.Ok(fn());
+		} catch (error) {
+			return Result.Err(error as E);
+		}
+	}
+
 	static Ok<T>(value: T): Ok<T> {
 		return new Ok(value);
 	}

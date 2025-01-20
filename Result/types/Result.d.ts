@@ -1,4 +1,5 @@
 export declare abstract class Result<T, E> {
+    static attempt<T, E>(fn: () => T): Result<T, E>;
     static Ok<T>(value: T): Ok<T>;
     static Err<E>(error: E): Err<E>;
     isOk(): this is Ok<T>;

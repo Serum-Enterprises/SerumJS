@@ -2,6 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Result = void 0;
 class Result {
+    static attempt(fn) {
+        try {
+            return Result.Ok(fn());
+        }
+        catch (error) {
+            return Result.Err(error);
+        }
+    }
     static Ok(value) {
         return new Ok(value);
     }

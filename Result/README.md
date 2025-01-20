@@ -13,17 +13,22 @@ npm install --save @serum-enterprises/result
 ```typescript
 import { Result } from '@serum-enterprises/result';
 
-function divide(a: number, b: number): Result<number, Error> {
+function divide(a: number, b: number): Result<number, RangeError> {
 	if (b === 0)
 		return Result.Err(new RangeError(`Cannot divide by Zero`));
 
 	return Result.Ok(a / b);
 }
 
-divide(10, 0).match(
-	value => console.log(`Result: ${value}`),
-	error => console.error(`Error: ${error.message}`)
-);
+Result.attempt<[number, number], SyntaxError>(() => JSON.parse('[10, 0]'))
+	.match<Result<number, RangeError | SyntaxError>>(
+		([a, b]) => divide(a, b),
+		error => Result.Err(error)
+	)
+	.match(
+		value => console.log(`Result: ${value}`),
+		error => console.error(`Error: ${error.message}`)
+	);
 ```
 
 ## API
