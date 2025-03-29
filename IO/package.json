@@ -1,12 +1,12 @@
 {
 	"name": "@serum-enterprises/io",
-	"version": "2.0.0-beta.0",
+	"version": "2.0.0-beta.1",
 	"engines": {
 		"node": ">=14.0.0"
 	},
 	"description": "Modern Directory/File based Data Connectors in NodeJS",
-	"main": "./build/IO.js",
-	"types": "./types/IO.d.ts",
+	"main": "./build/index.js",
+	"types": "./types/index.d.ts",
 	"scripts": {
 		"build": "tsc",
 		"test": "jest"
