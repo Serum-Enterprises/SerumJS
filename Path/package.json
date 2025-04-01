@@ -1,10 +1,10 @@
 {
 	"name": "@serum-enterprises/path",
-	"version": "2.0.1-beta.1",
+	"version": "2.0.1-beta.2",
 	"engines": {
 		"node": ">=14.0.0"
 	},
-	"description": "Deeply nested Data Structure Operations with Paths",
+	"description": "Deeply Nested Data Structure Operations with JSON Paths",
 	"main": "./build/Path.js",
 	"types": "./types/Path.d.ts",
 	"scripts": {
@@ -24,7 +24,7 @@
 		"@types/jest": "^29.5.14",
 		"@types/node": "^22.10.5",
 		"jest": "^29.7.0",
-		"typescript": "^5.7.3"
+		"typescript": "^5.8.2"
 	},
 	"dependencies": {
 		"@serum-enterprises/json": "^2.0.1",

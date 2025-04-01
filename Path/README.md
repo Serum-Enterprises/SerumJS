@@ -1,6 +1,6 @@
-# Result
+# Path
 
-Deeply nested Data Structure Operations with Paths
+Deeply Nested Data Structure Operations with JSON Paths
 
 ## Installation
 
@@ -10,28 +10,29 @@ npm install --save @serum-enterprises/path
 
 ## Usage
 
+This Library provides 4 simple functions to manipulate deeply nested JSON using Paths (an Array of Integers and Strings).
+
+The `get`, `set` and `remove` functions return Result Objects ([@serum-enterprises/result on NPM](https://www.npmjs.com/package/@serum-enterprises/result)) while `has` returns a boolean.
+
+**Note** that all functions are immutable and do not modify the original data but rather return a deep clone of the data with the changes applied.
+
 ```typescript
 import * as Path from '@serum-enterprises/path';
 
 const data = { name: { first: 'John', last: 'Doe' }, age: 20, friends: [{ name: "Maria", age: 22 }] };
 
-Path.set(data, ['name', 'first'], 'Jane');
-// data === { name: { first: 'Jane', last: 'Doe' }, age: 20, friends: [{ name: "Maria", age: 22 }] }
-Path.set(data, ['friends', -1, 'name'], 'Mark');
-// data === { name: { first: 'Jane', last: 'Doe' }, age: 20, friends: [{ name: "Mark" }, { name: "Maria", age: 22 }] }
+Path.set(data, ['friends', -2, 'name'], 'Mark');
+// Returns Result.Ok({ name: { first: 'John', last: 'Doe' }, age: 20, friends: [{ name: "Mark" }, null, { name: "Maria", age: 22 }] })
 
 Path.get(data, ['name', 'first']);
-// Jane
+// Returns Result.Ok('John')
 
 Path.has(data, ['name', 'first']);
-// True
+// Returns true
 
 Path.remove(data, ['friends', 0]);
-// data === { name: { first: 'Jane', last: 'Doe' }, age: 20, friends: [{ name: "Maria", age: 22 }] }
+// Returns Result.Ok({ name: { first: 'John', last: 'Doe' }, age: 20, friends: [] })
 ```
-
-**Note: This Library mutates passed Data! If this is unwanted, use @serum-enterprises/json to clone the Data first!**
-**Note: Path.set and Path.get return Result<JSON.JSON, Error>. See @serum-enterprises/result for more Information.**
 
 ## API
 
