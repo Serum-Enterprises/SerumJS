@@ -73,19 +73,8 @@ var Path;
     Path.toString = toString;
 })(Path || (exports.Path = Path = {}));
 class Context {
-    static wrap(data) {
-        return new Context(data);
-    }
-    _data;
-    constructor(data) {
-        this._data = data;
-    }
-    get data() {
-        return this._data;
-    }
-    set(path, value) {
-        const result = JSON.clone(this._data);
-        let currentTarget = result;
+    static set(target, path, value) {
+        let currentTarget = target;
         for (let i = 0; i < path.length - 1; i++) {
             const key = path[i];
             if (JSON.isArray(currentTarget)) {
@@ -134,11 +123,10 @@ class Context {
         }
         else
             return result_1.Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path)} to be an Array or an Object`));
-        this._data = result;
-        return result_1.Result.Ok(this);
+        return result_1.Result.Ok(target);
     }
-    get(path) {
-        let currentTarget = this._data;
+    static get(target, path) {
+        let currentTarget = target;
         for (let i = 0; i < path.length; i++) {
             const key = path[i];
             if (JSON.isArray(currentTarget)) {
@@ -158,10 +146,10 @@ class Context {
             else
                 return result_1.Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path, i)} to be an Array or an Object`));
         }
-        return result_1.Result.Ok(JSON.clone(currentTarget));
+        return result_1.Result.Ok(currentTarget);
     }
-    has(path) {
-        let currentTarget = this._data;
+    static has(target, path) {
+        let currentTarget = target;
         for (let i = 0; i < path.length; i++) {
             const key = path[i];
             if (JSON.isArray(currentTarget)) {
@@ -183,9 +171,8 @@ class Context {
         }
         return true;
     }
-    remove(path) {
-        const result = JSON.clone(this._data);
-        let currentTarget = result;
+    static remove(target, path) {
+        let currentTarget = target;
         for (let i = 0; i < path.length - 1; i++) {
             const key = path[i];
             if (JSON.isArray(currentTarget)) {
@@ -220,8 +207,38 @@ class Context {
         }
         else
             return result_1.Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path)} to be an Array or an Object`));
-        this._data = result;
-        return result_1.Result.Ok(this);
+        return result_1.Result.Ok(target);
+    }
+    static wrap(data) {
+        return new Context(data);
+    }
+    _data;
+    constructor(data) {
+        this._data = data;
+    }
+    get data() {
+        return this._data;
+    }
+    set(path, value) {
+        return Context.set(JSON.clone(this._data), path, value)
+            .mapOk(value => {
+            this._data = value;
+            return this;
+        });
+    }
+    get(path) {
+        return Context.get(this._data, path)
+            .mapOk(value => JSON.clone(value));
+    }
+    has(path) {
+        return Context.has(this._data, path);
+    }
+    remove(path) {
+        return Context.remove(JSON.clone(this._data), path)
+            .mapOk(value => {
+            this._data = value;
+            return this;
+        });
     }
 }
 exports.Context = Context;

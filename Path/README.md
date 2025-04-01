@@ -10,29 +10,21 @@ npm install --save @serum-enterprises/path
 
 ## Usage
 
-This Library provides 4 simple functions to manipulate deeply nested JSON using Paths (an Array of Integers and Strings).
+This Library provides two main Types: `Path` and `Context`.
 
-The `get`, `set` and `remove` functions return Result Objects ([@serum-enterprises/result on NPM](https://www.npmjs.com/package/@serum-enterprises/result)) while `has` returns a boolean.
+A Path is an Array of Integers and Strings that represents a location in a deeply nested data structure. It can be used to access, modify, or remove values from the data structure.
 
-**Note** that all functions are immutable and do not modify the original data but rather return a deep clone of the data with the changes applied.
+Paths are used by instances of `Context`, which is a wrapper around a JSON Data Structure, who provide methods for manipulating the Data inside the Context. The JSON Data Structure has to be modeled around [@serum-enterprises/json](https://www.npmjs.com/package/@serum-enterprises/json).
 
-```typescript
-import * as Path from '@serum-enterprises/path';
+There are 4 main operations available in the Context:
+- `get`: Get the value at the specified path.
+- `set`: Set the value at the specified path.
+- `remove`: Remove the value at the specified path.
+- `has`: Check if the value at the specified path exists.
 
-const data = { name: { first: 'John', last: 'Doe' }, age: 20, friends: [{ name: "Maria", age: 22 }] };
+All of those operations are available as non-atomic, mutating static methods, or as atomic instance methods that modify the Context in place.
 
-Path.set(data, ['friends', -2, 'name'], 'Mark');
-// Returns Result.Ok({ name: { first: 'John', last: 'Doe' }, age: 20, friends: [{ name: "Mark" }, null, { name: "Maria", age: 22 }] })
-
-Path.get(data, ['name', 'first']);
-// Returns Result.Ok('John')
-
-Path.has(data, ['name', 'first']);
-// Returns true
-
-Path.remove(data, ['friends', 0]);
-// Returns Result.Ok({ name: { first: 'John', last: 'Doe' }, age: 20, friends: [] })
-```
+To make the static methods atomic and immutable, the given target data for `set` and `remove` as well as the return value of `get` should be deeply cloned. The [@serum-enterprises/json](https://www.npmjs.com/package/@serum-enterprises/json) can be used for that purpose. It is also used internally by the Context, therefore installing it has no additional cost.
 
 ## API
 

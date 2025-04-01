@@ -11,6 +11,10 @@ export declare namespace Path {
     function toString(path: Path, index?: number): string;
 }
 export declare class Context {
+    static set(target: JSON.JSON, path: Path, value: JSON.JSON): Result<JSON.JSON, Error>;
+    static get(target: JSON.JSON, path: Path): Result<JSON.JSON, Error>;
+    static has(target: JSON.JSON, path: Path): boolean;
+    static remove(target: JSON.JSON, path: Path): Result<JSON.JSON, Error>;
     static wrap(data: JSON.JSON): Context;
     private _data;
     private constructor();
