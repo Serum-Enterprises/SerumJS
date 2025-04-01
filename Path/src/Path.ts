@@ -1,9 +1,12 @@
 import { Result } from '@serum-enterprises/result';
 import * as JSON from '@serum-enterprises/json';
 
-export namespace Path {
-	export type Path = (JSON.Integer | JSON.String)[];
+export class InvalidPathError extends Error { };
+export class PathNotFoundError extends Error { };
 
+export type Path = (JSON.Integer | JSON.String)[];
+
+export namespace Path {
 	export function isPath(value: unknown): value is Path {
 		return JSON.isShallowArray(value) && value.every((element) => JSON.isInteger(element) || JSON.isString(element));
 	}
@@ -34,183 +37,198 @@ export namespace Path {
 	}
 }
 
-export class InvalidPathError extends Error { };
-export class PathNotFoundError extends Error { };
+export class Context {
+	public static wrap(data: JSON.JSON): Context {
+		return new Context(data);
+	}
 
-export function set(target: JSON.JSON, path: Path.Path, value: JSON.JSON): Result<JSON.JSON, Error> {
-	const result = JSON.clone(target);
-	let currentTarget = result;
+	private _data: JSON.JSON;
 
-	for (let i = 0; i < path.length - 1; i++) {
-		const key = path[i]!;
+	private constructor(data: JSON.JSON) {
+		this._data = data;
+	}
 
-		if (JSON.isArray(currentTarget)) {
-			if (!JSON.isInteger(key))
-				return Result.Err(new InvalidPathError(`Expected path[${i}] to be an Integer`));
+	public get data(): JSON.JSON {
+		return this._data;
+	}
 
-			if (key < 0) {
-				currentTarget.unshift(...(new Array(Math.abs(key)).fill(null)));
-				currentTarget[0] = typeof path[i + 1] === 'string' ? {} : [];
+	public set(path: Path, value: JSON.JSON): Result<this, Error> {
+		const result = JSON.clone(this._data);
+		let currentTarget = result;
+
+		for (let i = 0; i < path.length - 1; i++) {
+			const key = path[i]!;
+
+			if (JSON.isArray(currentTarget)) {
+				if (!JSON.isInteger(key))
+					return Result.Err(new InvalidPathError(`Expected path[${i}] to be an Integer`));
+
+				if (key < 0) {
+					currentTarget.unshift(...(new Array(Math.abs(key)).fill(null)));
+					currentTarget[0] = typeof path[i + 1] === 'string' ? {} : [];
+				}
+				else if (key >= currentTarget.length) {
+					currentTarget.push(...(new Array(key - currentTarget.length).fill(null)));
+					currentTarget.push(typeof path[i + 1] === 'string' ? {} : []);
+				}
+				else
+					currentTarget = currentTarget[key]!;
 			}
-			else if (key >= currentTarget.length) {
-				currentTarget.push(...(new Array(key - currentTarget.length).fill(null)));
-				currentTarget.push(typeof path[i + 1] === 'string' ? {} : []);
+			else if (JSON.isShallowObject(currentTarget)) {
+				if (!JSON.isString(key))
+					return Result.Err(new InvalidPathError(`Expected path[${i}] to be a String`));
+
+				if (!(key in currentTarget))
+					currentTarget[key] = typeof path[i + 1] === 'string' ? {} : [];
+
+				currentTarget = currentTarget[key]!;
 			}
 			else
-				currentTarget = currentTarget[key]!;
+				return Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path, i)} to be an Array or an Object`));
+		}
+
+		const lastKey = path[path.length - 1];
+
+		if (JSON.isArray(currentTarget)) {
+			if (!JSON.isInteger(lastKey))
+				return Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be an Integer`));
+
+			if (lastKey < 0) {
+				currentTarget.unshift(...(new Array(Math.abs(lastKey)).fill(null)));
+				currentTarget[0] = value;
+			}
+			else if (lastKey >= currentTarget.length) {
+				currentTarget.push(...(new Array(lastKey - currentTarget.length).fill(null)));
+				currentTarget.push(value);
+			}
+			else
+				currentTarget[lastKey] = value;
 		}
 		else if (JSON.isShallowObject(currentTarget)) {
-			if (!JSON.isString(key))
-				return Result.Err(new InvalidPathError(`Expected path[${i}] to be a String`));
+			if (!JSON.isString(lastKey))
+				return Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be a String`));
 
-			if (!(key in currentTarget))
-				currentTarget[key] = typeof path[i + 1] === 'string' ? {} : [];
-
-			currentTarget = currentTarget[key]!;
-		}
-		else
-			return Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path, i)} to be an Array or an Object`));
-	}
-
-	const lastKey = path[path.length - 1];
-
-	if (JSON.isArray(currentTarget)) {
-		if (!JSON.isInteger(lastKey))
-			return Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be an Integer`));
-
-		if (lastKey < 0) {
-			currentTarget.unshift(...(new Array(Math.abs(lastKey)).fill(null)));
-			currentTarget[0] = value;
-		}
-		else if (lastKey >= currentTarget.length) {
-			currentTarget.push(...(new Array(lastKey - currentTarget.length).fill(null)));
-			currentTarget.push(value);
-		}
-		else
 			currentTarget[lastKey] = value;
-	}
-	else if (JSON.isShallowObject(currentTarget)) {
-		if (!JSON.isString(lastKey))
-			return Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be a String`));
-
-		currentTarget[lastKey] = value;
-	}
-	else
-		return Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path)} to be an Array or an Object`));
-
-	return Result.Ok(result);
-}
-
-export function get(target: JSON.JSON, path: Path.Path): Result<JSON.JSON, Error> {
-	let currentTarget = target;
-
-	for (let i = 0; i < path.length; i++) {
-		const key = path[i]!;
-
-		if (JSON.isArray(currentTarget)) {
-			if (!JSON.isInteger(key))
-				return Result.Err(new InvalidPathError(`Expected path[${i}] to be an Integer`));
-
-			if (key < 0 || key >= currentTarget.length)
-				return Result.Err(new PathNotFoundError(`Index ${key} out of bounds at path[${i}]`));
-
-			currentTarget = currentTarget[key] as JSON.JSON;
-		}
-		else if (JSON.isShallowObject(currentTarget)) {
-			if (!JSON.isString(key))
-				return Result.Err(new InvalidPathError(`Expected path[${i}] to be a String`));
-
-			if (!(key in currentTarget))
-				return Result.Err(new PathNotFoundError(`Property ${key} not found at path[${i}]`));
-
-			currentTarget = (currentTarget as JSON.Object)[key] as JSON.JSON;
 		}
 		else
-			return Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path, i)} to be an Array or an Object`));
+			return Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path)} to be an Array or an Object`));
+
+		this._data = result;
+		return Result.Ok(this);
 	}
 
-	return Result.Ok(JSON.clone(currentTarget));
-}
+	public get(path: Path): Result<JSON.JSON, Error> {
+		let currentTarget = this._data;
 
-export function has(target: JSON.JSON, path: Path.Path): boolean {
-	let currentTarget = target;
+		for (let i = 0; i < path.length; i++) {
+			const key = path[i]!;
 
-	for (let i = 0; i < path.length; i++) {
-		const key = path[i]!;
+			if (JSON.isArray(currentTarget)) {
+				if (!JSON.isInteger(key))
+					return Result.Err(new InvalidPathError(`Expected path[${i}] to be an Integer`));
+
+				if (key < 0 || key >= currentTarget.length)
+					return Result.Err(new PathNotFoundError(`Index ${key} out of bounds at path[${i}]`));
+
+				currentTarget = currentTarget[key] as JSON.JSON;
+			}
+			else if (JSON.isShallowObject(currentTarget)) {
+				if (!JSON.isString(key))
+					return Result.Err(new InvalidPathError(`Expected path[${i}] to be a String`));
+
+				if (!(key in currentTarget))
+					return Result.Err(new PathNotFoundError(`Property ${key} not found at path[${i}]`));
+
+				currentTarget = (currentTarget as JSON.Object)[key] as JSON.JSON;
+			}
+			else
+				return Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path, i)} to be an Array or an Object`));
+		}
+
+		return Result.Ok(JSON.clone(currentTarget));
+	}
+
+	public has(path: Path): boolean {
+		let currentTarget = this._data;
+
+		for (let i = 0; i < path.length; i++) {
+			const key = path[i]!;
+
+			if (JSON.isArray(currentTarget)) {
+				if (!JSON.isInteger(key))
+					return false;
+
+				if (key < 0 || key >= currentTarget.length)
+					return false;
+
+				currentTarget = currentTarget[key]!;
+			}
+			else if (JSON.isShallowObject(currentTarget)) {
+				if (!JSON.isString(key))
+					return false;
+
+				if (!(key in currentTarget))
+					return false;
+
+				currentTarget = currentTarget[key]!;
+			}
+			else
+				return false;
+		}
+
+		return true;
+	}
+
+	public remove(path: Path): Result<this, Error> {
+		const result = JSON.clone(this._data);
+		let currentTarget = result;
+
+		for (let i = 0; i < path.length - 1; i++) {
+			const key = path[i]!;
+
+			if (JSON.isArray(currentTarget)) {
+				if (!JSON.isInteger(key))
+					return Result.Err(new InvalidPathError(`Expected path[${i}] to be an Integer`));
+
+				if (key < 0 || key >= currentTarget.length)
+					return Result.Err(new PathNotFoundError(`Index ${key} out of bounds at path[${i}]`));
+
+				currentTarget = currentTarget[key]!;
+			}
+			else if (JSON.isShallowObject(currentTarget)) {
+				if (!JSON.isString(key))
+					return Result.Err(new InvalidPathError(`Expected path[${i}] to be a String`));
+
+				if (!(key in currentTarget))
+					return Result.Err(new PathNotFoundError(`Property ${key} not found at path[${i}]`));
+
+				currentTarget = currentTarget[key]!;
+			}
+			else
+				return Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path, i)} to be an Array or an Object`));
+		}
+
+		const lastKey = path[path.length - 1];
 
 		if (JSON.isArray(currentTarget)) {
-			if (!JSON.isInteger(key))
-				return false;
+			if (!JSON.isInteger(lastKey))
+				return Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be an Integer`));
 
-			if (key < 0 || key >= currentTarget.length)
-				return false;
+			if (lastKey < 0 || lastKey >= currentTarget.length)
+				return Result.Err(new PathNotFoundError(`Index ${lastKey} out of bounds at path[${path.length - 1}]`));
 
-			currentTarget = currentTarget[key]!;
+			currentTarget.splice(lastKey, 1);
 		}
 		else if (JSON.isShallowObject(currentTarget)) {
-			if (!JSON.isString(key))
-				return false;
+			if (!JSON.isString(lastKey))
+				return Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be a String`));
 
-			if (!(key in currentTarget))
-				return false;
-
-			currentTarget = currentTarget[key]!;
+			delete (currentTarget as JSON.Object)[lastKey];
 		}
 		else
-			return false;
+			return Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path)} to be an Array or an Object`));
+
+		this._data = result;
+		return Result.Ok(this);
 	}
-
-	return true;
-}
-
-export function remove(target: JSON.JSON, path: Path.Path): Result<JSON.JSON, Error> {
-	const result = JSON.clone(target);
-	let currentTarget = result;
-
-	for (let i = 0; i < path.length - 1; i++) {
-		const key = path[i]!;
-
-		if (JSON.isArray(currentTarget)) {
-			if (!JSON.isInteger(key))
-				return Result.Err(new InvalidPathError(`Expected path[${i}] to be an Integer`));
-
-			if (key < 0 || key >= currentTarget.length)
-				return Result.Err(new PathNotFoundError(`Index ${key} out of bounds at path[${i}]`));
-
-			currentTarget = currentTarget[key]!;
-		}
-		else if (JSON.isShallowObject(currentTarget)) {
-			if (!JSON.isString(key))
-				return Result.Err(new InvalidPathError(`Expected path[${i}] to be a String`));
-
-			if (!(key in currentTarget))
-				return Result.Err(new PathNotFoundError(`Property ${key} not found at path[${i}]`));
-
-			currentTarget = currentTarget[key]!;
-		}
-		else
-			return Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path, i)} to be an Array or an Object`));
-	}
-
-	const lastKey = path[path.length - 1];
-
-	if (JSON.isArray(currentTarget)) {
-		if (!JSON.isInteger(lastKey))
-			return Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be an Integer`));
-
-		if (lastKey < 0 || lastKey >= currentTarget.length)
-			return Result.Err(new PathNotFoundError(`Index ${lastKey} out of bounds at path[${path.length - 1}]`));
-
-		currentTarget.splice(lastKey, 1);
-	}
-	else if (JSON.isShallowObject(currentTarget)) {
-		if (!JSON.isString(lastKey))
-			return Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be a String`));
-
-		delete (currentTarget as JSON.Object)[lastKey];
-	}
-	else
-		return Result.Err(new InvalidPathError(`Expected target at path ${Path.toString(path)} to be an Array or an Object`));
-
-	return Result.Ok(result);
 }
