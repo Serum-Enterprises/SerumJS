@@ -1,4 +1,23 @@
 export abstract class Result<T, E> {
+	static all<T, E>(results: Result<T, E>[]): Result<T[], E[]> {
+		const values: T[] = [];
+		const errors: E[] = [];
+
+		for (const result of results) {
+			if (result.isOk()) {
+				values.push((result as Ok<T>).value);
+			} else {
+				errors.push((result as Err<E>).error);
+			}
+		}
+
+		if (errors.length > 0) {
+			return Result.Err(errors);
+		} else {
+			return Result.Ok(values);
+		}
+	}
+
 	static attempt<T, E>(fn: () => T): Result<T, E> {
 		try {
 			return Result.Ok(fn());

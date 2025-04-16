@@ -2,6 +2,24 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Result = void 0;
 class Result {
+    static all(results) {
+        const values = [];
+        const errors = [];
+        for (const result of results) {
+            if (result.isOk()) {
+                values.push(result.value);
+            }
+            else {
+                errors.push(result.error);
+            }
+        }
+        if (errors.length > 0) {
+            return Result.Err(errors);
+        }
+        else {
+            return Result.Ok(values);
+        }
+    }
     static attempt(fn) {
         try {
             return Result.Ok(fn());

@@ -1,6 +1,19 @@
 const { Result } = require('../build/Result');
 
 describe('Testing Result.js', () => {
+	test('Testing Result.all', () => {
+		const okResult1 = Result.Ok(1);
+		const okResult2 = Result.Ok(2);
+		const errResult = Result.Err('Error Message');
+
+		const allOk = Result.all([okResult1, okResult2]);
+		const allErr = Result.all([okResult1, errResult]);
+
+		expect(allOk.isOk()).toBe(true);
+		expect(allErr.isErr()).toBe(true);
+		expect(allErr.error).toStrictEqual(['Error Message']);
+	});
+
 	test('Testing Result.attempt', () => {
 		const value = 42;
 		const okResult = Result.attempt(() => value);
