@@ -28,7 +28,7 @@ declare class BooleanValidator extends Schema {
     #private;
     static fromJSON(schema: JSON.JSON, path?: string): Result<BooleanValidator, SchemaError>;
     constructor();
-    nullable(flag: boolean): this;
+    nullable(flag?: boolean): this;
     equals(value: boolean): this;
     validate(data: unknown, path?: string): Result<unknown, ValidationError>;
     toJSON(): JSON.Object;
@@ -37,7 +37,7 @@ declare class NumberValidator extends Schema {
     #private;
     static fromJSON(schema: JSON.JSON, path?: string): Result<NumberValidator, SchemaError>;
     constructor();
-    nullable(flag: boolean): this;
+    nullable(flag?: boolean): this;
     equals(value: number): this;
     integer(flag?: boolean): this;
     min(value: number): this;
@@ -49,7 +49,7 @@ declare class StringValidator extends Schema {
     #private;
     static fromJSON(schema: JSON.JSON, path?: string): Result<StringValidator, SchemaError>;
     constructor();
-    nullable(flag: boolean): this;
+    nullable(flag?: boolean): this;
     equals(value: string): this;
     min(value: number): this;
     max(value: number): this;

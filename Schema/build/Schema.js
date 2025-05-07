@@ -135,7 +135,7 @@ class BooleanValidator extends Schema {
         this.#nullable = { flag: false };
         this.#equals = { flag: false, value: false };
     }
-    nullable(flag) {
+    nullable(flag = true) {
         this.#nullable = { flag };
         return this;
     }
@@ -209,7 +209,7 @@ class NumberValidator extends Schema {
         this.#min = { flag: false, value: 0 };
         this.#max = { flag: false, value: 0 };
     }
-    nullable(flag) {
+    nullable(flag = true) {
         this.#nullable = { flag };
         return this;
     }
@@ -300,7 +300,7 @@ class StringValidator extends Schema {
         this.#min = { flag: false, value: 0 };
         this.#max = { flag: false, value: 0 };
     }
-    nullable(flag) {
+    nullable(flag = true) {
         this.#nullable = { flag };
         return this;
     }
