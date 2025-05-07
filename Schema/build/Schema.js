@@ -103,7 +103,7 @@ class AnyValidator extends Schema {
     validate(data, path = 'data') {
         if (!JSON.isJSON(data))
             return result_1.Result.Err(new ValidationError(`Expected ${path} to be JSON`));
-        return result_1.Result.Ok(void 0);
+        return result_1.Result.Ok(data);
     }
     toJSON() {
         return {
@@ -147,10 +147,10 @@ class BooleanValidator extends Schema {
         if (JSON.isBoolean(data)) {
             if (this.#equals.flag && this.#equals.value !== data)
                 return result_1.Result.Err(new ValidationError(`Expected ${path} to be ${this.#equals.value}${this.#nullable.flag ? '' : ' or Null'}`));
-            return result_1.Result.Ok(void 0);
+            return result_1.Result.Ok(data);
         }
         if (this.#nullable.flag && JSON.isNull(data))
-            return result_1.Result.Ok(void 0);
+            return result_1.Result.Ok(data);
         return result_1.Result.Err(new ValidationError(`Expected ${path} to be a Boolean${this.#nullable.flag ? '' : ' or Null'}`));
     }
     toJSON() {
@@ -239,10 +239,10 @@ class NumberValidator extends Schema {
                 return result_1.Result.Err(new ValidationError(`Expected ${path} to be at least ${this.#min.value}`));
             if (this.#max.flag && this.#max.value < data)
                 return result_1.Result.Err(new ValidationError(`Expected ${path} to be at most ${this.#max.value}`));
-            return result_1.Result.Ok(void 0);
+            return result_1.Result.Ok(data);
         }
         if (this.#nullable.flag && JSON.isNull(data))
-            return result_1.Result.Ok(void 0);
+            return result_1.Result.Ok(data);
         return result_1.Result.Err(new ValidationError(`Expected ${path} to be a Number${this.#nullable.flag ? '' : ' or Null'}`));
     }
     toJSON() {
@@ -324,10 +324,10 @@ class StringValidator extends Schema {
                 return result_1.Result.Err(new ValidationError(`Expected ${path} to be at least ${this.#min.value} characters long`));
             if (this.#max.flag && this.#max.value < data.length)
                 return result_1.Result.Err(new ValidationError(`Expected ${path} to be at most ${this.#max.value} characters long`));
-            return result_1.Result.Ok(void 0);
+            return result_1.Result.Ok(data);
         }
         if (this.#nullable.flag && JSON.isNull(data))
-            return result_1.Result.Ok(void 0);
+            return result_1.Result.Ok(data);
         return result_1.Result.Err(new ValidationError(`Expected ${path} to be a String${this.#nullable.flag ? '' : ' or Null'}`));
     }
     toJSON() {
@@ -447,10 +447,10 @@ class ArrayValidator extends Schema {
                 if (errors.length > 0)
                     return result_1.Result.Err(new ValidationError(`Expected ${path} to be a Tuple where every Element matches its respective Validator`, { cause: errors }));
             }
-            return result_1.Result.Ok(void 0);
+            return result_1.Result.Ok(data);
         }
         if (this.#nullable.flag && JSON.isNull(data))
-            return result_1.Result.Ok(void 0);
+            return result_1.Result.Ok(data);
         return result_1.Result.Err(new ValidationError(`Expected ${path} to be an Array${this.#nullable.flag ? '' : ' or Null'}`));
     }
     toJSON() {
@@ -540,10 +540,10 @@ class ObjectValidator extends Schema {
                     return result_1.Result.Err(new ValidationError(`Expected ${path} to have only the Properties defined in the Schema`, { cause: errors }));
                 }
             }
-            return result_1.Result.Ok(void 0);
+            return result_1.Result.Ok(data);
         }
         if (this.#nullable.flag && JSON.isNull(data))
-            return result_1.Result.Ok(void 0);
+            return result_1.Result.Ok(data);
         return result_1.Result.Err(new ValidationError(`Expected ${path} to be an Object${this.#nullable.flag ? '' : ' or Null'}`));
     }
     toJSON() {
@@ -598,9 +598,9 @@ class OrValidator extends Schema {
             }, []);
             if (errors.length === this.#oneOf.value.length)
                 return result_1.Result.Err(new ValidationError(`Expected ${path} to match at least one of the OneOf Validators`, { cause: errors }));
-            return result_1.Result.Ok(void 0);
+            return result_1.Result.Ok(data);
         }
-        return result_1.Result.Ok(void 0);
+        return result_1.Result.Ok(data);
     }
     toJSON() {
         const schema = {
@@ -654,7 +654,7 @@ class AndValidator extends Schema {
             if (errors.length > 0)
                 return result_1.Result.Err(new ValidationError(`Expected ${path} to match all of the AllOf Validators`, { cause: errors }));
         }
-        return result_1.Result.Ok(void 0);
+        return result_1.Result.Ok(data);
     }
     toJSON() {
         const schema = {
