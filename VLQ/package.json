@@ -1,0 +1,30 @@
+{
+  "name": "@serum-enterprises/vlq",
+  "version": "1.0.0-beta.0",
+  "description": "A VLQ Implementation for NodeJS using BigInts and Buffers",
+  "main": "./build/VLQ.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Serum-Enterprises/SerumJS.git"
+  },
+  "keywords": [
+    "vlq",
+    "encode",
+    "decode",
+    "varint"
+  ],
+  "author": "Philipp Steckenbauer",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Serum-Enterprises/SerumJS/issues"
+  },
+  "homepage": "https://github.com/Serum-Enterprises/SerumJS#readme",
+  "devDependencies": {
+    "@types/node": "^22.15.19",
+    "typescript": "^5.8.3"
+  }
+}
