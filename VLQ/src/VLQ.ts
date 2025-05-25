@@ -1,6 +1,13 @@
-export function encodeUnsignedInteger(value: bigint): Buffer {
+import { Result } from '@serum-enterprises/result';
+
+export abstract class VLQError extends Error { }
+export class EmptyBufferError extends VLQError { }
+export class IncompleteSequenceError extends VLQError { }
+export class NegativeIntegerError extends VLQError { }
+
+export function encodeUnsignedInteger(value: bigint): Result<Buffer, Error> {
 	if (value < 0n)
-		throw new RangeError('Expected value to be a positive Integer');
+		return Result.Err(new NegativeIntegerError('Expected value to be a positive Integer'));
 
 	const bytes: number[] = [];
 
@@ -16,32 +23,32 @@ export function encodeUnsignedInteger(value: bigint): Buffer {
 		bytes.unshift(byte);
 	}
 
-	return Buffer.from(bytes);
+	return Result.Ok(Buffer.from(bytes));
 }
 
-export function decodeUnsignedInteger(buffer: Buffer, includeLength: false): bigint;
-export function decodeUnsignedInteger(buffer: Buffer, includeLength: true): { value: bigint, byteLength: bigint };
-export function decodeUnsignedInteger(buffer: Buffer, includeLength: boolean = false): bigint | { value: bigint, byteLength: bigint } {
+export function decodeUnsignedInteger(buffer: Buffer, includeLength: false): Result<bigint, Error>;
+export function decodeUnsignedInteger(buffer: Buffer, includeLength: true): Result<{ value: bigint, byteLength: number }, Error>;
+export function decodeUnsignedInteger(buffer: Buffer, includeLength: boolean = false): Result<bigint | { value: bigint, byteLength: number }, Error> {
 	if (buffer.length === 0)
-		throw new RangeError('Buffer is empty');
+		return Result.Err(new EmptyBufferError('Buffer is empty'));
 
 	let value = 0n;
-	let i = 0;
+	let byteLength = 0;
 	let byte = 0;
 
 	do {
-		byte = buffer[i]!;
+		byte = buffer[byteLength]!;
 		value = (value << 7n) | BigInt(byte & 0x7F);
-		i++;
-	} while (i < buffer.length && (byte & 0x80));
+		byteLength++;
+	} while (byteLength < buffer.length && (byte & 0x80));
 
-	if (i === buffer.length && (byte & 0x80))
-		throw new RangeError('Incomplete VLQ Sequence');
+	if (byteLength === buffer.length && (byte & 0x80))
+		return Result.Err(new IncompleteSequenceError('Incomplete VLQ Sequence'));
 
-	return includeLength ? { value, byteLength: BigInt(i) } : value;
+	return Result.Ok(includeLength ? { value, byteLength } : value);
 }
 
-export function encodeInteger(value: bigint): Buffer {
+export function encodeInteger(value: bigint): Result<Buffer, Error> {
 	const isNegative = value < 0n;
 	const negativeMask = isNegative ? 0x40 : 0x00;
 	let abs = isNegative ? -value : value;
@@ -63,33 +70,33 @@ export function encodeInteger(value: bigint): Buffer {
 	else
 		bytes[0]! |= negativeMask;
 
-	return Buffer.from(bytes);
+	return Result.Ok(Buffer.from(bytes));
 }
 
-export function decodeInteger(buffer: Buffer, includeLength: false): bigint;
-export function decodeInteger(buffer: Buffer, includeLength: true): { value: bigint, byteLength: bigint };
-export function decodeInteger(buffer: Buffer, includeLength: boolean = false): bigint | { value: bigint, byteLength: bigint } {
+export function decodeInteger(buffer: Buffer, includeLength: false): Result<bigint, Error>;
+export function decodeInteger(buffer: Buffer, includeLength: true): Result<{ value: bigint, byteLength: number }, Error>;
+export function decodeInteger(buffer: Buffer, includeLength: boolean = false): Result<bigint | { value: bigint, byteLength: number }, Error> {
 	if (buffer.length === 0)
-		throw new RangeError('Buffer is empty');
+		return Result.Err(new EmptyBufferError('Buffer is empty'));
 
 	let result = 0n;
-	let i = 0;
-	let byte = buffer[i]!;
+	let byteLength = 0;
+	let byte = buffer[byteLength]!;
 
 	const isNegative = !!(byte & 0x40);
 	result = BigInt(byte & 0x3F);
-	i++;
+	byteLength++;
 
-	while (i < buffer.length && (byte & 0x80)) {
-		byte = buffer[i]!;
+	while (byteLength < buffer.length && (byte & 0x80)) {
+		byte = buffer[byteLength]!;
 		result = (result << 7n) | BigInt(byte & 0x7F);
-		i++;
+		byteLength++;
 	}
 
-	if (i === buffer.length && (byte & 0x80))
-		throw new RangeError('Incomplete VLQ Sequence');
+	if (byteLength === buffer.length && (byte & 0x80))
+		return Result.Err(new IncompleteSequenceError('Incomplete VLQ Sequence'));
 
 	const value = isNegative ? -result : result;
 
-	return includeLength ? { value, byteLength: BigInt(i) } : value;
+	return Result.Ok(includeLength ? { value, byteLength } : value);
 }

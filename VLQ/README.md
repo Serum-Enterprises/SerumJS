@@ -8,41 +8,26 @@ A VLQ Implementation for NodeJS using BigInts and Buffers
 npm install --save @serum-enterprises/vlq
 ```
 
-## Usage
+## Example Usage
 
 ```typescript
 import * as VLQ from '@serum-enterprises/vlq';
 
 const unsignedInteger = 1234567890123456789012345678901234567890n;
-const signedInteger = -1234567890123456789012345678901234567890n;
-let unsignedDecoded: bigint;
-let signedDecoded: bigint;
-let byteLength: bigint;
 
-const unsignedEncoded = VLQ.encodeUnsignedInteger(unsignedInteger);
-unsignedDecoded = VLQ.decodeUnsignedInteger(unsignedEncoded);
+const result = VLQ.encodeUnsignedInteger(unsignedInteger);
 
-assert(unsignedDecoded === unsignedInteger);
-
-{unsignedDecoded, byteLength} = VLQ.decodeUnsignedInteger(unsignedEncoded);
-
-assert(unsignedDecoded === unsignedInteger);
-assert(byteLength === BigInt(unsignedEncoded.length));
-
-const signedEncoded = VLQ.encodeSignedInteger(signedInteger);
-signedDecoded = VLQ.decodeSignedInteger(signedEncoded);
-
-assert(signedDecoded === signedInteger);
-
-{signedDecoded, byteLength} = VLQ.decodeSignedInteger(signedEncoded);
-
-assert(signedDecoded === signedInteger);
-assert(byteLength === BigInt(signedEncoded.length));
+result.match(
+	console.log,
+	console.error
+);
 ```
+
+**Note: All VLQ Functions return a Result. See @serum-enterprises/result for more Information.**
 
 ## API
 
-Please check [VLQ.d.ts](./types/VLQ.d.ts) for the full API.
+Please check [VLQ.d.ts](./types/VLQ.d.ts) for the full API and a list of possible Errors.
 
 ## LICENSE
 
