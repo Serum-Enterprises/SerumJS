@@ -1,5 +1,5 @@
 import {Result} from '@serum-enterprises/result';
-import * as JSON from '@serum-enterprises/json';
+import {JSON} from '@serum-enterprises/json';
 
 export type Path = (JSON.Integer | JSON.String)[];
 
@@ -34,20 +34,44 @@ export namespace Path {
     }
 }
 
+function round(n: number): number {
+    return n >= 0 ? Math.floor(n + 0.5) : Math.ceil(n - 0.5);
+}
+
 function expandArray<T>(target: T[], index: number, value: T, filler: T): number {
     if (index < 0) {
-        target.unshift(...(new Array(Math.abs(index))).fill(filler));
-        target[0] = value;
+        if (index > -.5)
+            target.unshift(value);
+        else {
+            const normalizedIndex = round(index);
+            target.unshift(...(new Array(Math.abs(normalizedIndex))).fill(filler));
+            target[0] = value;
+        }
+
         return 0;
     }
 
     if (index > target.length) {
-        target.push(...(new Array(Math.abs(index - target.length))).fill(filler));
-        target.push(value);
+        if (index < target.length + .5)
+            target.push(value);
+        else {
+            const normalizedIndex = round(index);
+            target.push(...(new Array(Math.abs(normalizedIndex - target.length))).fill(filler));
+            target.push(value);
+        }
+
         return target.length - 1;
     }
 
-    target[index] = value;
+    if (!JSON.isInteger(index)) {
+        const insertAt = Math.floor(index) + 1;
+        target.splice(insertAt, 0, value);
+        return insertAt;
+    }
+    else {
+        target[index] = value;
+    }
+
     return index;
 }
 

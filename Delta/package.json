@@ -27,7 +27,7 @@
 		"typescript": "^5.8.2"
 	},
 	"dependencies": {
-		"@serum-enterprises/json": "^2.0.1",
+		"@serum-enterprises/json": "^3.0.0",
 		"@serum-enterprises/result": "^2.0.1"
 	}
 }
