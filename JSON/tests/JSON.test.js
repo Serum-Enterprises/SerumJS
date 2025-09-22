@@ -1,4 +1,4 @@
-const JSON = require('../build/JSON');
+const {JSON} = require('../build/JSON');
 
 describe('Testing JSON', () => {
 	test('Testing JSON.isNull', () => {

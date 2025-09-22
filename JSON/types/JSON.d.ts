@@ -1,37 +1,40 @@
-export type Null = null;
-export type Boolean = boolean;
-export type Number = number;
-export type Integer = number;
-export type String = string;
-export type Array = JSON[];
-export type ShallowArray = unknown[];
-export type Object = {
-    [key: string]: JSON;
-};
-export type ShallowObject = {
-    [key: string]: unknown;
-};
-export type Primitive = Boolean | Number | String;
-export type Container = Array | Object;
-export type JSON = Null | Primitive | Container;
-export declare function isNull(value: unknown): value is Null;
-export declare function isBoolean(value: unknown): value is Boolean;
-export declare function isNumber(value: unknown): value is Number;
-export declare function isInteger(value: unknown): value is Integer;
-export declare function isString(value: unknown): value is String;
-export declare function isShallowArray(value: unknown): value is ShallowArray;
-export declare function isArray(value: unknown): value is Array;
-export declare function isShallowObject(value: unknown): value is ShallowObject;
-export declare function isObject(value: unknown): value is Object;
-export declare function isPrimitive(value: unknown): value is Primitive;
-export declare function isShallowContainer(value: unknown): value is unknown[] | {
-    [key: string]: unknown;
-};
-export declare function isContainer(value: unknown): value is Container;
-export declare function isShallowJSON(value: unknown): value is Null | Boolean | Number | String | unknown[] | {
-    [key: string]: unknown;
-};
-export declare function isJSON(value: unknown): value is JSON;
-export declare function clone<T extends JSON = JSON>(value: T): T;
-export declare function parse(value: string): JSON;
-export declare function stringify(value: JSON): string;
+export type JSON = JSON.JSON;
+export declare namespace JSON {
+    type Null = null;
+    type Boolean = boolean;
+    type Number = number;
+    type Integer = number;
+    type String = string;
+    type Array = JSON[];
+    type ShallowArray = unknown[];
+    type Object = {
+        [key: string]: JSON;
+    };
+    type ShallowObject = {
+        [key: string]: unknown;
+    };
+    type Primitive = Boolean | Number | String;
+    type Container = Array | Object;
+    type JSON = Null | Primitive | Container;
+    function isNull(value: unknown): value is Null;
+    function isBoolean(value: unknown): value is Boolean;
+    function isNumber(value: unknown): value is Number;
+    function isInteger(value: unknown): value is Integer;
+    function isString(value: unknown): value is String;
+    function isShallowArray(value: unknown): value is ShallowArray;
+    function isArray(value: unknown): value is Array;
+    function isShallowObject(value: unknown): value is ShallowObject;
+    function isObject(value: unknown): value is Object;
+    function isPrimitive(value: unknown): value is Primitive;
+    function isShallowContainer(value: unknown): value is unknown[] | {
+        [key: string]: unknown;
+    };
+    function isContainer(value: unknown): value is Container;
+    function isShallowJSON(value: unknown): value is Null | Boolean | Number | String | unknown[] | {
+        [key: string]: unknown;
+    };
+    function isJSON(value: unknown): value is JSON;
+    function clone<T extends JSON = JSON>(value: T): T;
+    function parse(value: string): JSON;
+    function stringify(value: JSON): string;
+}

@@ -1,10 +1,10 @@
 {
 	"name": "@serum-enterprises/json",
-	"version": "2.0.1",
+	"version": "3.0.0",
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=24.0.0"
 	},
-	"description": "Type-Safe drop-in replacement for the native JSON Object",
+	"description": "Type-Safe drop-in replacement for native JSON",
 	"main": "./build/JSON.js",
 	"types": "./types/JSON.d.ts",
 	"scripts": {
