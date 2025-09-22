@@ -1,12 +1,12 @@
 {
-	"name": "@serum-enterprises/path",
-	"version": "2.0.2-beta.0",
+	"name": "@serum-enterprises/delta",
+	"version": "1.0.0-beta.0",
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=16.9.0"
 	},
-	"description": "Deeply Nested Data Structure Operations with JSON Paths",
-	"main": "./build/Path.js",
-	"types": "./types/Path.d.ts",
+	"description": "Deeply Nested Data Structure Operations with JSON",
+	"main": "./build/Delta.js",
+	"types": "./types/Delta.d.ts",
 	"scripts": {
 		"build": "tsc",
 		"test": "echo \"Beta Version - Tests incomplete\" && jest"
