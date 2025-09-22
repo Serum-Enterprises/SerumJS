@@ -36,6 +36,13 @@ export abstract class Option<T> {
 		);
 	}
 
+	then<R>(fn: (value: T) => Option<R>): Option<R> {
+		if (this.isSome())
+			return fn(this.value);
+		else
+			return Option.None();
+	}
+
 	match<R>(onSome: (value: T) => R, onNone: () => R): R {
 		if (this.isSome())
 			return onSome((this as Some<T>).value);

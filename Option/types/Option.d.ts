@@ -6,6 +6,7 @@ export declare abstract class Option<T> {
     onSome(fn: (value: T) => void): this;
     onNone(fn: () => void): this;
     map<R>(fn: (value: T) => R): Option<R>;
+    then<R>(fn: (value: T) => Option<R>): Option<R>;
     match<R>(onSome: (value: T) => R, onNone: () => R): R;
 }
 export declare class Some<T> extends Option<T> {

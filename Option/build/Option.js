@@ -27,6 +27,12 @@ class Option {
     map(fn) {
         return this.match(value => Option.Some(fn(value)), () => Option.None());
     }
+    then(fn) {
+        if (this.isSome())
+            return fn(this.value);
+        else
+            return Option.None();
+    }
     match(onSome, onNone) {
         if (this.isSome())
             return onSome(this.value);

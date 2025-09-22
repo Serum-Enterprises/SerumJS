@@ -68,6 +68,23 @@ describe('Testing Option.js', () => {
 		expect(newOption.isNone()).toBe(true);
 	});
 
+	test('Testing Option.then with Some', () => {
+		const option = Option.Some(42);
+
+		const result = option.then(v => Option.Some(v * 2));
+
+		expect(result.isSome()).toBe(true);
+		expect(result).toHaveProperty('value', 84);
+	});
+
+	test('Testing Option.then with None', () => {
+		const option = Option.None();
+
+		const result = option.then(v => Option.Some(v * 2));
+
+		expect(result.isNone()).toBe(true);
+	});
+
 	test('Testing Option.match with Some', () => {
 		const value = 42;
 		const option = Option.Some(value);
