@@ -24,7 +24,7 @@ function find<T>(array: T[], element: T): Option<T> {
 
 find([1, 2, 3], 2).match(
 	value => console.log(`Found: ${value}`),
-	() => console.error(`Element not found`);
+	() => console.error(`Element not found`)
 );
 ```
 
