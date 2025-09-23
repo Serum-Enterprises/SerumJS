@@ -65,22 +65,22 @@ class Result {
 }
 exports.Result = Result;
 class Ok extends Result {
-    #value;
+    _value;
     constructor(value) {
         super();
-        this.#value = value;
+        this._value = value;
     }
     get value() {
-        return this.#value;
+        return this._value;
     }
 }
 class Err extends Result {
-    #error;
+    _error;
     constructor(error) {
         super();
-        this.#error = error;
+        this._error = error;
     }
     get error() {
-        return this.#error;
+        return this._error;
     }
 }
