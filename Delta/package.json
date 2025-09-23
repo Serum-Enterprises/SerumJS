@@ -1,8 +1,8 @@
 {
 	"name": "@serum-enterprises/delta",
-	"version": "1.0.0-beta.0",
+	"version": "2.0.0-beta.0",
 	"engines": {
-		"node": ">=16.9.0"
+		"node": ">=24.0.0"
 	},
 	"description": "Deeply Nested Data Structure Operations with JSON",
 	"main": "./build/Delta.js",
@@ -28,6 +28,6 @@
 	},
 	"dependencies": {
 		"@serum-enterprises/json": "^3.0.0",
-		"@serum-enterprises/result": "^2.0.1"
+		"@serum-enterprises/result": "^3.0.1"
 	}
 }
