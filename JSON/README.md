@@ -36,6 +36,8 @@ if(verify(data)) {
 
 Please check [JSON.d.ts](./types/JSON.d.ts) for the full API.
 
+Please also note that functions prefixed with `_` are potentially mutating their Input.
+
 ## LICENSE
 
 MIT License

@@ -18,10 +18,14 @@ export declare namespace Delta {
     }
     class TypeMismatchError extends Error {
     }
-    function atomicSet(target: JSON.JSON, path: Path, value: JSON.JSON): Result<JSON.JSON, Error>;
-    function atomicGet(target: JSON.JSON, path: Path): Result<JSON.JSON, Error>;
-    function atomicHas(target: JSON.JSON, path: Path): boolean;
-    function atomicRemove(target: JSON.JSON, path: Path, compress?: boolean): Result<JSON.JSON, Error>;
+    function _set(target: JSON, path: Path, value: JSON): Result<JSON, Error>;
+    function set(target: JSON, path: Path, value: JSON): Result<JSON, Error>;
+    function _get(target: JSON, path: Path): Result<JSON, Error>;
+    function get(target: JSON, path: Path): Result<JSON, Error>;
+    function _has(target: JSON, path: Path): boolean;
+    function has(target: JSON, path: Path): boolean;
+    function _remove(target: JSON, path: Path, compress?: boolean): Result<JSON, Error>;
+    function remove(target: JSON, path: Path, compress?: boolean): Result<JSON, Error>;
     function apply(target: JSON, delta: Delta, compress?: boolean): Result<JSON, Error>;
     function applyMany(target: JSON, deltas: Delta[], compress?: boolean): Result<JSON, Error>;
 }

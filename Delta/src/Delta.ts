@@ -88,11 +88,11 @@ export namespace Delta {
 
     export class TypeMismatchError extends Error {}
 
-    function walk(target: JSON.JSON, path: Path, create: boolean = false): Result<[JSON.JSON, (number | string)], Error> {
+    function walk(target: JSON, path: Path, create: boolean = false): Result<[JSON, (number | string)], Error> {
         if (path.length === 0)
             return Result.Err(new InvalidPathError(`Path is empty`));
 
-        let currentTarget: JSON.JSON = target;
+        let currentTarget: JSON = target;
 
         for (let i = 0; i < path.length - 1; i++) {
             let key = path[i]!;
@@ -130,14 +130,12 @@ export namespace Delta {
         return Result.Ok([currentTarget, path[path.length - 1]!]);
     }
 
-    export function atomicSet(target: JSON.JSON, path: Path, value: JSON.JSON): Result<JSON.JSON, Error> {
+    export function _set(target: JSON, path: Path, value: JSON): Result<JSON, Error> {
         if (path.length === 0)
             return Result.Ok(value);
 
-        const clonedTarget = JSON.clone(target);
-
-        return walk(clonedTarget, path, true)
-            .match<Result<JSON.JSON, Error>>(
+        return walk(target, path, true)
+            .match<Result<JSON, Error>>(
                 ([currentTarget, lastKey]) => {
                     if (JSON.isShallowArray(currentTarget)) {
                         if (!JSON.isInteger(lastKey))
@@ -145,7 +143,7 @@ export namespace Delta {
 
                         expandArray(currentTarget, lastKey, value, null);
 
-                        return Result.Ok(clonedTarget);
+                        return Result.Ok(target);
                     }
 
                     if (JSON.isShallowObject(currentTarget)) {
@@ -154,7 +152,7 @@ export namespace Delta {
 
                         currentTarget[lastKey] = value;
 
-                        return Result.Ok(clonedTarget);
+                        return Result.Ok(target);
                     }
 
                     return Result.Err(new TypeMismatchError(`Target at ${Path.toString(path)} is not an Array or Object`));
@@ -163,12 +161,16 @@ export namespace Delta {
             );
     }
 
-    export function atomicGet(target: JSON.JSON, path: Path): Result<JSON.JSON, Error> {
+    export function set(target: JSON, path: Path, value: JSON): Result<JSON, Error> {
+        return _set(JSON.clone(target), path, value);
+    }
+
+    export function _get(target: JSON, path: Path): Result<JSON, Error> {
         if (path.length === 0)
             return Result.Ok(target);
 
         return walk(target, path, false)
-            .match<Result<JSON.JSON, Error>>(
+            .match<Result<JSON, Error>>(
                 ([currentTarget, lastKey]) => {
                     if (JSON.isShallowArray(currentTarget)) {
                         if (!JSON.isInteger(lastKey))
@@ -196,21 +198,27 @@ export namespace Delta {
             );
     }
 
-    export function atomicHas(target: JSON.JSON, path: Path): boolean {
-        return atomicGet(target, path)
+    export function get(target: JSON, path: Path): Result<JSON, Error> {
+        return _get(JSON.clone(target), path);
+    }
+
+    export function _has(target: JSON, path: Path): boolean {
+        return _get(target, path)
             .match(
                 () => true,
                 () => false
             );
     }
 
-    export function atomicRemove(target: JSON.JSON, path: Path, compress: boolean = true): Result<JSON.JSON, Error> {
+    export function has(target: JSON, path: Path): boolean {
+        return _has(target, path);
+    }
+
+    export function _remove(target: JSON, path: Path, compress: boolean = true): Result<JSON, Error> {
         if (path.length === 0)
             return Result.Err(new InvalidPathError(`Cannot remove target`));
 
-        const clonedTarget = JSON.clone(target);
-
-        return walk(clonedTarget, path, false)
+        return walk(target, path, false)
             .match(
                 ([currentTarget, lastKey]) => {
                     if (JSON.isShallowArray(currentTarget)) {
@@ -218,14 +226,14 @@ export namespace Delta {
                             return Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be an Integer`));
 
                         if (lastKey < 0 || lastKey >= currentTarget.length)
-                            return Result.Ok(clonedTarget);
+                            return Result.Ok(target);
 
                         if (compress)
                             currentTarget.splice(lastKey, 1);
                         else
                             currentTarget[lastKey] = null;
 
-                        return Result.Ok(clonedTarget);
+                        return Result.Ok(target);
                     }
 
                     if (JSON.isShallowObject(currentTarget)) {
@@ -233,44 +241,48 @@ export namespace Delta {
                             return Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be a String`));
 
                         if (!Object.hasOwn(currentTarget, lastKey))
-                            return Result.Ok(clonedTarget);
+                            return Result.Ok(target);
 
                         if (compress)
                             delete currentTarget[lastKey];
                         else
                             currentTarget[lastKey] = null;
 
-                        return Result.Ok(clonedTarget);
+                        return Result.Ok(target);
                     }
 
                     return Result.Err(new TypeMismatchError(`Target at ${Path.toString(path)} is not an Array or Object`));
                 },
                 error => {
                     if (error instanceof NotFoundError)
-                        return Result.Ok(clonedTarget);
+                        return Result.Ok(target);
                     else
                         return Result.Err(error);
                 }
             );
     }
+    
+    export function remove(target: JSON, path: Path, compress: boolean = true): Result<JSON, Error> {
+        return _remove(JSON.clone(target), path, compress);
+    }
 
     export function apply(target: JSON, delta: Delta, compress: boolean = true): Result<JSON, Error> {
-        if(delta.length === 1)
-            return atomicRemove(target, delta[0]!, compress);
+        if (delta.length === 1)
+            return _remove(JSON.clone(target), delta[0]!, compress);
         else
-            return atomicSet(target, delta[0]!, delta[1]!);
+            return _set(JSON.clone(target), delta[0]!, delta[1]!);
     }
 
     export function applyMany(target: JSON, deltas: Delta[], compress: boolean = true): Result<JSON, Error> {
-        let currentTarget = target;
+        let currentTarget = JSON.clone(target);
 
         for (let i = 0; i < deltas.length; i++) {
             const result = Delta.apply(currentTarget, deltas[i]!, compress);
 
-            if(result.isOk())
+            if (result.isOk())
                 currentTarget = result.value;
 
-            if(result.isErr())
+            if (result.isErr())
                 return result;
         }
 

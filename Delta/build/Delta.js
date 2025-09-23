@@ -115,29 +115,32 @@ var Delta;
         }
         return result_1.Result.Ok([currentTarget, path[path.length - 1]]);
     }
-    function atomicSet(target, path, value) {
+    function _set(target, path, value) {
         if (path.length === 0)
             return result_1.Result.Ok(value);
-        const clonedTarget = json_1.JSON.clone(target);
-        return walk(clonedTarget, path, true)
+        return walk(target, path, true)
             .match(([currentTarget, lastKey]) => {
             if (json_1.JSON.isShallowArray(currentTarget)) {
                 if (!json_1.JSON.isInteger(lastKey))
                     return result_1.Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be an Integer`));
                 expandArray(currentTarget, lastKey, value, null);
-                return result_1.Result.Ok(clonedTarget);
+                return result_1.Result.Ok(target);
             }
             if (json_1.JSON.isShallowObject(currentTarget)) {
                 if (!json_1.JSON.isString(lastKey))
                     return result_1.Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be a String`));
                 currentTarget[lastKey] = value;
-                return result_1.Result.Ok(clonedTarget);
+                return result_1.Result.Ok(target);
             }
             return result_1.Result.Err(new TypeMismatchError(`Target at ${Path.toString(path)} is not an Array or Object`));
         }, error => result_1.Result.Err(error));
     }
-    Delta.atomicSet = atomicSet;
-    function atomicGet(target, path) {
+    Delta._set = _set;
+    function set(target, path, value) {
+        return _set(json_1.JSON.clone(target), path, value);
+    }
+    Delta.set = set;
+    function _get(target, path) {
         if (path.length === 0)
             return result_1.Result.Ok(target);
         return walk(target, path, false)
@@ -159,58 +162,69 @@ var Delta;
             return result_1.Result.Err(new TypeMismatchError(`Target at ${Path.toString(path)} is not an Array or Object`));
         }, error => result_1.Result.Err(error));
     }
-    Delta.atomicGet = atomicGet;
-    function atomicHas(target, path) {
-        return atomicGet(target, path)
+    Delta._get = _get;
+    function get(target, path) {
+        return _get(json_1.JSON.clone(target), path);
+    }
+    Delta.get = get;
+    function _has(target, path) {
+        return _get(target, path)
             .match(() => true, () => false);
     }
-    Delta.atomicHas = atomicHas;
-    function atomicRemove(target, path, compress = true) {
+    Delta._has = _has;
+    function has(target, path) {
+        return _has(target, path);
+    }
+    Delta.has = has;
+    function _remove(target, path, compress = true) {
         if (path.length === 0)
             return result_1.Result.Err(new InvalidPathError(`Cannot remove target`));
-        const clonedTarget = json_1.JSON.clone(target);
-        return walk(clonedTarget, path, false)
+        return walk(target, path, false)
             .match(([currentTarget, lastKey]) => {
             if (json_1.JSON.isShallowArray(currentTarget)) {
                 if (!json_1.JSON.isInteger(lastKey))
                     return result_1.Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be an Integer`));
                 if (lastKey < 0 || lastKey >= currentTarget.length)
-                    return result_1.Result.Ok(clonedTarget);
+                    return result_1.Result.Ok(target);
                 if (compress)
                     currentTarget.splice(lastKey, 1);
                 else
                     currentTarget[lastKey] = null;
-                return result_1.Result.Ok(clonedTarget);
+                return result_1.Result.Ok(target);
             }
             if (json_1.JSON.isShallowObject(currentTarget)) {
                 if (!json_1.JSON.isString(lastKey))
                     return result_1.Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be a String`));
                 if (!Object.hasOwn(currentTarget, lastKey))
-                    return result_1.Result.Ok(clonedTarget);
+                    return result_1.Result.Ok(target);
                 if (compress)
                     delete currentTarget[lastKey];
                 else
                     currentTarget[lastKey] = null;
-                return result_1.Result.Ok(clonedTarget);
+                return result_1.Result.Ok(target);
             }
             return result_1.Result.Err(new TypeMismatchError(`Target at ${Path.toString(path)} is not an Array or Object`));
         }, error => {
             if (error instanceof NotFoundError)
-                return result_1.Result.Ok(clonedTarget);
+                return result_1.Result.Ok(target);
             else
                 return result_1.Result.Err(error);
         });
     }
-    Delta.atomicRemove = atomicRemove;
+    Delta._remove = _remove;
+    function remove(target, path, compress = true) {
+        return _remove(json_1.JSON.clone(target), path, compress);
+    }
+    Delta.remove = remove;
     function apply(target, delta, compress = true) {
         if (delta.length === 1)
-            return atomicRemove(target, delta[0], compress);
+            return _remove(json_1.JSON.clone(target), delta[0], compress);
         else
-            return atomicSet(target, delta[0], delta[1]);
+            return _set(json_1.JSON.clone(target), delta[0], delta[1]);
     }
     Delta.apply = apply;
     function applyMany(target, deltas, compress = true) {
-        let currentTarget = target;
+        let currentTarget = json_1.JSON.clone(target);
         for (let i = 0; i < deltas.length; i++) {
             const result = Delta.apply(currentTarget, deltas[i], compress);
             if (result.isOk())
