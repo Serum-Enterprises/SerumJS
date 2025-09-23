@@ -1,45 +1,12 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Delta = exports.Path = void 0;
 const result_1 = require("@serum-enterprises/result");
-const JSON = __importStar(require("@serum-enterprises/json"));
+const json_1 = require("@serum-enterprises/json");
 var Path;
 (function (Path) {
     function isPath(value) {
-        return JSON.isShallowArray(value) && value.every((element) => JSON.isInteger(element) || JSON.isString(element));
+        return json_1.JSON.isShallowArray(value) && value.every((element) => json_1.JSON.isInteger(element) || json_1.JSON.isString(element));
     }
     Path.isPath = isPath;
     function equals(path1, path2) {
@@ -64,18 +31,38 @@ var Path;
     }
     Path.toString = toString;
 })(Path || (exports.Path = Path = {}));
+function round(n) {
+    return n >= 0 ? Math.floor(n + 0.5) : Math.ceil(n - 0.5);
+}
 function expandArray(target, index, value, filler) {
     if (index < 0) {
-        target.unshift(...(new Array(Math.abs(index))).fill(filler));
-        target[0] = value;
+        if (index > -.5)
+            target.unshift(value);
+        else {
+            const normalizedIndex = round(index);
+            target.unshift(...(new Array(Math.abs(normalizedIndex))).fill(filler));
+            target[0] = value;
+        }
         return 0;
     }
     if (index > target.length) {
-        target.push(...(new Array(Math.abs(index - target.length))).fill(filler));
-        target.push(value);
+        if (index < target.length + .5)
+            target.push(value);
+        else {
+            const normalizedIndex = round(index);
+            target.push(...(new Array(Math.abs(normalizedIndex - target.length))).fill(filler));
+            target.push(value);
+        }
         return target.length - 1;
     }
-    target[index] = value;
+    if (!json_1.JSON.isInteger(index)) {
+        const insertAt = Math.floor(index) + 1;
+        target.splice(insertAt, 0, value);
+        return insertAt;
+    }
+    else {
+        target[index] = value;
+    }
     return index;
 }
 var Delta;
@@ -101,8 +88,8 @@ var Delta;
         let currentTarget = target;
         for (let i = 0; i < path.length - 1; i++) {
             let key = path[i];
-            if (JSON.isShallowArray(currentTarget)) {
-                if (!JSON.isInteger(key))
+            if (json_1.JSON.isShallowArray(currentTarget)) {
+                if (!json_1.JSON.isInteger(key))
                     return result_1.Result.Err(new InvalidPathError(`Expected path[${i}] to be an Integer`));
                 if ((key < 0 || key >= currentTarget.length)) {
                     if (create)
@@ -112,8 +99,8 @@ var Delta;
                 }
                 currentTarget = currentTarget[key];
             }
-            else if (JSON.isShallowObject(currentTarget)) {
-                if (!JSON.isString(key))
+            else if (json_1.JSON.isShallowObject(currentTarget)) {
+                if (!json_1.JSON.isString(key))
                     return result_1.Result.Err(new InvalidPathError(`Expected path[${i}] to be a String`));
                 if (!Object.hasOwn(currentTarget, key)) {
                     if (create)
@@ -128,20 +115,20 @@ var Delta;
         }
         return result_1.Result.Ok([currentTarget, path[path.length - 1]]);
     }
-    function set(target, path, value) {
+    function atomicSet(target, path, value) {
         if (path.length === 0)
             return result_1.Result.Ok(value);
-        const clonedTarget = JSON.clone(target);
+        const clonedTarget = json_1.JSON.clone(target);
         return walk(clonedTarget, path, true)
             .match(([currentTarget, lastKey]) => {
-            if (JSON.isShallowArray(currentTarget)) {
-                if (!JSON.isInteger(lastKey))
+            if (json_1.JSON.isShallowArray(currentTarget)) {
+                if (!json_1.JSON.isInteger(lastKey))
                     return result_1.Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be an Integer`));
                 expandArray(currentTarget, lastKey, value, null);
                 return result_1.Result.Ok(clonedTarget);
             }
-            if (JSON.isShallowObject(currentTarget)) {
-                if (!JSON.isString(lastKey))
+            if (json_1.JSON.isShallowObject(currentTarget)) {
+                if (!json_1.JSON.isString(lastKey))
                     return result_1.Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be a String`));
                 currentTarget[lastKey] = value;
                 return result_1.Result.Ok(clonedTarget);
@@ -149,21 +136,21 @@ var Delta;
             return result_1.Result.Err(new TypeMismatchError(`Target at ${Path.toString(path)} is not an Array or Object`));
         }, error => result_1.Result.Err(error));
     }
-    Delta.set = set;
-    function get(target, path) {
+    Delta.atomicSet = atomicSet;
+    function atomicGet(target, path) {
         if (path.length === 0)
             return result_1.Result.Ok(target);
         return walk(target, path, false)
             .match(([currentTarget, lastKey]) => {
-            if (JSON.isShallowArray(currentTarget)) {
-                if (!JSON.isInteger(lastKey))
+            if (json_1.JSON.isShallowArray(currentTarget)) {
+                if (!json_1.JSON.isInteger(lastKey))
                     return result_1.Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be an Integer`));
                 if (lastKey < 0 || lastKey >= currentTarget.length)
                     return result_1.Result.Err(new OutOfBoundsError(`Target at path[${path.length - 1}] is Out of Bounds`));
                 return result_1.Result.Ok(currentTarget[lastKey]);
             }
-            if (JSON.isShallowObject(currentTarget)) {
-                if (!JSON.isString(lastKey))
+            if (json_1.JSON.isShallowObject(currentTarget)) {
+                if (!json_1.JSON.isString(lastKey))
                     return result_1.Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be a String`));
                 if (!Object.hasOwn(currentTarget, lastKey))
                     return result_1.Result.Err(new KeyNotFoundError(`Target at path[${path.length - 1}] not found`));
@@ -172,20 +159,20 @@ var Delta;
             return result_1.Result.Err(new TypeMismatchError(`Target at ${Path.toString(path)} is not an Array or Object`));
         }, error => result_1.Result.Err(error));
     }
-    Delta.get = get;
-    function has(target, path) {
-        return get(target, path)
+    Delta.atomicGet = atomicGet;
+    function atomicHas(target, path) {
+        return atomicGet(target, path)
             .match(() => true, () => false);
     }
-    Delta.has = has;
-    function remove(target, path, compress = false) {
+    Delta.atomicHas = atomicHas;
+    function atomicRemove(target, path, compress = true) {
         if (path.length === 0)
             return result_1.Result.Err(new InvalidPathError(`Cannot remove target`));
-        const clonedTarget = JSON.clone(target);
+        const clonedTarget = json_1.JSON.clone(target);
         return walk(clonedTarget, path, false)
             .match(([currentTarget, lastKey]) => {
-            if (JSON.isShallowArray(currentTarget)) {
-                if (!JSON.isInteger(lastKey))
+            if (json_1.JSON.isShallowArray(currentTarget)) {
+                if (!json_1.JSON.isInteger(lastKey))
                     return result_1.Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be an Integer`));
                 if (lastKey < 0 || lastKey >= currentTarget.length)
                     return result_1.Result.Ok(clonedTarget);
@@ -195,8 +182,8 @@ var Delta;
                     currentTarget[lastKey] = null;
                 return result_1.Result.Ok(clonedTarget);
             }
-            if (JSON.isShallowObject(currentTarget)) {
-                if (!JSON.isString(lastKey))
+            if (json_1.JSON.isShallowObject(currentTarget)) {
+                if (!json_1.JSON.isString(lastKey))
                     return result_1.Result.Err(new InvalidPathError(`Expected path[${path.length - 1}] to be a String`));
                 if (!Object.hasOwn(currentTarget, lastKey))
                     return result_1.Result.Ok(clonedTarget);
@@ -214,5 +201,24 @@ var Delta;
                 return result_1.Result.Err(error);
         });
     }
-    Delta.remove = remove;
+    Delta.atomicRemove = atomicRemove;
+    function apply(target, delta, compress = true) {
+        if (delta.length === 1)
+            return atomicRemove(target, delta[0], compress);
+        else
+            return atomicSet(target, delta[0], delta[1]);
+    }
+    Delta.apply = apply;
+    function applyMany(target, deltas, compress = true) {
+        let currentTarget = target;
+        for (let i = 0; i < deltas.length; i++) {
+            const result = Delta.apply(currentTarget, deltas[i], compress);
+            if (result.isOk())
+                currentTarget = result.value;
+            if (result.isErr())
+                return result;
+        }
+        return result_1.Result.Ok(currentTarget);
+    }
+    Delta.applyMany = applyMany;
 })(Delta || (exports.Delta = Delta = {}));

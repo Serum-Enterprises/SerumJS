@@ -75,6 +75,8 @@ function expandArray<T>(target: T[], index: number, value: T, filler: T): number
     return index;
 }
 
+export type Delta = [Path] | [Path, JSON];
+
 export namespace Delta {
     export class NotFoundError extends Error {}
 
@@ -128,7 +130,7 @@ export namespace Delta {
         return Result.Ok([currentTarget, path[path.length - 1]!]);
     }
 
-    export function set(target: JSON.JSON, path: Path, value: JSON.JSON): Result<JSON.JSON, Error> {
+    export function atomicSet(target: JSON.JSON, path: Path, value: JSON.JSON): Result<JSON.JSON, Error> {
         if (path.length === 0)
             return Result.Ok(value);
 
@@ -161,7 +163,7 @@ export namespace Delta {
             );
     }
 
-    export function get(target: JSON.JSON, path: Path): Result<JSON.JSON, Error> {
+    export function atomicGet(target: JSON.JSON, path: Path): Result<JSON.JSON, Error> {
         if (path.length === 0)
             return Result.Ok(target);
 
@@ -194,15 +196,15 @@ export namespace Delta {
             );
     }
 
-    export function has(target: JSON.JSON, path: Path): boolean {
-        return get(target, path)
+    export function atomicHas(target: JSON.JSON, path: Path): boolean {
+        return atomicGet(target, path)
             .match(
                 () => true,
                 () => false
             );
     }
 
-    export function remove(target: JSON.JSON, path: Path, compress: boolean = false): Result<JSON.JSON, Error> {
+    export function atomicRemove(target: JSON.JSON, path: Path, compress: boolean = true): Result<JSON.JSON, Error> {
         if (path.length === 0)
             return Result.Err(new InvalidPathError(`Cannot remove target`));
 
@@ -250,5 +252,28 @@ export namespace Delta {
                         return Result.Err(error);
                 }
             );
+    }
+
+    export function apply(target: JSON, delta: Delta, compress: boolean = true): Result<JSON, Error> {
+        if(delta.length === 1)
+            return atomicRemove(target, delta[0]!, compress);
+        else
+            return atomicSet(target, delta[0]!, delta[1]!);
+    }
+
+    export function applyMany(target: JSON, deltas: Delta[], compress: boolean = true): Result<JSON, Error> {
+        let currentTarget = target;
+
+        for (let i = 0; i < deltas.length; i++) {
+            const result = Delta.apply(currentTarget, deltas[i]!, compress);
+
+            if(result.isOk())
+                currentTarget = result.value;
+
+            if(result.isErr())
+                return result;
+        }
+
+        return Result.Ok(currentTarget);
     }
 }
