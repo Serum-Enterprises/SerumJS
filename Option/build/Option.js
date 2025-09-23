@@ -27,12 +27,6 @@ class Option {
     map(fn) {
         return this.match(value => Option.Some(fn(value)), () => Option.None());
     }
-    then(fn) {
-        if (this.isSome())
-            return fn(this.value);
-        else
-            return Option.None();
-    }
     match(onSome, onNone) {
         if (this.isSome())
             return onSome(this.value);
@@ -42,13 +36,13 @@ class Option {
 }
 exports.Option = Option;
 class Some extends Option {
-    #value;
+    _value;
     constructor(value) {
         super();
-        this.#value = value;
+        this._value = value;
     }
     get value() {
-        return this.#value;
+        return this._value;
     }
 }
 exports.Some = Some;
