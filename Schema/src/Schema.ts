@@ -6,47 +6,47 @@ export class ValidationError extends Error { }
 
 export abstract class Schema {
 	static get Any() {
-		return new AnyValidator();
+		return new AnySchema();
 	}
 
 	static get Boolean() {
-		return new BooleanValidator();
+		return new BooleanSchema();
 	}
 
 	static get Number() {
-		return new NumberValidator();
+		return new NumberSchema();
 	}
 
 	static get String() {
-		return new StringValidator();
+		return new StringSchema();
 	}
 
 	static get Array() {
-		return new ArrayValidator();
+		return new ArraySchema();
 	}
 
 	static get Object() {
-		return new ObjectValidator();
+		return new ObjectSchema();
 	}
 
 	static get Or() {
-		return new OrValidator();
+		return new OrSchema();
 	}
 
 	static get And() {
-		return new AndValidator();
+		return new AndSchema();
 	}
 
 	static get defaultRegistry(): Map<string, typeof Schema> {
 		return new Map<string, typeof Schema>([
-			['any', AnyValidator],
-			['boolean', BooleanValidator],
-			['number', NumberValidator],
-			['string', StringValidator],
-			['array', ArrayValidator],
-			['object', ObjectValidator],
-			['or', OrValidator],
-			['and', AndValidator]
+			['any', AnySchema],
+			['boolean', BooleanSchema],
+			['number', NumberSchema],
+			['string', StringSchema],
+			['array', ArraySchema],
+			['object', ObjectSchema],
+			['or', OrSchema],
+			['and', AndSchema]
 		]);
 	}
 
@@ -58,7 +58,7 @@ export abstract class Schema {
 			return Result.Err(new SchemaError(`Expected ${path}.type to be a String`));
 
 		if (!registry.has(schema['type']))
-			return Result.Err(new SchemaError(`Expected ${path}.type to be a registered Validator`));
+			return Result.Err(new SchemaError(`Expected ${path}.type to be a registered Schema`));
 
 		return (registry.get(schema['type']) as typeof Schema).fromJSON(schema, path, registry);
 	}
@@ -68,14 +68,14 @@ export abstract class Schema {
 	abstract toJSON(): JSON.Object;
 }
 
-class AnyValidator extends Schema {
-	static override fromJSON(schema: JSON.JSON, path: string = "schema"): Result<AnyValidator, SchemaError> {
-		const validator = new AnyValidator();
+export class AnySchema extends Schema {
+	static override fromJSON(schema: JSON.JSON, path: string = "schema"): Result<AnySchema, SchemaError> {
+		const schemaInstance = new AnySchema();
 
 		if (!JSON.isObject(schema))
 			return Result.Err(new SchemaError(`Expected ${path} to be an Object`));
 
-		return Result.Ok(validator);
+		return Result.Ok(schemaInstance);
 	}
 
 	constructor() {
@@ -96,9 +96,9 @@ class AnyValidator extends Schema {
 	}
 }
 
-class BooleanValidator extends Schema {
-	static override fromJSON(schema: JSON.JSON, path: string = "schema"): Result<BooleanValidator, SchemaError> {
-		const validator = new BooleanValidator();
+export class BooleanSchema extends Schema {
+	static override fromJSON(schema: JSON.JSON, path: string = "schema"): Result<BooleanSchema, SchemaError> {
+		const schemaInstance = new BooleanSchema();
 
 		if (!JSON.isObject(schema))
 			return Result.Err(new SchemaError(`Expected ${path} to be an Object`));
@@ -107,17 +107,17 @@ class BooleanValidator extends Schema {
 			if (!JSON.isBoolean(schema['nullable']))
 				return Result.Err(new SchemaError(`Expected ${path}.nullable to be a Boolean`));
 
-			validator.nullable(schema['nullable']);
+			schemaInstance.nullable(schema['nullable']);
 		}
 
 		if ('equals' in schema) {
 			if (!JSON.isBoolean(schema['equals']))
 				return Result.Err(new SchemaError(`Expected ${path}.equals to be a Boolean`));
 
-			validator.equals(schema['equals']);
+			schemaInstance.equals(schema['equals']);
 		}
 
-		return Result.Ok(validator);
+		return Result.Ok(schemaInstance);
 	}
 
 	#nullable: { flag: boolean };
@@ -170,9 +170,9 @@ class BooleanValidator extends Schema {
 	}
 }
 
-class NumberValidator extends Schema {
-	static override fromJSON(schema: JSON.JSON, path: string = "schema"): Result<NumberValidator, SchemaError> {
-		const validator = new NumberValidator();
+export class NumberSchema extends Schema {
+	static override fromJSON(schema: JSON.JSON, path: string = "schema"): Result<NumberSchema, SchemaError> {
+		const schemaInstance = new NumberSchema();
 
 		if (!JSON.isObject(schema))
 			return Result.Err(new SchemaError(`Expected ${path} to be an Object`));
@@ -181,38 +181,38 @@ class NumberValidator extends Schema {
 			if (!JSON.isBoolean(schema['nullable']))
 				return Result.Err(new SchemaError(`Expected ${path}.nullable to be a Boolean`));
 
-			validator.nullable(schema['nullable']);
+			schemaInstance.nullable(schema['nullable']);
 		}
 
 		if ('equals' in schema) {
 			if (!JSON.isNumber(schema['equals']))
 				return Result.Err(new SchemaError(`Expected ${path}.equals to be a Number`));
 
-			validator.equals(schema['equals']);
+			schemaInstance.equals(schema['equals']);
 		}
 
 		if ('integer' in schema) {
 			if (!JSON.isBoolean(schema['integer']))
 				return Result.Err(new SchemaError(`Expected ${path}.integer to be a Boolean`));
 
-			validator.integer(schema['integer']);
+			schemaInstance.integer(schema['integer']);
 		}
 
 		if ('min' in schema) {
 			if (!JSON.isNumber(schema['min']))
 				return Result.Err(new SchemaError(`Expected ${path}.min to be a Number`));
 
-			validator.min(schema['min']);
+			schemaInstance.min(schema['min']);
 		}
 
 		if ('max' in schema) {
 			if (!JSON.isNumber(schema['max']))
 				return Result.Err(new SchemaError(`Expected ${path}.max to be a Number`));
 
-			validator.max(schema['max']);
+			schemaInstance.max(schema['max']);
 		}
 
-		return Result.Ok(validator);
+		return Result.Ok(schemaInstance);
 	}
 
 	#nullable: { flag: boolean };
@@ -307,9 +307,9 @@ class NumberValidator extends Schema {
 	}
 }
 
-class StringValidator extends Schema {
-	static override fromJSON(schema: JSON.JSON, path: string = "schema"): Result<StringValidator, SchemaError> {
-		const validator = new StringValidator();
+export class StringSchema extends Schema {
+	static override fromJSON(schema: JSON.JSON, path: string = "schema"): Result<StringSchema, SchemaError> {
+		const schemaInstance = new StringSchema();
 
 		if (!JSON.isObject(schema))
 			return Result.Err(new SchemaError(`Expected ${path} to be an Object`));
@@ -318,31 +318,31 @@ class StringValidator extends Schema {
 			if (!JSON.isBoolean(schema['nullable']))
 				return Result.Err(new SchemaError(`Expected ${path}.nullable to be a Boolean`));
 
-			validator.nullable(schema['nullable']);
+			schemaInstance.nullable(schema['nullable']);
 		}
 
 		if ('equals' in schema) {
 			if (!JSON.isString(schema['equals']))
 				return Result.Err(new SchemaError(`Expected ${path}.equals to be a String`));
 
-			validator.equals(schema['equals']);
+			schemaInstance.equals(schema['equals']);
 		}
 
 		if ('min' in schema) {
 			if (!JSON.isNumber(schema['min']))
 				return Result.Err(new SchemaError(`Expected ${path}.min to be a Number`));
 
-			validator.min(schema['min']);
+			schemaInstance.min(schema['min']);
 		}
 
 		if ('max' in schema) {
 			if (!JSON.isNumber(schema['max']))
 				return Result.Err(new SchemaError(`Expected ${path}.max to be a Number`));
 
-			validator.max(schema['max']);
+			schemaInstance.max(schema['max']);
 		}
 
-		return Result.Ok(validator);
+		return Result.Ok(schemaInstance);
 	}
 
 	#nullable: { flag: boolean };
@@ -424,9 +424,9 @@ class StringValidator extends Schema {
 	}
 }
 
-class ArrayValidator extends Schema {
-	static override fromJSON(schema: JSON.JSON, path: string = "schema", registry: Map<string, typeof Schema> = Schema.defaultRegistry): Result<ArrayValidator, SchemaError> {
-		const validator = new ArrayValidator();
+export class ArraySchema extends Schema {
+	static override fromJSON(schema: JSON.JSON, path: string = "schema", registry: Map<string, typeof Schema> = Schema.defaultRegistry): Result<ArraySchema, SchemaError> {
+		const schemaInstance = new ArraySchema();
 
 		if (!JSON.isObject(schema))
 			return Result.Err(new SchemaError(`Expected ${path} to be an Object`));
@@ -435,61 +435,61 @@ class ArrayValidator extends Schema {
 			if (!JSON.isBoolean(schema['nullable']))
 				return Result.Err(new SchemaError(`Expected ${path}.nullable to be a Boolean`));
 
-			validator.nullable(schema['nullable']);
+			schemaInstance.nullable(schema['nullable']);
 		}
 
 		if ('min' in schema) {
 			if (!JSON.isNumber(schema['min']))
 				return Result.Err(new SchemaError(`Expected ${path}.min to be a Number`));
 
-			validator.min(schema['min']);
+			schemaInstance.min(schema['min']);
 		}
 
 		if ('max' in schema) {
 			if (!JSON.isNumber(schema['max']))
 				return Result.Err(new SchemaError(`Expected ${path}.max to be a Number`));
 
-			validator.max(schema['max']);
+			schemaInstance.max(schema['max']);
 		}
 
 		if ('every' in schema) {
 			if (!JSON.isObject(schema['every']))
 				return Result.Err(new SchemaError(`Expected ${path}.every to be an Object`));
 
-			const itemValidator: Result<Schema, SchemaError> = Schema.fromJSON(schema['every'], `${path}.every`, registry);
+			const itemSchema: Result<Schema, SchemaError> = Schema.fromJSON(schema['every'], `${path}.every`, registry);
 
-			if (itemValidator.isOk())
-				validator.every(itemValidator.value);
+			if (itemSchema.isOk())
+				schemaInstance.every(itemSchema.value);
 
-			if (itemValidator.isErr())
-				return itemValidator;
+			if (itemSchema.isErr())
+				return itemSchema;
 		}
 
 		if ('tuple' in schema) {
 			if (!JSON.isArray(schema['tuple']))
 				return Result.Err(new SchemaError(`Expected ${path}.tuple to be an Array`));
 
-			const validatorResults: [{ [key: string]: Schema }, { [key: string]: SchemaError }] = [{}, {}];
+			const schemaResults: [{ [key: string]: Schema }, { [key: string]: SchemaError }] = [{}, {}];
 
 			for (let i = 0; i < schema['tuple'].length; i++) {
 				const value = schema['tuple'][i] as JSON.JSON;
 
 				if (!JSON.isObject(value))
-					validatorResults[1][i] = new SchemaError(`Expected ${path}.tuple[${i}] to be an Object`);
+					schemaResults[1][i] = new SchemaError(`Expected ${path}.tuple[${i}] to be an Object`);
 
 				Schema.fromJSON(value, `${path}.tuple[${i}]`, registry).match(
-					value => { validatorResults[0][i] = value },
-					error => { validatorResults[1][i] = error }
+					value => { schemaResults[0][i] = value },
+					error => { schemaResults[1][i] = error }
 				);
 			}
 
-			if (Object.keys(validatorResults[1]).length > 0)
-				return Result.Err(new SchemaError(`Expected ${path}.tuple to be an Array where every Element is a valid Schema`, { cause: validatorResults[1] }));
+			if (Object.keys(schemaResults[1]).length > 0)
+				return Result.Err(new SchemaError(`Expected ${path}.tuple to be an Array where every Element is a valid Schema`, { cause: schemaResults[1] }));
 
-			validator.tuple(Object.entries(validatorResults[0]).map(([_, value]) => value));
+			schemaInstance.tuple(Object.entries(schemaResults[0]).map(([_, value]) => value));
 		}
 
-		return Result.Ok(validator);
+		return Result.Ok(schemaInstance);
 	}
 
 	#nullable: { flag: boolean };
@@ -501,7 +501,7 @@ class ArrayValidator extends Schema {
 	constructor() {
 		super();
 		this.#nullable = { flag: false };
-		this.#every = { flag: false, value: new AnyValidator() };
+		this.#every = { flag: false, value: new AnySchema() };
 		this.#min = { flag: false, value: 0 };
 		this.#max = { flag: false, value: 0 };
 		this.#tuple = { flag: false, value: [] };
@@ -525,14 +525,14 @@ class ArrayValidator extends Schema {
 		return this;
 	}
 
-	every(validator: Schema): this {
-		this.#every = { flag: true, value: validator };
+	every(schema: Schema): this {
+		this.#every = { flag: true, value: schema };
 
 		return this;
 	}
 
-	tuple(validators: Schema[]): this {
-		this.#tuple = { flag: true, value: validators };
+	tuple(schemas: Schema[]): this {
+		this.#tuple = { flag: true, value: schemas };
 
 		return this;
 	}
@@ -552,7 +552,7 @@ class ArrayValidator extends Schema {
 					.map(value => value.error);
 
 				if (errors.length > 0)
-					return Result.Err(new ValidationError(`Expected ${path} to be an Array where every Element matches the item Validator`, { cause: errors }));
+					return Result.Err(new ValidationError(`Expected ${path} to be an Array where every Element matches the item Schema`, { cause: errors }));
 			}
 
 			if (this.#tuple.flag) {
@@ -560,12 +560,12 @@ class ArrayValidator extends Schema {
 					return Result.Err(new ValidationError(`Expected ${path} to have exactly ${this.#tuple.value.length} Elements`));
 
 				const errors: ValidationError[] = this.#tuple.value
-					.map((validator, index) => validator.validate(data[index], `${path}[${index}]`))
+					.map((schema, index) => schema.validate(data[index], `${path}[${index}]`))
 					.filter(value => value.isErr())
 					.map(value => value.error);
 
 				if (errors.length > 0)
-					return Result.Err(new ValidationError(`Expected ${path} to be a Tuple where every Element matches its respective Validator`, { cause: errors }));
+					return Result.Err(new ValidationError(`Expected ${path} to be a Tuple where every Element matches its respective Schema`, { cause: errors }));
 			}
 
 			return Result.Ok(data);
@@ -595,15 +595,15 @@ class ArrayValidator extends Schema {
 			schema['every'] = this.#every.value.toJSON();
 
 		if (this.#tuple.flag)
-			schema['tuple'] = this.#tuple.value.map(validator => validator.toJSON());
+			schema['tuple'] = this.#tuple.value.map(schema => schema.toJSON());
 
 		return schema;
 	}
 }
 
-class ObjectValidator extends Schema {
-	static override fromJSON(schema: JSON.JSON, path: string = "schema", registry: Map<string, typeof Schema> = Schema.defaultRegistry): Result<ObjectValidator, SchemaError> {
-		const validator = new ObjectValidator();
+export class ObjectSchema extends Schema {
+	static override fromJSON(schema: JSON.JSON, path: string = "schema", registry: Map<string, typeof Schema> = Schema.defaultRegistry): Result<ObjectSchema, SchemaError> {
+		const schemaInstance = new ObjectSchema();
 
 		if (!JSON.isObject(schema))
 			return Result.Err(new SchemaError(`Expected ${path} to be an Object`));
@@ -612,39 +612,39 @@ class ObjectValidator extends Schema {
 			if (!JSON.isBoolean(schema['nullable']))
 				return Result.Err(new SchemaError(`Expected ${path}.nullable to be a Boolean`));
 
-			validator.nullable(schema['nullable']);
+			schemaInstance.nullable(schema['nullable']);
 		}
 
 		if ('schema' in schema) {
 			if (!JSON.isObject(schema['schema']))
 				return Result.Err(new SchemaError(`Expected ${path}.schema to be an Object`));
 
-			const validatorResults: [{ [key: string]: Schema }, { [key: string]: SchemaError }] = [{}, {}];
+			const schemaResults: [{ [key: string]: Schema }, { [key: string]: SchemaError }] = [{}, {}];
 
 			for (let [key, value] of Object.entries(schema['schema'])) {
 				if (!JSON.isObject(value))
-					validatorResults[1][key] = new SchemaError(`Expected ${path}.schema.${key} to be an Object`);
+					schemaResults[1][key] = new SchemaError(`Expected ${path}.schema.${key} to be an Object`);
 
 				Schema.fromJSON(value, path, registry).match(
-					value => { validatorResults[0][key] = value },
-					error => { validatorResults[1][key] = error }
+					value => { schemaResults[0][key] = value },
+					error => { schemaResults[1][key] = error }
 				);
 			}
 
-			if (Object.keys(validatorResults[1]).length > 0)
-				return Result.Err(new SchemaError(`Expected ${path}.schema to be an Object where every Property is a valid Schema`, { cause: validatorResults[1] }));
+			if (Object.keys(schemaResults[1]).length > 0)
+				return Result.Err(new SchemaError(`Expected ${path}.schema to be an Object where every Property is a valid Schema`, { cause: schemaResults[1] }));
 
-			validator.schema(validatorResults[0]);
+			schemaInstance.schema(schemaResults[0]);
 		}
 
 		if ('inclusive' in schema) {
 			if (!JSON.isBoolean(schema['inclusive']))
 				return Result.Err(new SchemaError(`Expected ${path}.inclusive to be a Boolean`));
 
-			validator.inclusive(schema['inclusive']);
+			schemaInstance.inclusive(schema['inclusive']);
 		}
 
-		return Result.Ok(validator);
+		return Result.Ok(schemaInstance);
 	}
 
 	#nullable: { flag: boolean };
@@ -681,8 +681,8 @@ class ObjectValidator extends Schema {
 			if (this.#schema.flag) {
 				const errors: { [key: string]: ValidationError } = {};
 
-				for (let [key, validator] of Object.entries(this.#schema.value)) {
-					const result = validator.validate(data[key], `${path}.${key}`);
+				for (let [key, schema] of Object.entries(this.#schema.value)) {
+					const result = schema.validate(data[key], `${path}.${key}`);
 
 					if (result.isErr())
 						errors[key] = result.error;
@@ -728,9 +728,9 @@ class ObjectValidator extends Schema {
 	}
 }
 
-class OrValidator extends Schema {
-	static override fromJSON(schema: JSON.JSON, path: string = "schema", registry: Map<string, typeof Schema> = Schema.defaultRegistry): Result<OrValidator, SchemaError> {
-		const validator = new OrValidator();
+export class OrSchema extends Schema {
+	static override fromJSON(schema: JSON.JSON, path: string = "schema", registry: Map<string, typeof Schema> = Schema.defaultRegistry): Result<OrSchema, SchemaError> {
+		const schemaInstance = new OrSchema();
 
 		if (!JSON.isObject(schema))
 			return Result.Err(new SchemaError(`Expected ${path} to be an Object`));
@@ -739,7 +739,7 @@ class OrValidator extends Schema {
 			if (!JSON.isArray(schema['oneOf']))
 				return Result.Err(new SchemaError(`Expected ${path}.oneOf to be an Array`));
 
-			const validatorResults: [Schema[], SchemaError[]] = schema['oneOf']
+			const schemaResults: [Schema[], SchemaError[]] = schema['oneOf']
 				.map(value => Schema.fromJSON(value, `${path}.oneOf`, registry))
 				.reduce<[Schema[], SchemaError[]]>((acc, result) => {
 					return result.match(
@@ -748,13 +748,13 @@ class OrValidator extends Schema {
 					);
 				}, [[], []]);
 
-			if (validatorResults[1].length > 0)
-				return Result.Err(new SchemaError(`Expected ${path}.oneOf to be an Array where every Element is a valid Schema`, { cause: validatorResults[1] }));
+			if (schemaResults[1].length > 0)
+				return Result.Err(new SchemaError(`Expected ${path}.oneOf to be an Array where every Element is a valid Schema`, { cause: schemaResults[1] }));
 
-			validator.oneOf(validatorResults[0]);
+			schemaInstance.oneOf(schemaResults[0]);
 		}
 
-		return Result.Ok(validator);
+		return Result.Ok(schemaInstance);
 	}
 
 	#oneOf: { flag: boolean, value: Schema[] };
@@ -764,8 +764,8 @@ class OrValidator extends Schema {
 		this.#oneOf = { flag: false, value: [] };
 	}
 
-	oneOf(validators: Schema[]): this {
-		this.#oneOf = { flag: true, value: validators };
+	oneOf(schemas: Schema[]): this {
+		this.#oneOf = { flag: true, value: schemas };
 
 		return this;
 	}
@@ -776,7 +776,7 @@ class OrValidator extends Schema {
 
 		if (this.#oneOf.flag) {
 			let errors: ValidationError[] = this.#oneOf.value
-				.map(validator => validator.validate(data, path))
+				.map(schema => schema.validate(data, path))
 				.reduce<ValidationError[]>((acc, value) => {
 					return value.match(
 						_ => acc,
@@ -785,7 +785,7 @@ class OrValidator extends Schema {
 				}, []);
 
 			if (errors.length === this.#oneOf.value.length)
-				return Result.Err(new ValidationError(`Expected ${path} to match at least one of the OneOf Validators`, { cause: errors }));
+				return Result.Err(new ValidationError(`Expected ${path} to match at least one of the OneOf Schemas`, { cause: errors }));
 
 			return Result.Ok(data);
 		}
@@ -799,15 +799,15 @@ class OrValidator extends Schema {
 		};
 
 		if (this.#oneOf.flag)
-			schema['oneOf'] = this.#oneOf.value.map(validator => validator.toJSON());
+			schema['oneOf'] = this.#oneOf.value.map(schema => schema.toJSON());
 
 		return schema;
 	}
 }
 
-class AndValidator extends Schema {
-	static override fromJSON(schema: JSON.JSON, path: string = "schema", registry: Map<string, typeof Schema> = Schema.defaultRegistry): Result<AndValidator, SchemaError> {
-		const validator = new AndValidator();
+export class AndSchema extends Schema {
+	static override fromJSON(schema: JSON.JSON, path: string = "schema", registry: Map<string, typeof Schema> = Schema.defaultRegistry): Result<AndSchema, SchemaError> {
+		const schemaInstance = new AndSchema();
 
 		if (!JSON.isObject(schema))
 			return Result.Err(new SchemaError(`Expected ${path} to be an Object`));
@@ -816,27 +816,27 @@ class AndValidator extends Schema {
 			if (!JSON.isArray(schema['allOf']))
 				return Result.Err(new SchemaError(`Expected ${path}.allOf to be an Array`));
 
-			const validatorResults: [Schema[], SchemaError[]] = [[], []];
+			const schemaResults: [Schema[], SchemaError[]] = [[], []];
 
 			for (let i = 0; i < schema['allOf'].length; i++) {
 				const value = schema['allOf'][i] as JSON.JSON;
 
 				if (!JSON.isObject(value))
-					validatorResults[1][i] = new SchemaError(`Expected ${path}.allOf[${i}] to be an Object`);
+					schemaResults[1][i] = new SchemaError(`Expected ${path}.allOf[${i}] to be an Object`);
 				else
 					Schema.fromJSON(value, `${path}.allOf[${i}]`, registry).match(
-						value => { validatorResults[0].push(value) },
-						error => { validatorResults[1].push(error) }
+						value => { schemaResults[0].push(value) },
+						error => { schemaResults[1].push(error) }
 					);
 			}
 
-			if (validatorResults[1].length > 0)
-				return Result.Err(new SchemaError(`Expected ${path}.allOf to be an Array where every Element is a valid Schema`, { cause: validatorResults[1] }));
+			if (schemaResults[1].length > 0)
+				return Result.Err(new SchemaError(`Expected ${path}.allOf to be an Array where every Element is a valid Schema`, { cause: schemaResults[1] }));
 
-			validator.allOf(Object.entries(validatorResults[0]).map(([_, value]) => value));
+			schemaInstance.allOf(Object.entries(schemaResults[0]).map(([_, value]) => value));
 		}
 
-		return Result.Ok(validator);
+		return Result.Ok(schemaInstance);
 	}
 
 	#allOf: { flag: boolean, value: Schema[] };
@@ -846,8 +846,8 @@ class AndValidator extends Schema {
 		this.#allOf = { flag: false, value: [] };
 	}
 
-	allOf(validators: Schema[]): this {
-		this.#allOf = { flag: true, value: validators };
+	allOf(schemas: Schema[]): this {
+		this.#allOf = { flag: true, value: schemas };
 
 		return this;
 	}
@@ -858,7 +858,7 @@ class AndValidator extends Schema {
 
 		if (this.#allOf.flag) {
 			const errors: ValidationError[] = this.#allOf.value
-				.map(validator => validator.validate(data, path))
+				.map(schema => schema.validate(data, path))
 				.reduce<ValidationError[]>((acc, value) => {
 					return value.match(
 						_ => acc,
@@ -867,7 +867,7 @@ class AndValidator extends Schema {
 				}, []);
 
 			if (errors.length > 0)
-				return Result.Err(new ValidationError(`Expected ${path} to match all of the AllOf Validators`, { cause: errors }));
+				return Result.Err(new ValidationError(`Expected ${path} to match all of the AllOf Schemas`, { cause: errors }));
 		}
 
 		return Result.Ok(data);
@@ -880,7 +880,7 @@ class AndValidator extends Schema {
 		};
 
 		if (this.#allOf.flag)
-			schema['allOf'] = this.#allOf.value.map(validator => validator.toJSON());
+			schema['allOf'] = this.#allOf.value.map(schema => schema.toJSON());
 
 		return schema;
 	}
