@@ -12,10 +12,10 @@ import {IntersectValidator} from './validators/logic/Intersect';
 import {UnionValidator} from './validators/logic/Union';
 
 export interface DeserializableValidator {
-	fromJSON(definition: Definition & { [key: string]: unknown }, path: string, domain: Domain): Validator;
+	fromJSON(definition: Definition & { [key: string]: unknown }, path: string, domain: Registry): Validator;
 }
 
-export class Domain {
+export class Registry {
 	static readonly defaultRegistry = {
 		json: JSONValidator,
 		boolean: BooleanValidator,
@@ -28,7 +28,7 @@ export class Domain {
 	};
 
 	public constructor(
-		private _registry: {[key: string]: DeserializableValidator} = Domain.defaultRegistry
+		private _registry: {[key: string]: DeserializableValidator} = Registry.defaultRegistry
 	) { }
 
 	public fromJSON(definition: unknown, path: string = 'definition'): Validator {
