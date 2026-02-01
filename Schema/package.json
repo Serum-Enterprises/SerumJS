@@ -1,12 +1,12 @@
 {
 	"name": "@serum-enterprises/schema",
-	"version": "2.0.1-beta.2",
+	"version": "3.0.0-beta.0",
 	"engines": {
 		"node": ">=14.0.0"
 	},
 	"description": "Modern Schema Validation Library inspired by Joi.dev",
-	"main": "./build/Schema.js",
-	"types": "./types/Schema.d.ts",
+	"main": "./build/index.js",
+	"types": "./types/index.d.ts",
 	"scripts": {
 		"build": "tsc",
 		"test": "jest"
