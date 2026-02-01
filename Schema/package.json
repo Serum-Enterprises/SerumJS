@@ -25,9 +25,5 @@
 		"@types/node": "^22.10.6",
 		"jest": "^29.7.0",
 		"typescript": "^5.7.3"
-	},
-	"dependencies": {
-		"@serum-enterprises/json": "^2.0.1",
-		"@serum-enterprises/result": "^2.0.1"
 	}
 }

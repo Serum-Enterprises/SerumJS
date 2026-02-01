@@ -1,4 +1,4 @@
-import * as JSON from '@serum-enterprises/json';
+import {JSON} from '../../util/JSON';
 import type {Registry} from '../../Registry';
 import {Validator} from '../Validator';
 import {
@@ -54,7 +54,6 @@ export class UnionValidator<
 	}
 
 
-
 	public constructor(
 		protected _allOf: Option<readonly Validator[]> = Option.None()
 	) {
@@ -75,7 +74,7 @@ export class UnionValidator<
 		data: unknown,
 		path: string = 'data'
 	): asserts data is T {
-		if(!this._allOf.isSome())
+		if (!this._allOf.isSome())
 			throw new AssertError(`Empty Union at ${path}`);
 
 		const errors: AssertError[] = [];

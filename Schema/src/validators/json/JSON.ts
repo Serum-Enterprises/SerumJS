@@ -1,4 +1,4 @@
-import * as JSON from '@serum-enterprises/json';
+import {JSON} from '../../util/JSON';
 import type {Registry} from '../../Registry';
 import {Validator} from '../Validator';
 import {Definition, AssertError} from '../../util';
@@ -17,7 +17,7 @@ export class JSONValidator<T extends JSON.JSON = JSON.JSON> extends Validator<T>
 	}
 
 	public override assert(data: unknown, path: string = 'data'): asserts data is JSON.JSON {
-		if(!JSON.isJSON(data))
+		if (!JSON.isJSON(data))
 			throw new AssertError(`Expected ${path} to be valid JSON`);
 	}
 

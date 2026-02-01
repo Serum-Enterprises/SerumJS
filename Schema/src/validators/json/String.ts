@@ -1,4 +1,4 @@
-import * as JSON from '@serum-enterprises/json';
+import {JSON} from '../../util/JSON';
 import type {Registry} from '../../Registry';
 import {Validator} from '../Validator';
 import {Definition, ApplyNullability, AssertError, DefinitionError} from '../../util';
