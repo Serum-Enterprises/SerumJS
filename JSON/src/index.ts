@@ -1,4 +1,3 @@
-export type JSON = JSON.JSON;
 export namespace JSON {
     export type Null = null;
     export type Boolean = boolean;
