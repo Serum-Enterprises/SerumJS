@@ -1,8 +1,8 @@
-import {JSON} from '../../util/JSON';
-import type {Registry} from '../../Registry';
+import {JSON} from '@serum-enterprises/json';
+import {Option} from '@serum-enterprises/option';
 import {Validator} from '../Validator';
-import {Definition, ApplyNullability, AssertError, DefinitionError} from '../../util';
-import {Option} from '../../util/Option';
+import {Definition, ApplyNullability, AssertError, DefinitionError} from '../lib/util';
+import {JSONValidator} from './JSON';
 
 export interface BooleanValidatorDefinition extends Definition {
 	type: 'boolean';
@@ -16,8 +16,7 @@ export class BooleanValidator<
 > extends Validator<ApplyNullability<T, N>> {
 	public static override fromJSON(
 		definition: Definition & { [key: string]: unknown },
-		path: string = 'definition',
-		_registry: Registry
+		path: string = 'definition'
 	): Validator {
 		const validatorInstance = new BooleanValidator();
 
@@ -38,12 +37,8 @@ export class BooleanValidator<
 		return validatorInstance;
 	}
 
-	public constructor(
-		protected _nullable: Option<null> = Option.None(),
-		protected _equals: Option<boolean> = Option.None()
-	) {
-		super();
-	}
+	protected _nullable: Option<null> = Option.None();
+	protected _equals: Option<boolean> = Option.None();
 
 	public nullable<const F extends boolean = true>(flag?: F): BooleanValidator<T, F> {
 		this._nullable = flag ?? true ? Option.Some(null) : Option.None();
@@ -57,16 +52,40 @@ export class BooleanValidator<
 		return this as unknown as BooleanValidator<V, N>;
 	}
 
-	public override assert(data: unknown, path: string = 'data'): asserts data is ApplyNullability<T, N> {
+	public assert(data: unknown, path: string = 'data'): asserts data is ApplyNullability<T, N> {
 		if (JSON.isBoolean(data)) {
 			if (this._equals.isSome() && this._equals.value !== data)
 				throw new AssertError(`Expected ${path} to be ${this._equals.value}${this._nullable.isSome() ? '' : ' or Null'}`);
 		}
-		else if (!(this._nullable.isSome() && JSON.isNull(data)))
-			throw new AssertError(`Expected ${path} to be a Boolean${this._nullable.isSome() ? '' : ' or Null'}`);
+		else if(JSON.isNull(data)) {
+			if(!this._nullable.isSome())
+				throw new AssertError(`Expected ${path} to be a Boolean${this._nullable.isSome() ? ' or Null' : ''}`);
+		}
+		else
+			throw new AssertError(`Expected ${path} to be a Boolean${this._nullable.isSome() ? ' or Null' : ''}`);
 	}
 
-	public override toJSON(): BooleanValidatorDefinition {
+	public isSubset(other: Validator): boolean {
+		if (other instanceof JSONValidator)
+			return true;
+
+		if (!(other instanceof BooleanValidator))
+			return false;
+
+		if (this._nullable.isSome() && !other._nullable.isSome())
+			return false;
+
+		if (other._equals.isSome()) {
+			if (this._equals.isSome())
+				return this._equals.value === other._equals.value;
+			else
+				return false;
+		}
+
+		return true;
+	}
+
+	public toJSON(): BooleanValidatorDefinition {
 		const definition: BooleanValidatorDefinition = {
 			type: 'boolean'
 		};

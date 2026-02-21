@@ -1,4 +1,4 @@
-import {Validator} from '../validators/Validator';
+import type {Validator} from '../Validator';
 
 export type ApplyNullability<T, N extends boolean> =
 	N extends true ? T | null : Exclude<T, null>;

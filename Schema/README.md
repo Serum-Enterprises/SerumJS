@@ -40,6 +40,12 @@ schema.validate({ name: 'John', age: 20, friends: [{ name: "Maria", age: 22 }] }
 
 Please check [Schema.d.ts](./types/Schema.d.ts) for the full API.
 
+## Changelog
+
+2.1.0-beta.0:
+- Renamed Validators to Schemas (e.g. `BooleanValidator` became `BooleanSchema`)
+- Exported Basic Schemas (AnySchema, BooleanSchema, NumberSchema, StringSchema, ArraySchema, ObjectSchema, AndSchema, OrSchema) to improve Extensibility and Typing
+
 ## LICENSE
 
 MIT License

@@ -1,14 +1,15 @@
 {
 	"name": "@serum-enterprises/schema",
-	"version": "3.0.0-beta.0",
+	"version": "3.0.0-beta.1",
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=24.0.0"
 	},
 	"description": "Modern Schema Validation Library inspired by Joi.dev",
 	"main": "./build/index.js",
 	"types": "./types/index.d.ts",
 	"scripts": {
-		"build": "tsc",
+		"prebuild": "tsc",
+		"build": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=build/index.js --sourcemap",
 		"test": "jest"
 	},
 	"repository": {
@@ -21,9 +22,14 @@
 		"url": "https://github.com/Serum-Enterprises/SerumJS/issues"
 	},
 	"devDependencies": {
-		"@types/jest": "^29.5.14",
-		"@types/node": "^22.10.6",
-		"jest": "^29.7.0",
-		"typescript": "^5.7.3"
+		"@types/jest": "^30.0.0",
+		"@types/node": "^25.3.0",
+		"esbuild": "^0.27.3",
+		"jest": "^30.2.0",
+		"typescript": "^5.9.3"
+	},
+	"dependencies": {
+		"@serum-enterprises/json": "^3.1.0",
+		"@serum-enterprises/option": "^3.0.1"
 	}
 }

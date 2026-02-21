@@ -1,7 +1,6 @@
-import {JSON} from '../../util/JSON';
-import type {Registry} from '../../Registry';
+import {JSON} from '@serum-enterprises/json';
 import {Validator} from '../Validator';
-import {Definition, AssertError} from '../../util';
+import {Definition, AssertError} from '../lib/util';
 
 export interface JSONValidatorDefinition extends Definition {
 	type: 'json';
@@ -10,18 +9,21 @@ export interface JSONValidatorDefinition extends Definition {
 export class JSONValidator<T extends JSON.JSON = JSON.JSON> extends Validator<T> {
 	public static override fromJSON(
 		_definition: Definition & { [key: string]: unknown },
-		_path: string = 'definition',
-		_domain: Registry
+		_path: string = 'definition'
 	): Validator {
 		return new JSONValidator();
 	}
 
-	public override assert(data: unknown, path: string = 'data'): asserts data is JSON.JSON {
+	public assert(data: unknown, path: string = 'data'): asserts data is JSON.JSON {
 		if (!JSON.isJSON(data))
 			throw new AssertError(`Expected ${path} to be valid JSON`);
 	}
 
-	public override toJSON(): JSONValidatorDefinition {
+	public isSubset(other: Validator): boolean {
+		return other instanceof JSONValidator;
+	}
+
+	public toJSON(): JSONValidatorDefinition {
 		return {
 			type: 'json'
 		};
