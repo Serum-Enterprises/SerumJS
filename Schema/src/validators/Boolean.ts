@@ -14,7 +14,7 @@ export class BooleanValidator<
 	T extends JSON.Boolean = JSON.Boolean,
 	N extends boolean = false
 > extends Validator<ApplyNullability<T, N>> {
-	public static override fromJSON(
+	public static fromJSON(
 		definition: Definition & { [key: string]: unknown },
 		path: string = 'definition'
 	): Validator {

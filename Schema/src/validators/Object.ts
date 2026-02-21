@@ -1,6 +1,7 @@
 import {JSON} from '@serum-enterprises/json';
 import {Option} from '@serum-enterprises/option';
 import {Validator} from '../Validator';
+import {fromJSON} from '../lib/fromJSON';
 import {
 	Definition, ApplyNullability,
 	InferDefinitionType, InferValidatorReturnType,
@@ -41,7 +42,7 @@ export class ObjectValidator<
 	// E is exact (no extra props when shape is set)
 	E extends boolean = false
 > extends Validator<ObjectResult<T, S, E>> {
-	public static override fromJSON(
+	public static fromJSON(
 		definition: Definition & { [key: string]: unknown },
 		path: string = "definition"
 	): Validator {
@@ -76,7 +77,7 @@ export class ObjectValidator<
 		}
 
 		if ("every" in definition) {
-			validatorInstance.every(super.fromJSON(definition['every'], `${path}.every`));
+			validatorInstance.every(fromJSON(definition['every'], `${path}.every`));
 		}
 
 		if ("shape" in definition) {
@@ -88,7 +89,7 @@ export class ObjectValidator<
 
 			for (const [key, value] of Object.entries(definition["shape"])) {
 				try {
-					shape[key] = super.fromJSON(value, `${path}.shape.${key}`);
+					shape[key] = fromJSON(value, `${path}.shape.${key}`);
 				} catch (e) {
 					if (!(e instanceof DefinitionError))
 						throw new DefinitionError(`Fatal Error: Undefined Error thrown by Domain.fromJSON at ${path}.shape.${key}`);

@@ -1,4 +1,7 @@
-export {Validator} from './Validator';
+import {Validator} from './Validator';
+import {fromJSON} from './lib/fromJSON';
+
+export {Validator};
 
 import {JSONValidator, JSONValidatorDefinition} from './validators/JSON';
 import {BooleanValidator, BooleanValidatorDefinition} from './validators/Boolean';
@@ -30,6 +33,10 @@ export class Schema {
 
 	static get Object(): ObjectValidator {
 		return new ObjectValidator();
+	}
+
+	static fromJSON(definition: unknown, path: string = 'definition'): Validator {
+		return fromJSON(definition, path);
 	}
 }
 

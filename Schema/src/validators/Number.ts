@@ -17,7 +17,7 @@ export class NumberValidator<
 	T extends JSON.Number = JSON.Number,
 	N extends boolean = false
 > extends Validator<ApplyNullability<T, N>> {
-	public static override fromJSON(
+	public static fromJSON(
 		definition: Definition & { [key: string]: unknown },
 		path: string = 'definition'
 	): Validator {

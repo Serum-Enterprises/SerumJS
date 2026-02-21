@@ -1,6 +1,7 @@
 import {JSON} from '@serum-enterprises/json';
 import {Option} from '@serum-enterprises/option';
 import {Validator} from '../Validator';
+import {fromJSON} from '../lib/fromJSON';
 import {
 	Definition, ApplyNullability,
 	InferDefinitionType, InferValidatorReturnType,
@@ -36,7 +37,7 @@ export class ArrayValidator<
 	// N is the Nullable Flag
 	N extends boolean = false
 > extends Validator<ApplyNullability<ArrayResult<E, T>, N>> {
-	public static override fromJSON(
+	public static fromJSON(
 		definition: Definition & { [key: string]: unknown },
 		path: string = 'definition'
 	): Validator {
@@ -68,7 +69,7 @@ export class ArrayValidator<
 				throw new DefinitionError(`Expected ${path}.every to be an Object`);
 
 			validatorInstance.every(
-				super.fromJSON(definition['every'], `${path}.every`) as Validator
+				fromJSON(definition['every'], `${path}.every`) as Validator
 			);
 		}
 
@@ -81,7 +82,7 @@ export class ArrayValidator<
 
 			definition['tuple'].forEach((tupleDef, index) => {
 				try {
-					tupleSchemas.push(super.fromJSON(tupleDef, `${path}.tuple[${index}]`));
+					tupleSchemas.push(fromJSON(tupleDef, `${path}.tuple[${index}]`));
 				} catch (e) {
 					if (!(e instanceof DefinitionError))
 						throw new DefinitionError(`Fatal Error: Undefined Error thrown by Domain.fromJSON at ${path}`);
