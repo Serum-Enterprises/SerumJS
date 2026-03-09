@@ -12,12 +12,12 @@ export declare abstract class Result<T, E> {
     match<R>(onOk: (value: T) => R, onErr: (error: E) => R): R;
 }
 declare class Ok<T> extends Result<T, never> {
-    #private;
+    private _value;
     constructor(value: T);
     get value(): T;
 }
 declare class Err<E> extends Result<never, E> {
-    #private;
+    private _error;
     constructor(error: E);
     get error(): E;
 }

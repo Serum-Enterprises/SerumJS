@@ -1,8 +1,8 @@
 {
 	"name": "@serum-enterprises/option",
-	"version": "2.0.1",
+	"version": "3.0.1",
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=24.0.0"
 	},
 	"description": "Rust-like Option for TS/JS Projects",
 	"main": "./build/Option.js",

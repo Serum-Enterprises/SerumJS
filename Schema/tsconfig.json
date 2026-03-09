@@ -4,9 +4,10 @@
 		"module": "Node16", /* Specify what module code is generated. */
 		"lib": ["ES2024"], /* Specify library files to be included in the compilation. */
 		"rootDir": "./src", /* Specify the root folder within your source files. */
-		"outDir": "./build", /* Specify an output folder for all emitted files. */
 		"declaration": true, /* Generate .d.ts files from TypeScript and JavaScript files in your project. */
 		"declarationDir": "./types", /* Specify the output directory for generated declaration files. */
+		"emitDeclarationOnly": true,
+		"noEmit": false,
 		"forceConsistentCasingInFileNames": true, /* Ensure that casing is correct in imports. */
 		/* Type Checking */
 		"strict": true, /* Enable all strict type-checking options. */
@@ -25,6 +26,6 @@
 		"noFallthroughCasesInSwitch": true, /* Enable error reporting for fallthrough cases in switch statements. */
 		"noUncheckedIndexedAccess": true, /* Add 'undefined' to a type when accessed using an index. */
 		"noImplicitOverride": true, /* Ensure overriding members in derived classes are marked with an override modifier. */
-		"noPropertyAccessFromIndexSignature": true, /* Enforces using indexed accessors for keys declared using an indexed type. */
+		"noPropertyAccessFromIndexSignature": true /* Enforces using indexed accessors for keys declared using an indexed type. */
 	}
 }

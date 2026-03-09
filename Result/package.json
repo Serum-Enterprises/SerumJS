@@ -1,8 +1,8 @@
 {
 	"name": "@serum-enterprises/result",
-	"version": "2.0.3",
+	"version": "3.0.1",
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=24.0.0"
 	},
 	"description": "Rust-like Result for TS/JS Projects",
 	"main": "./build/Result.js",

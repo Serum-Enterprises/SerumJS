@@ -1,105 +1,107 @@
 export abstract class Result<T, E> {
-	static all<T, E>(results: Result<T, E>[]): Result<T[], E[]> {
-		const values: T[] = [];
-		const errors: E[] = [];
+    static all<T, E>(results: Result<T, E>[]): Result<T[], E[]> {
+        const values: T[] = [];
+        const errors: E[] = [];
 
-		for (const result of results) {
-			if (result.isOk()) {
-				values.push((result as Ok<T>).value);
-			} else {
-				errors.push((result as Err<E>).error);
-			}
-		}
+        for (const result of results) {
+            if (result.isOk()) {
+                values.push((result as Ok<T>).value);
+            }
+            else {
+                errors.push((result as Err<E>).error);
+            }
+        }
 
-		if (errors.length > 0) {
-			return Result.Err(errors);
-		} else {
-			return Result.Ok(values);
-		}
-	}
+        if (errors.length > 0) {
+            return Result.Err(errors);
+        }
+        else {
+            return Result.Ok(values);
+        }
+    }
 
-	static attempt<T, E>(fn: () => T): Result<T, E> {
-		try {
-			return Result.Ok(fn());
-		} catch (error) {
-			return Result.Err(error as E);
-		}
-	}
+    static attempt<T, E>(fn: () => T): Result<T, E> {
+        try {
+            return Result.Ok(fn());
+        } catch (error) {
+            return Result.Err(error as E);
+        }
+    }
 
-	static Ok<T>(value: T): Ok<T> {
-		return new Ok(value);
-	}
+    static Ok<T>(value: T): Ok<T> {
+        return new Ok(value);
+    }
 
-	static Err<E>(error: E): Err<E> {
-		return new Err(error);
-	}
+    static Err<E>(error: E): Err<E> {
+        return new Err(error);
+    }
 
-	isOk(): this is Ok<T> {
-		return this instanceof Ok;
-	}
+    isOk(): this is Ok<T> {
+        return this instanceof Ok;
+    }
 
-	isErr(): this is Err<E> {
-		return this instanceof Err;
-	}
+    isErr(): this is Err<E> {
+        return this instanceof Err;
+    }
 
-	onOk(fn: (value: T) => void): this {
-		if (this.isOk())
-			fn((this as Ok<T>).value);
+    onOk(fn: (value: T) => void): this {
+        if (this.isOk())
+            fn((this as Ok<T>).value);
 
-		return this;
-	}
+        return this;
+    }
 
-	onErr(fn: (error: E) => void): this {
-		if (this.isErr())
-			fn((this as Err<E>).error);
+    onErr(fn: (error: E) => void): this {
+        if (this.isErr())
+            fn((this as Err<E>).error);
 
-		return this;
-	}
+        return this;
+    }
 
-	mapOk<R>(fn: (value: T) => R): Result<R, E> {
-		return this.match<Result<R, E>>(
-			value => Result.Ok(fn(value)),
-			error => Result.Err(error)
-		);
-	}
+    mapOk<R>(fn: (value: T) => R): Result<R, E> {
+        return this.match<Result<R, E>>(
+            value => Result.Ok(fn(value)),
+            error => Result.Err(error)
+        );
+    }
 
-	mapErr<F>(fn: (error: E) => F): Result<T, F> {
-		return this.match<Result<T, F>>(
-			value => Result.Ok(value),
-			error => Result.Err(fn(error))
-		);
-	}
+    mapErr<F>(fn: (error: E) => F): Result<T, F> {
+        return this.match<Result<T, F>>(
+            value => Result.Ok(value),
+            error => Result.Err(fn(error))
+        );
+    }
 
-	match<R>(onOk: (value: T) => R, onErr: (error: E) => R): R {
-		if (this.isOk())
-			return onOk((this as Ok<T>).value);
-		else
-			return onErr((this as unknown as Err<E>).error);
-	}
+    match<R>(onOk: (value: T) => R, onErr: (error: E) => R): R {
+        if (this.isOk())
+            return onOk((this as Ok<T>).value);
+        else
+            return onErr((this as unknown as Err<E>).error);
+    }
 }
 
 class Ok<T> extends Result<T, never> {
-	#value: T;
+    private _value: T;
 
-	constructor(value: T) {
-		super();
-		this.#value = value;
-	}
+    constructor(value: T) {
+        super();
+        this._value = value;
+    }
 
-	get value(): T {
-		return this.#value;
-	}
+    get value(): T {
+        return this._value;
+    }
 }
 
 class Err<E> extends Result<never, E> {
-	#error: E;
+    private _error: E;
 
-	constructor(error: E) {
-		super();
-		this.#error = error;
-	}
+    constructor(error: E) {
+        super();
+        this._error = error;
+    }
 
-	get error(): E {
-		return this.#error;
-	}
+    get error(): E {
+        return this._error;
+    }
 }

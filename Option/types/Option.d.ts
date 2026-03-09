@@ -9,7 +9,7 @@ export declare abstract class Option<T> {
     match<R>(onSome: (value: T) => R, onNone: () => R): R;
 }
 export declare class Some<T> extends Option<T> {
-    #private;
+    private _value;
     constructor(value: T);
     get value(): T;
 }

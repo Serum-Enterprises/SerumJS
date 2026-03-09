@@ -1,12 +1,26 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.NegativeIntegerError = exports.IncompleteSequenceError = exports.EmptyBufferError = exports.VLQError = void 0;
 exports.encodeUnsignedInteger = encodeUnsignedInteger;
 exports.decodeUnsignedInteger = decodeUnsignedInteger;
 exports.encodeInteger = encodeInteger;
 exports.decodeInteger = decodeInteger;
+const result_1 = require("@serum-enterprises/result");
+class VLQError extends Error {
+}
+exports.VLQError = VLQError;
+class EmptyBufferError extends VLQError {
+}
+exports.EmptyBufferError = EmptyBufferError;
+class IncompleteSequenceError extends VLQError {
+}
+exports.IncompleteSequenceError = IncompleteSequenceError;
+class NegativeIntegerError extends VLQError {
+}
+exports.NegativeIntegerError = NegativeIntegerError;
 function encodeUnsignedInteger(value) {
     if (value < 0n)
-        throw new RangeError('Expected value to be a positive Integer');
+        return result_1.Result.Err(new NegativeIntegerError('Expected value to be a positive Integer'));
     const bytes = [];
     let byte = Number(value & 0x7fn);
     value >>= 7n;
@@ -17,22 +31,22 @@ function encodeUnsignedInteger(value) {
         value >>= 7n;
         bytes.unshift(byte);
     }
-    return Buffer.from(bytes);
+    return result_1.Result.Ok(Buffer.from(bytes));
 }
 function decodeUnsignedInteger(buffer, includeLength = false) {
     if (buffer.length === 0)
-        throw new RangeError('Buffer is empty');
+        return result_1.Result.Err(new EmptyBufferError('Buffer is empty'));
     let value = 0n;
-    let i = 0;
+    let byteLength = 0;
     let byte = 0;
     do {
-        byte = buffer[i];
+        byte = buffer[byteLength];
         value = (value << 7n) | BigInt(byte & 0x7F);
-        i++;
-    } while (i < buffer.length && (byte & 0x80));
-    if (i === buffer.length && (byte & 0x80))
-        throw new RangeError('Incomplete VLQ Sequence');
-    return includeLength ? { value, byteLength: BigInt(i) } : value;
+        byteLength++;
+    } while (byteLength < buffer.length && (byte & 0x80));
+    if (byteLength === buffer.length && (byte & 0x80))
+        return result_1.Result.Err(new IncompleteSequenceError('Incomplete VLQ Sequence'));
+    return result_1.Result.Ok(includeLength ? { value, byteLength } : value);
 }
 function encodeInteger(value) {
     const isNegative = value < 0n;
@@ -51,24 +65,24 @@ function encodeInteger(value) {
         bytes.unshift(0x80 | negativeMask);
     else
         bytes[0] |= negativeMask;
-    return Buffer.from(bytes);
+    return result_1.Result.Ok(Buffer.from(bytes));
 }
 function decodeInteger(buffer, includeLength = false) {
     if (buffer.length === 0)
-        throw new RangeError('Buffer is empty');
+        return result_1.Result.Err(new EmptyBufferError('Buffer is empty'));
     let result = 0n;
-    let i = 0;
-    let byte = buffer[i];
+    let byteLength = 0;
+    let byte = buffer[byteLength];
     const isNegative = !!(byte & 0x40);
     result = BigInt(byte & 0x3F);
-    i++;
-    while (i < buffer.length && (byte & 0x80)) {
-        byte = buffer[i];
+    byteLength++;
+    while (byteLength < buffer.length && (byte & 0x80)) {
+        byte = buffer[byteLength];
         result = (result << 7n) | BigInt(byte & 0x7F);
-        i++;
+        byteLength++;
     }
-    if (i === buffer.length && (byte & 0x80))
-        throw new RangeError('Incomplete VLQ Sequence');
+    if (byteLength === buffer.length && (byte & 0x80))
+        return result_1.Result.Err(new IncompleteSequenceError('Incomplete VLQ Sequence'));
     const value = isNegative ? -result : result;
-    return includeLength ? { value, byteLength: BigInt(i) } : value;
+    return result_1.Result.Ok(includeLength ? { value, byteLength } : value);
 }

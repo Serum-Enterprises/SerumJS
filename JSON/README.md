@@ -1,6 +1,6 @@
 # JSON
 
-Type-Safe drop-in replacement for the native JSON Object
+Type-Safe drop-in replacement for the native JSON
 
 ## Installation
 
@@ -11,22 +11,23 @@ npm install --save @serum-enterprises/json
 ## Usage
 
 ```typescript
-import * as JSON from '@serum-enterprises/json';
+import {JSON} from '@serum-enterprises/json';
 
-const data: JSON.JSON = { name: 'John Doe', age: 25 };
+const data: JSON = { name: 'John Doe', age: 25 };
+const name: JSON.String = data.name;
 
-function verify(data: JSON.JSON): boolean {
+function verify(data: JSON): boolean {
 	if(!JSON.isObject(data))
 		return false;
 
-	if(!JSON.isString(data.name) || !JSON.isInteger(data.age))
+	if(!JSON.isString(data.name) || !JSON.isInteger(data.age))
 		return false;
 
 	return true;
 }
 
 if(verify(data)) {
-	console.log(`Data is correct: `);
+	console.log(`Data for ${name} is correct: `);
 	console.log(JSON.stringify(data, null, 2));
 }
 ```
@@ -34,6 +35,8 @@ if(verify(data)) {
 ## API
 
 Please check [JSON.d.ts](./types/JSON.d.ts) for the full API.
+
+Please also note that functions prefixed with `_` are potentially mutating their Input.
 
 ## LICENSE
 

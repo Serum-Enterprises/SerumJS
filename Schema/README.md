@@ -5,40 +5,30 @@ Modern Schema Validation Library inspired by Joi.dev
 ## Installation
 
 ```bash
-npm install --save @serum-enterprises/schema
+npm install --save @serum-enterprises/schema@3.0.0-beta.1
 ```
 
 ## Usage
 
 ```typescript
-import Schema from '@serum-enterprises/schema';
+import {Schema} from '@serum-enterprises/schema';
 
-const schema = Schema.Object
-	.nullable()
-	.schema({
-		name: Schema.String,
-		age: Schema.Number.integer().min(18).max(99),
-		friends: Schema.Array
-			.every(
-				Schema.Or.oneOf([
-					Schema.Object
-						.schema({
-							name: Schema.String,
-							age: Schema.Number.min(18).max(99)
-						}),
-					Schema.String
-				])
-			)
-	});
+const schema = Schema.Object.nullable().shape({
+	name: Schema.String,
+	age: Schema.Number.integer().min(18).max(99),
+	friends: Schema.Array.every(Schema.String)
+}).exact();
 
-schema.validate({ name: 'John', age: 20, friends: [{ name: "Maria", age: 22 }] });
+const person = schema.validate({name: 'John', age: 20, friends: ["Jane", "Mary"]});
+
+console.log(person.name);
+console.log(person.age);
+console.log(person.friends.join(', '));
 ```
-
-**Note: Schema.fromJSON and Schema.validate return a Result. See @serum-enterprises/result for more Information.**
 
 ## API
 
-Please check [Schema.d.ts](./types/Schema.d.ts) for the full API.
+Please check [index.d.ts](./types/index.d.ts) for the full API.
 
 ## LICENSE
 

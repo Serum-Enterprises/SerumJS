@@ -36,13 +36,13 @@ class Option {
 }
 exports.Option = Option;
 class Some extends Option {
-    #value;
+    _value;
     constructor(value) {
         super();
-        this.#value = value;
+        this._value = value;
     }
     get value() {
-        return this.#value;
+        return this._value;
     }
 }
 exports.Some = Some;
