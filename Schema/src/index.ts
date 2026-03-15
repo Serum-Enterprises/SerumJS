@@ -38,6 +38,26 @@ export class Schema {
 	static fromJSON(definition: unknown, path: string = 'definition'): Validator {
 		return fromJSON(definition, path);
 	}
+
+	static assertDefinition(definition: unknown, path: string = 'definition'): asserts definition is Definition {
+		this.fromJSON(definition, path);
+	}
+
+	static validateDefinition(definition: unknown, path: string = 'definition'): Definition {
+		this.assertDefinition(definition, path);
+
+		return definition;
+	}
+
+	static isDefinition(definition: unknown, path: string = 'definition'): definition is Definition {
+		try {
+			this.assertDefinition(definition, path);
+
+			return true;
+		} catch (e) {
+			return false;
+		}
+	}
 }
 
 export const Validators = {
