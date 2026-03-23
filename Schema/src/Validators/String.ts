@@ -1,9 +1,9 @@
 import {JSON} from '@serum-enterprises/json';
 import {Option} from '@serum-enterprises/option';
 import {Validator} from '../Validator';
-import {Definition, ApplyNullability, AssertError, DefinitionError} from '../lib/util';
+import {ApplyNullability, AssertError, DefinitionError} from '../lib/util';
 import {JSONValidator} from './JSON';
-import {StringValidatorDefinition} from '../Definitions';
+import {Definition, StringValidatorDefinition} from '../Definitions';
 
 export class StringValidator<
 	T extends JSON.String = JSON.String,

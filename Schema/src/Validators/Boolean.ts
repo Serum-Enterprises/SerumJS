@@ -1,9 +1,9 @@
 import {JSON} from '@serum-enterprises/json';
 import {Option} from '@serum-enterprises/option';
 import {Validator} from '../Validator';
-import {Definition, ApplyNullability, AssertError, DefinitionError} from '../lib/util';
+import {AssertError, DefinitionError} from '../lib/util';
 import {JSONValidator} from './JSON';
-import {BooleanValidatorDefinition} from '../Definitions';
+import {Definition, BooleanValidatorDefinition} from '../Definitions';
 
 export class BooleanValidator<
 	T extends JSON.Boolean = JSON.Boolean,

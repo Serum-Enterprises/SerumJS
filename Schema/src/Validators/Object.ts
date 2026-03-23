@@ -3,13 +3,13 @@ import {Option} from '@serum-enterprises/option';
 import {Validator} from '../Validator';
 import {fromJSON} from '../lib/fromJSON';
 import {
-	Definition, ApplyNullability,
+	ApplyNullability,
 	InferDefinitionType, InferValidatorReturnType,
 	InferObjectDefinitionType, InferObjectReturnType,
 	AssertError, DefinitionError
 } from '../lib/util';
 import {JSONValidator} from './JSON';
-import {ObjectValidatorDefinition} from '../Definitions';
+import {Definition, ObjectValidatorDefinition} from '../Definitions';
 
 type ObjectResult<T, S, E extends boolean> =
 	S extends { [key: string]: unknown }

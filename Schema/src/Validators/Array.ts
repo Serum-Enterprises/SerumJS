@@ -3,13 +3,13 @@ import {Option} from '@serum-enterprises/option';
 import {Validator} from '../Validator';
 import {fromJSON} from '../lib/fromJSON';
 import {
-	Definition, ApplyNullability,
+	ApplyNullability,
 	InferDefinitionType, InferValidatorReturnType,
 	InferListDefinitionType, InferListReturnType,
 	AssertError, DefinitionError
 } from '../lib/util';
 import {JSONValidator} from './JSON';
-import {ArrayValidatorDefinition} from '../Definitions';
+import {Definition, ArrayValidatorDefinition} from '../Definitions';
 
 type ArrayResult<E, T> =
 	T extends readonly unknown[]

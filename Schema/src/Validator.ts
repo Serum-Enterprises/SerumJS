@@ -1,4 +1,4 @@
-import {Definition} from './lib/util';
+import {Definition} from './Definitions';
 
 export abstract class Validator<T = unknown> {
 	public abstract assert(data: unknown, path: string): asserts data is T;

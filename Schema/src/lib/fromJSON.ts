@@ -1,12 +1,13 @@
 import {JSON} from '@serum-enterprises/json';
 import type {Validator} from '../Validator';
-import {JSONValidator} from '../validators/JSON';
-import {BooleanValidator} from '../validators/Boolean';
-import {NumberValidator} from '../validators/Number';
-import {StringValidator} from '../validators/String';
-import {ArrayValidator} from '../validators/Array';
-import {ObjectValidator} from '../validators/Object';
-import {Definition, DefinitionError} from './util';
+import {JSONValidator} from '../Validators/JSON';
+import {BooleanValidator} from '../Validators/Boolean';
+import {NumberValidator} from '../Validators/Number';
+import {StringValidator} from '../Validators/String';
+import {ArrayValidator} from '../Validators/Array';
+import {ObjectValidator} from '../Validators/Object';
+import {DefinitionError} from './util';
+import {Definition} from '../Definitions';
 
 export function fromJSON(
 	definition: unknown,

@@ -3,12 +3,21 @@ import {fromJSON} from './lib/fromJSON';
 
 export {Validator};
 
-import {JSONValidator, JSONValidatorDefinition} from './validators/JSON';
-import {BooleanValidator, BooleanValidatorDefinition} from './validators/Boolean';
-import {NumberValidator, NumberValidatorDefinition} from './validators/Number';
-import {StringValidator, StringValidatorDefinition} from './validators/String';
-import {ArrayValidator, ArrayValidatorDefinition} from './validators/Array';
-import {ObjectValidator, ObjectValidatorDefinition} from './validators/Object';
+import {JSONValidator} from './Validators/JSON';
+import {BooleanValidator} from './Validators/Boolean';
+import {NumberValidator} from './Validators/Number';
+import {StringValidator} from './Validators/String';
+import {ArrayValidator} from './Validators/Array';
+import {ObjectValidator} from './Validators/Object';
+
+import {
+	JSONValidatorDefinition,
+	BooleanValidatorDefinition,
+	NumberValidatorDefinition,
+	StringValidatorDefinition,
+	ArrayValidatorDefinition,
+	ObjectValidatorDefinition
+} from './Definitions';
 
 export class Schema {
 	static get JSON(): JSONValidator {
