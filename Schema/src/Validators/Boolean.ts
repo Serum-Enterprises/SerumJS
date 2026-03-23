@@ -5,28 +5,26 @@ import {AssertError, DefinitionError} from '../lib/util';
 import {JSONValidator} from './JSON';
 import {Definition, BooleanValidatorDefinition} from '../Definitions';
 
-export class BooleanValidator<
-	T extends JSON.Boolean = JSON.Boolean,
-	N extends boolean = false
-> extends Validator<ApplyNullability<T, N>> {
+export class BooleanValidator<T = unknown> extends Validator<T> {
 	public static fromJSON(
 		definition: Definition & { [key: string]: unknown },
 		path: string = 'definition'
-	): Validator {
+	): BooleanValidator {
 		const validatorInstance = new BooleanValidator();
 
 		if ('nullable' in definition) {
 			if (!JSON.isBoolean(definition['nullable']))
 				throw new DefinitionError(`Expected ${path}.nullable to be a Boolean`);
 
-			validatorInstance.nullable(definition['nullable']);
+			if(definition['nullable'])
+				validatorInstance._nullable = Option.Some(null);
 		}
 
 		if ('equals' in definition) {
 			if (!JSON.isBoolean(definition['equals']))
 				throw new DefinitionError(`Expected ${path}.equals to be a Boolean`);
 
-			validatorInstance.equals(definition['equals']);
+			validatorInstance._equals = Option.Some(definition['equals']);
 		}
 
 		return validatorInstance;
@@ -35,19 +33,7 @@ export class BooleanValidator<
 	protected _nullable: Option<null> = Option.None();
 	protected _equals: Option<boolean> = Option.None();
 
-	public nullable<const F extends boolean = true>(flag?: F): BooleanValidator<T, F> {
-		this._nullable = flag ?? true ? Option.Some(null) : Option.None();
-
-		return this as unknown as BooleanValidator<T, F>;
-	}
-
-	public equals<const V extends boolean>(value: V): BooleanValidator<V, N> {
-		this._equals = Option.Some(value);
-
-		return this as unknown as BooleanValidator<V, N>;
-	}
-
-	public assert(data: unknown, path: string = 'data'): asserts data is ApplyNullability<T, N> {
+	public assert(data: unknown, path: string = 'data'): asserts data is T {
 		if (JSON.isBoolean(data)) {
 			if (this._equals.isSome() && this._equals.value !== data)
 				throw new AssertError(`Expected ${path} to be ${this._equals.value}${this._nullable.isSome() ? '' : ' or Null'}`);

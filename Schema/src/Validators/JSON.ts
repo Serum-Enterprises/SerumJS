@@ -7,7 +7,7 @@ export class JSONValidator<T extends JSON.JSON = JSON.JSON> extends Validator<T>
 	public static fromJSON(
 		_definition: Definition & { [key: string]: unknown },
 		_path: string = 'definition'
-	): Validator {
+	): JSONValidator {
 		return new JSONValidator();
 	}
 

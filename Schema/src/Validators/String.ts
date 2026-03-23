@@ -1,46 +1,44 @@
 import {JSON} from '@serum-enterprises/json';
 import {Option} from '@serum-enterprises/option';
 import {Validator} from '../Validator';
-import {ApplyNullability, AssertError, DefinitionError} from '../lib/util';
+import {AssertError, DefinitionError} from '../lib/util';
 import {JSONValidator} from './JSON';
 import {Definition, StringValidatorDefinition} from '../Definitions';
 
-export class StringValidator<
-	T extends JSON.String = JSON.String,
-	N extends boolean = false
-> extends Validator<ApplyNullability<T, N>> {
+export class StringValidator<T = unknown> extends Validator<T> {
 	public static fromJSON(
 		definition: Definition & { [key: string]: unknown },
 		path: string = 'schema'
-	): Validator {
+	): StringValidator {
 		const validatorInstance = new StringValidator();
 
 		if ('nullable' in definition) {
 			if (!JSON.isBoolean(definition['nullable']))
 				throw new DefinitionError(`Expected ${path}.nullable to be a Boolean`);
 
-			validatorInstance.nullable(definition['nullable']);
+			if(definition['nullable'])
+				validatorInstance._nullable = Option.Some(null);
 		}
 
 		if ('equals' in definition) {
 			if (!JSON.isString(definition['equals']))
 				throw new DefinitionError(`Expected ${path}.equals to be a String`);
 
-			validatorInstance.equals(definition['equals'], `${path}.equals`);
+			validatorInstance._equals = Option.Some(definition['equals']);
 		}
 
 		if ('min' in definition) {
 			if (!JSON.isNumber(definition['min']))
-				throw new DefinitionError(`Expected ${path}.min to be a positive Integer`);
+				throw new DefinitionError(`Expected ${path}.min to be a Number`);
 
-			validatorInstance.min(definition['min'], `${path}.min`);
+			validatorInstance._min = Option.Some(definition['min']);
 		}
 
 		if ('max' in definition) {
 			if (!JSON.isNumber(definition['max']))
-				throw new DefinitionError(`Expected ${path}.max to be a positive Integer`);
+				throw new DefinitionError(`Expected ${path}.max to be a Number`);
 
-			validatorInstance.max(definition['max'], `${path}.max`);
+			validatorInstance._max = Option.Some(definition['max']);
 		}
 
 		return validatorInstance;
@@ -51,56 +49,7 @@ export class StringValidator<
 	protected _min: Option<number> = Option.None();
 	protected _max: Option<number> = Option.None();
 
-	public nullable<const F extends boolean = true>(flag?: F): StringValidator<T, F> {
-		this._nullable = (flag ?? true) ? Option.Some(null) : Option.None();
-
-		return this as unknown as StringValidator<T, F>;
-	}
-
-	public equals<const V extends string>(value: V, path: string = 'equals'): StringValidator<V, N> {
-		if (this._min.isSome() && this._min.value > value.length)
-			throw new DefinitionError(`Expected the Equals Rules Length to be larger than or equal to the Minimum Rule at Path ${path}`);
-
-		if (this._max.isSome() && this._max.value < value.length)
-			throw new DefinitionError(`Expected the Equals Rules Length to be smaller than or equal to the Maximum Rule at Path ${path}`);
-
-
-		this._equals = Option.Some(value);
-
-		return this as unknown as StringValidator<V, N>;
-	}
-
-	public min(value: number, path: string = 'min'): this {
-		if (!Number.isSafeInteger(value) || value < 0)
-			throw new DefinitionError(`Expected ${path}.min to be a positive Integer`);
-
-		if (this._max.isSome() && this._max.value < value)
-			throw new DefinitionError(`Expected Minimum Rule to be smaller than or equal to Maximum Rule at Path ${path}`);
-
-		if (this._equals.isSome() && this._equals.value.length < value)
-			throw new DefinitionError(`Expected Minimum Rule to be smaller than or equal to the Equals Rules Length at Path ${path}`);
-
-		this._min = Option.Some(value);
-
-		return this;
-	}
-
-	public max(value: number, path: string = 'max'): this {
-		if (!Number.isSafeInteger(value) || value < 0)
-			throw new DefinitionError(`Expected ${path}.max to be a positive Integer`);
-
-		if (this._min.isSome() && this._min.value > value)
-			throw new DefinitionError(`Expected Maximum Rule to be larger than or equal to Minimum Rule at Path ${path}`);
-
-		if (this._equals.isSome() && this._equals.value.length > value)
-			throw new DefinitionError(`Expected Maximum Rule to be larger than or equal to the Equals Rules Length at Path ${path}`);
-
-		this._max = Option.Some(value);
-
-		return this;
-	}
-
-	public assert(data: unknown, path: string = 'data'): asserts data is ApplyNullability<T, N> {
+	public assert(data: unknown, path: string = 'data'): asserts data is T {
 		if (JSON.isString(data)) {
 			if (this._equals.isSome() && this._equals.value !== data)
 				throw new AssertError(`Expected ${path} to be ${this._equals.value}`);

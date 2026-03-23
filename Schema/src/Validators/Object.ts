@@ -2,71 +2,54 @@ import {JSON} from '@serum-enterprises/json';
 import {Option} from '@serum-enterprises/option';
 import {Validator} from '../Validator';
 import {fromJSON} from '../lib/fromJSON';
-import {
-	ApplyNullability,
-	InferDefinitionType, InferValidatorReturnType,
-	InferObjectDefinitionType, InferObjectReturnType,
-	AssertError, DefinitionError
-} from '../lib/util';
+import {AssertError, DefinitionError} from '../lib/util';
 import {JSONValidator} from './JSON';
 import {Definition, ObjectValidatorDefinition} from '../Definitions';
 
-type ObjectResult<T, S, E extends boolean> =
-	S extends { [key: string]: unknown }
-		? E extends true
-			? { [K in keyof S]: S[K] & T }
-			: { [K in keyof S]: S[K] & T } & { [key: string]: T }
-		: { [key: string]: T };
-
 export class ObjectValidator<
-	// T & S are the Every (Type) and Shape return types
 	T = unknown,
-	S = unknown,
 	// TD & SD are the Every (Type) and Shape definitions
 	TD extends Definition = Definition,
-	SD extends { [key: string]: Definition } = { [key: string]: Definition },
-	// N is nullable
-	N extends boolean = false,
-	// E is exact (no extra props when shape is set)
-	E extends boolean = false
-> extends Validator<ObjectResult<T, S, E>> {
+	SD extends { [key: string]: Definition } = { [key: string]: Definition }
+> extends Validator<T> {
 	public static fromJSON(
 		definition: Definition & { [key: string]: unknown },
 		path: string = "definition"
-	): Validator {
+	): ObjectValidator {
 		const validatorInstance = new ObjectValidator();
 
 		if ("nullable" in definition) {
 			if (!JSON.isBoolean(definition["nullable"]))
 				throw new DefinitionError(`Expected ${path}.nullable to be a Boolean`);
 
-			validatorInstance.nullable(definition["nullable"]);
+			if (definition['nullable'])
+				validatorInstance._nullable = Option.Some(null);
 		}
 
 		if ("exact" in definition) {
 			if (!JSON.isBoolean(definition["exact"]))
 				throw new DefinitionError(`Expected ${path}.exact to be a Boolean`);
 
-			validatorInstance.exact(definition["exact"], `${path}.exact`);
+			if (definition['exact'])
+				validatorInstance._exact = Option.Some(null);
 		}
 
 		if ("min" in definition) {
 			if (!JSON.isNumber(definition["min"]))
 				throw new DefinitionError(`Expected ${path}.min to be a Number`);
 
-			validatorInstance.min(definition["min"], `${path}.min`);
+			validatorInstance._min = Option.Some(definition['min']);
 		}
 
 		if ("max" in definition) {
 			if (!JSON.isNumber(definition["max"]))
 				throw new DefinitionError(`Expected ${path}.max to be a Number`);
 
-			validatorInstance.max(definition["max"], `${path}.max`);
+			validatorInstance._max = Option.Some(definition['max']);
 		}
 
-		if ("every" in definition) {
-			validatorInstance.every(fromJSON(definition['every'], `${path}.every`));
-		}
+		if ("every" in definition)
+			validatorInstance._every = Option.Some(fromJSON(definition['every'], `${path}.every`));
 
 		if ("shape" in definition) {
 			if (!JSON.isShallowObject(definition["shape"]))
@@ -90,7 +73,7 @@ export class ObjectValidator<
 				throw new DefinitionError(`Multiple Definition Errors detected at ${path}.shape (see cause)`, {cause: errors});
 			}
 
-			validatorInstance.shape(shape, `${path}.shape`);
+			validatorInstance._shape = Option.Some(shape);
 		}
 
 		return validatorInstance;
@@ -103,98 +86,8 @@ export class ObjectValidator<
 	protected _shape: Option<{ [key: string]: Validator }> = Option.None();
 	protected _exact: Option<null> = Option.None();
 
-
-	public nullable<const F extends boolean = true>(flag?: F): ObjectValidator<T, S, TD, SD, F, E> {
-		this._nullable = (flag ?? true) ? Option.Some(null) : Option.None();
-
-		return this as unknown as ObjectValidator<T, S, TD, SD, F, E>;
-	}
-
-	public min(value: number, path: string = 'min'): this {
-		if (this._max.isSome() && this._max.value < value)
-			throw new DefinitionError(`Expected Minimum Rule to be smaller than or equal to Maximum Rule at Path ${path}`);
-
-		if (this._shape.isSome() && value < Object.keys(this._shape.value).length)
-			throw new DefinitionError(`Expected Minimum Rule to be larger than or equal to Shape Key Count at Path ${path}`);
-
-		if (this._exact.isSome() && this._shape.isSome() && value > Object.keys(this._shape.value).length)
-			throw new DefinitionError(`Expected Minimum Rule to be smaller than or equal to Shape Key Count due to Exact Rule at Path ${path}`);
-
-		this._min = Option.Some(value);
-
-		return this;
-	}
-
-	public max(value: number, path: string = 'max'): this {
-		if (this._min.isSome() && this._min.value > value)
-			throw new DefinitionError(`Expected Maximum Rule to be larger than or equal to Minimum Rule at Path ${path}`);
-
-		if (this._shape.isSome() && value < Object.keys(this._shape.value).length)
-			throw new DefinitionError(`Expected Maximum Rule to be larger than or equal to Shape Key Count at Path ${path}`);
-
-		this._max = Option.Some(value);
-
-		return this;
-	}
-
-	public every<V extends Validator>(validator: V): ObjectValidator<
-		InferValidatorReturnType<V>,
-		S,
-		InferDefinitionType<V>,
-		SD,
-		N,
-		E
-	> {
-		this._every = Option.Some(validator);
-
-		return this as unknown as ObjectValidator<InferValidatorReturnType<V>, S, InferDefinitionType<V>, SD, N, E>;
-	}
-
-	public shape<S extends { [key: string]: Validator }>(value: S, path: string = 'shape'): ObjectValidator<
-		T,
-		InferObjectReturnType<S>,
-		TD,
-		InferObjectDefinitionType<S>,
-		N,
-		E
-	> {
-		const shapeKeyCount = Object.keys(value).length;
-
-		if (this._min.isSome() && this._min.value < shapeKeyCount)
-			throw new DefinitionError(`Expected Shape Key Count to be smaller than or equal to Minimum Rule at Path ${path}`);
-
-		if (this._max.isSome() && this._max.value < shapeKeyCount)
-			throw new DefinitionError(`Expected Shape Key Count to be smaller than or equal to Maximum Rule at Path ${path}`);
-
-		if (this._exact.isSome() && this._min.isSome() && this._min.value > shapeKeyCount)
-			throw new DefinitionError(`Expected Shape Key Count to be larger than or equal to Minimum Rule due to Exact Rule at Path ${path}`);
-
-		if (this._exact.isSome() && this._max.isSome() && this._max.value < shapeKeyCount)
-			throw new DefinitionError(`Expected Shape Key Count to be smaller than or equal to Maximum Rule due to Exact Rule at Path ${path}`);
-
-		this._shape = Option.Some(value);
-
-		return this as unknown as ObjectValidator<T, InferObjectReturnType<S>, TD, InferObjectDefinitionType<S>, N, E>;
-	}
-
-	public exact<const F extends boolean = true>(flag?: F, path: string = 'exact'): ObjectValidator<T, S, TD, SD, N, F> {
-		if ((flag ?? true) && this._shape.isSome()) {
-			const shapeKeyCount = Object.keys(this._shape.value).length;
-
-			if (this._min.isSome() && this._min.value > shapeKeyCount)
-				throw new DefinitionError(`Expected Exact Rule to be false due to Minimum Rule requiring more Properties than Shape defines at Path ${path}`);
-
-			if (this._max.isSome() && this._max.value < shapeKeyCount)
-				throw new DefinitionError(`Expected Exact Rule to be false due to Maximum Rule allowing fewer Properties than Shape defines at Path ${path}`);
-		}
-
-		this._exact = (flag ?? true) ? Option.Some(null) : Option.None();
-
-		return this as unknown as ObjectValidator<T, S, TD, SD, N, F>;
-	}
-
-	public assert(data: unknown, path: string = "data"): asserts data is ApplyNullability<ObjectResult<T, S, E>, N> {
-		if(JSON.isShallowObject(data)) {
+	public assert(data: unknown, path: string = "data"): asserts data is T {
+		if (JSON.isShallowObject(data)) {
 			const keys = Object.keys(data);
 
 			if (this._min.isSome() && keys.length < this._min.value)
@@ -246,8 +139,8 @@ export class ObjectValidator<
 			if (errors.length > 0)
 				throw new AssertError(`Multiple Errors while asserting ${path} (see cause)`, {cause: errors});
 		}
-		else if(JSON.isNull(data)) {
-			if(!this._nullable.isSome())
+		else if (JSON.isNull(data)) {
+			if (!this._nullable.isSome())
 				throw new AssertError(`Expected ${path} to be an Object${this._nullable.isSome() ? ' or Null' : ''}`);
 		}
 		else
@@ -255,7 +148,7 @@ export class ObjectValidator<
 	}
 
 	public isSubset(other: Validator): boolean {
-		if(other instanceof JSONValidator)
+		if (other instanceof JSONValidator)
 			return true;
 
 		// Must be the same validator type
