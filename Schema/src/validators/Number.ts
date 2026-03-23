@@ -3,15 +3,7 @@ import {Option} from '@serum-enterprises/option';
 import {Validator} from '../Validator';
 import {Definition, ApplyNullability, AssertError, DefinitionError} from '../lib/util';
 import {JSONValidator} from './JSON';
-
-export interface NumberValidatorDefinition extends Definition {
-	type: 'number';
-	nullable?: boolean;
-	equals?: JSON.Number;
-	integer?: boolean;
-	min?: number;
-	max?: number;
-}
+import {NumberValidatorDefinition} from '../Definitions';
 
 export class NumberValidator<
 	T extends JSON.Number = JSON.Number,

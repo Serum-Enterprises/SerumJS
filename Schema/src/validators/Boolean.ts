@@ -3,12 +3,7 @@ import {Option} from '@serum-enterprises/option';
 import {Validator} from '../Validator';
 import {Definition, ApplyNullability, AssertError, DefinitionError} from '../lib/util';
 import {JSONValidator} from './JSON';
-
-export interface BooleanValidatorDefinition extends Definition {
-	type: 'boolean';
-	nullable?: boolean;
-	equals?: boolean;
-}
+import {BooleanValidatorDefinition} from '../Definitions';
 
 export class BooleanValidator<
 	T extends JSON.Boolean = JSON.Boolean,

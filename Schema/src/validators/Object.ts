@@ -9,6 +9,7 @@ import {
 	AssertError, DefinitionError
 } from '../lib/util';
 import {JSONValidator} from './JSON';
+import {ObjectValidatorDefinition} from '../Definitions';
 
 type ObjectResult<T, S, E extends boolean> =
 	S extends { [key: string]: unknown }
@@ -16,19 +17,6 @@ type ObjectResult<T, S, E extends boolean> =
 			? { [K in keyof S]: S[K] & T }
 			: { [K in keyof S]: S[K] & T } & { [key: string]: T }
 		: { [key: string]: T };
-
-export interface ObjectValidatorDefinition<
-	TD extends Definition = Definition,
-	SD extends { [key: string]: Definition } = { [key: string]: Definition }
-> extends Definition {
-	type: 'object';
-	nullable?: boolean;
-	exact?: boolean;
-	min?: number;
-	max?: number;
-	every?: TD;
-	shape?: SD;
-}
 
 export class ObjectValidator<
 	// T & S are the Every (Type) and Shape return types

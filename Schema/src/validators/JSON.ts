@@ -1,10 +1,7 @@
 import {JSON} from '@serum-enterprises/json';
 import {Validator} from '../Validator';
 import {Definition, AssertError} from '../lib/util';
-
-export interface JSONValidatorDefinition extends Definition {
-	type: 'json';
-}
+import {JSONValidatorDefinition} from '../Definitions';
 
 export class JSONValidator<T extends JSON.JSON = JSON.JSON> extends Validator<T> {
 	public static fromJSON(

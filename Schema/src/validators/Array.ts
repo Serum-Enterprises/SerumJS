@@ -9,23 +9,12 @@ import {
 	AssertError, DefinitionError
 } from '../lib/util';
 import {JSONValidator} from './JSON';
+import {ArrayValidatorDefinition} from '../Definitions';
 
 type ArrayResult<E, T> =
 	T extends readonly unknown[]
 		? [...{ [K in keyof T]: T[K] & E }, ...E[]]
 		: E[];
-
-export interface ArrayValidatorDefinition<
-	E extends Definition = Definition,
-	T extends readonly Definition[] = readonly Definition[]
-> extends Definition {
-	type: 'array';
-	nullable?: boolean;
-	min?: number;
-	max?: number;
-	every?: E;
-	tuple?: T;
-}
 
 export class ArrayValidator<
 	// E & T are the Every and Tuple Return Types
