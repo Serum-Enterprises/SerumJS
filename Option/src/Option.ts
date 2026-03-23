@@ -1,12 +1,4 @@
-export abstract class Option<T> {
-	static Some<T>(value: T): Some<T> {
-		return new Some(value);
-	}
-
-	static None(): None {
-		return new None();
-	}
-
+abstract class BaseOption<T> {
 	isSome(): this is Some<T> {
 		return this instanceof Some;
 	}
@@ -44,8 +36,8 @@ export abstract class Option<T> {
 	}
 }
 
-export class Some<T> extends Option<T> {
-	private _value: T;
+export class Some<T> extends BaseOption<T> {
+	private readonly _value: T;
 
 	constructor(value: T) {
 		super();
@@ -57,4 +49,15 @@ export class Some<T> extends Option<T> {
 	}
 }
 
-export class None extends Option<never> { }
+export class None extends BaseOption<never> {}
+
+export type Option<T> = Some<T> | None;
+
+export const Option = {
+	Some<T>(value: T): Some<T> {
+		return new Some(value);
+	},
+	None(): None {
+		return new None();
+	}
+}
