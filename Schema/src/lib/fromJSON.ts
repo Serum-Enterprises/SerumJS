@@ -6,6 +6,7 @@ import {NumberValidator} from '../Validators/Number';
 import {StringValidator} from '../Validators/String';
 import {ArrayValidator} from '../Validators/Array';
 import {ObjectValidator} from '../Validators/Object';
+import {UnionValidator} from '../Validators/Union';
 import {DefinitionError} from './util';
 import {Definition} from '../Definitions';
 
@@ -32,6 +33,8 @@ export function fromJSON(
 			return ArrayValidator.fromJSON(definition as Definition & {[key: string]: unknown}, path);
 		case 'object':
 			return ObjectValidator.fromJSON(definition as Definition & {[key: string]: unknown}, path);
+		case 'union':
+			return UnionValidator.fromJSON(definition as Definition & {[key: string]: unknown}, path);
 		default:
 			throw new DefinitionError(`Expected ${path}.type to be a registered Validator`);
 	}
