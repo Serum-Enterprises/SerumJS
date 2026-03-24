@@ -80,7 +80,7 @@ export class NumberValidator<T = unknown> extends Validator<T> {
 			throw new AssertError(`Expected ${path} to be a Number${this._nullable.isSome() ? ' or Null' : ''}`);
 	}
 
-	public isSubset(other: Validator): boolean {
+	protected _isSubset(other: Validator): boolean {
 		if (other instanceof JSONValidator)
 			return true;
 

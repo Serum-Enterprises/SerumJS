@@ -68,7 +68,7 @@ export class StringValidator<T = unknown> extends Validator<T> {
 			throw new AssertError(`Expected ${path} to be a String${this._nullable.isSome() ? ' or Null' : ''}`);
 	}
 
-	public isSubset(other: Validator): boolean {
+	protected _isSubset(other: Validator): boolean {
 		if (other instanceof JSONValidator)
 			return true;
 
