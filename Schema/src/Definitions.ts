@@ -57,3 +57,11 @@ export interface ObjectValidatorDefinition<
 	every?: E;
 	shape?: S;
 }
+
+export interface UnionValidatorDefinition<
+	V extends readonly Definition[] = readonly Definition[]
+> extends Definition {
+	type: 'union';
+	nullable?: boolean;
+	variants: V;
+}
