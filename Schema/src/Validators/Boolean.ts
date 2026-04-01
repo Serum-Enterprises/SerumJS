@@ -46,7 +46,7 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 			throw new AssertError(`Expected ${path} to be a Boolean${this._nullable.isSome() ? ' or Null' : ''}`);
 	}
 
-	protected _isSubset(other: Validator): boolean {
+	public isSubset(other: Validator): boolean {
 		if (other instanceof JSONValidator)
 			return true;
 

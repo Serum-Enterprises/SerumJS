@@ -16,7 +16,7 @@ export class JSONValidator<T extends JSON.JSON = JSON.JSON> extends Validator<T>
 			throw new AssertError(`Expected ${path} to be valid JSON`);
 	}
 
-	protected _isSubset(other: Validator): boolean {
+	public isSubset(other: Validator): boolean {
 		return other instanceof JSONValidator;
 	}
 

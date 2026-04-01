@@ -128,7 +128,7 @@ export class ArrayValidator<
 			throw new AssertError(`Expected ${path} to be an Array${this._nullable.isSome() ? ' or Null' : ''}`);
 	}
 
-	protected _isSubset(other: Validator): boolean {
+	public isSubset(other: Validator): boolean {
 		if(other instanceof JSONValidator)
 			return true;
 

@@ -9,8 +9,7 @@ import {
 	NumberValidatorDefinition,
 	StringValidatorDefinition,
 	ArrayValidatorDefinition,
-	ObjectValidatorDefinition,
-	UnionValidatorDefinition
+	ObjectValidatorDefinition
 } from './Definitions';
 
 import {
@@ -19,8 +18,7 @@ import {
 	NumberValidator,
 	StringValidator,
 	ArrayValidator,
-	ObjectValidator,
-	UnionValidator
+	ObjectValidator
 } from './Validators';
 
 import {
@@ -29,8 +27,7 @@ import {
 	NumberBuilder,
 	StringBuilder,
 	ArrayBuilder,
-	ObjectBuilder,
-	UnionBuilder
+	ObjectBuilder
 } from './Builders';
 
 export class Schema {
@@ -57,10 +54,6 @@ export class Schema {
 
 	static get Object(): ObjectBuilder {
 		return new ObjectBuilder();
-	}
-
-	static get Union(): UnionBuilder {
-		return new UnionBuilder();
 	}
 
 	// Static fromJSON. Returns a basic Validator with no Type Inference
@@ -100,7 +93,6 @@ export namespace Definitions {
 	export type String = StringValidatorDefinition;
 	export type Array = ArrayValidatorDefinition;
 	export type Object = ObjectValidatorDefinition;
-	export type Union = UnionValidatorDefinition;
 }
 
 // Utility Type describing all Definitions as a Union
@@ -110,8 +102,7 @@ export type Definition =
 	NumberValidatorDefinition |
 	StringValidatorDefinition |
 	ArrayValidatorDefinition |
-	ObjectValidatorDefinition |
-	UnionValidatorDefinition;
+	ObjectValidatorDefinition
 
 // All Validators for re-use (for example, building custom Validators with these as a Basis)
 export const Validators = {
@@ -120,8 +111,7 @@ export const Validators = {
 	Number: NumberValidator,
 	String: StringValidator,
 	Array: ArrayValidator,
-	Object: ObjectValidator,
-	Union: UnionValidator,
+	Object: ObjectValidator
 } as const;
 
 // All Builders for re-use
@@ -131,8 +121,7 @@ export const Builders = {
 	Number: NumberBuilder,
 	String: StringBuilder,
 	Array: ArrayBuilder,
-	Object: ObjectBuilder,
-	Union: UnionBuilder
+	Object: ObjectBuilder
 }
 
 // Extra Utilities to infer a Definition Type or a Validator Return Type for statically defined Schemas
