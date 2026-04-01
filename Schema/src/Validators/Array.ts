@@ -22,7 +22,7 @@ export class ArrayValidator<
 			if (!JSON.isBoolean(definition['nullable']))
 				throw new DefinitionError(`Expected ${path}.nullable to be a Boolean`);
 
-			if(definition['nullable'])
+			if (definition['nullable'])
 				validatorInstance._nullable = Option.Some(null);
 		}
 
@@ -71,10 +71,10 @@ export class ArrayValidator<
 	}
 
 	protected _nullable: Option<null> = Option.None();
-	protected _every: Option<Validator> = Option.None();
-	protected _tuple: Option<readonly Validator[]> = Option.None();
 	protected _min: Option<number> = Option.None();
 	protected _max: Option<number> = Option.None();
+	protected _every: Option<Validator> = Option.None();
+	protected _tuple: Option<readonly Validator[]> = Option.None();
 
 	public assert(data: unknown, path: string = 'data'): asserts data is T {
 		if (JSON.isShallowArray(data)) {
@@ -120,8 +120,8 @@ export class ArrayValidator<
 			if (errors.length > 0)
 				throw new AssertError(`Multiple Errors while asserting ${path} (see cause)`, {cause: errors});
 		}
-		else if(JSON.isNull(data)) {
-			if(!this._nullable.isSome())
+		else if (JSON.isNull(data)) {
+			if (!this._nullable.isSome())
 				throw new AssertError(`Expected ${path} to be an Array${this._nullable.isSome() ? ' or Null' : ''}`);
 		}
 		else
@@ -129,7 +129,7 @@ export class ArrayValidator<
 	}
 
 	public isSubset(other: Validator): boolean {
-		if(other instanceof JSONValidator)
+		if (other instanceof JSONValidator)
 			return true;
 
 		if (!(other instanceof ArrayValidator))
@@ -194,6 +194,27 @@ export class ArrayValidator<
 		}
 
 		return !(other._every.isSome() && (thisMax === Infinity ? true : thisMax > Math.max(thisTupleLen, otherTupleLen)) && (!this._every.isSome() || !this._every.value.isSubset(other._every.value)));
+	}
+
+	public isEquals(other: Validator): boolean {
+		if (!(other instanceof ArrayValidator))
+			return false;
+
+		return this._nullable.equals(other._nullable) &&
+			this._min.equals(other._min) &&
+			this._max.equals(other._max) &&
+			this._every.equals(other._every, (a, b) => a.isEquals(b)) &&
+			this._tuple.equals(other._tuple, (a, b) => {
+				if (a.length !== b.length)
+					return false;
+
+				for (let i = 0; i < a.length; i++) {
+					if (!a[i]!.isEquals(b[i]!))
+						return false;
+				}
+
+				return true;
+			});
 	}
 
 	public toJSON(): ArrayValidatorDefinition<ED, TD> {

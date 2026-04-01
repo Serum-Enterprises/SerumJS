@@ -53,10 +53,10 @@ export class NumberValidator<T = unknown> extends Validator<T> {
 	}
 
 	protected _nullable: Option<null> = Option.None();
-	protected _equals: Option<JSON.Number> = Option.None();
 	protected _integer: Option<null> = Option.None();
 	protected _min: Option<number> = Option.None();
 	protected _max: Option<number> = Option.None();
+	protected _equals: Option<JSON.Number> = Option.None();
 
 	public assert(data: unknown, path: string = 'data'): asserts data is T {
 		if (JSON.isNumber(data)) {
@@ -119,6 +119,17 @@ export class NumberValidator<T = unknown> extends Validator<T> {
 			return false;
 
 		return true;
+	}
+
+	public isEquals(other: Validator): boolean {
+		if (!(other instanceof NumberValidator))
+			return false;
+
+		return this._nullable.equals(other._nullable) &&
+			this._integer.equals(other._integer) &&
+			this._min.equals(other._min) &&
+			this._max.equals(other._max) &&
+			this._equals.equals(other._equals);
 	}
 
 	public toJSON(): NumberValidatorDefinition {

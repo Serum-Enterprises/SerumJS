@@ -20,6 +20,10 @@ export class JSONValidator<T extends JSON.JSON = JSON.JSON> extends Validator<T>
 		return other instanceof JSONValidator;
 	}
 
+	public isEquals(other: Validator): boolean {
+		return other instanceof JSONValidator;
+	}
+
 	public toJSON(): JSONValidatorDefinition {
 		return {
 			type: 'json'

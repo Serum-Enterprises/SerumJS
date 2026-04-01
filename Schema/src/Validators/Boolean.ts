@@ -16,7 +16,7 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 			if (!JSON.isBoolean(definition['nullable']))
 				throw new DefinitionError(`Expected ${path}.nullable to be a Boolean`);
 
-			if(definition['nullable'])
+			if (definition['nullable'])
 				validatorInstance._nullable = Option.Some(null);
 		}
 
@@ -38,8 +38,8 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 			if (this._equals.isSome() && this._equals.value !== data)
 				throw new AssertError(`Expected ${path} to be ${this._equals.value}${this._nullable.isSome() ? '' : ' or Null'}`);
 		}
-		else if(JSON.isNull(data)) {
-			if(!this._nullable.isSome())
+		else if (JSON.isNull(data)) {
+			if (!this._nullable.isSome())
 				throw new AssertError(`Expected ${path} to be a Boolean${this._nullable.isSome() ? ' or Null' : ''}`);
 		}
 		else
@@ -64,6 +64,13 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 		}
 
 		return true;
+	}
+
+	public isEquals(other: Validator): boolean {
+		if (!(other instanceof BooleanValidator))
+			return false;
+
+		return this._nullable.equals(other._nullable) && this._equals.equals(other._equals);
 	}
 
 	public toJSON(): BooleanValidatorDefinition {

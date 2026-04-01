@@ -82,9 +82,9 @@ export class ObjectValidator<
 	protected _nullable: Option<null> = Option.None();
 	protected _min: Option<number> = Option.None();
 	protected _max: Option<number> = Option.None();
+	protected _exact: Option<null> = Option.None();
 	protected _every: Option<Validator> = Option.None();
 	protected _shape: Option<{ [key: string]: Validator }> = Option.None();
-	protected _exact: Option<null> = Option.None();
 
 	public assert(data: unknown, path: string = "data"): asserts data is T {
 		if (JSON.isShallowObject(data)) {
@@ -253,6 +253,31 @@ export class ObjectValidator<
 		// If other has no "every", this can be stricter or looser on value-types freely (as long as above holds).
 
 		return true;
+	}
+
+	public isEquals(other: Validator): boolean {
+		if (!(other instanceof ObjectValidator))
+			return false;
+
+		return this._nullable.equals(other._nullable) &&
+			this._min.equals(other._min) &&
+			this._max.equals(other._max) &&
+			this._exact.equals(other._exact) &&
+			this._every.equals(other._every, (a, b) => a.isEquals(b)) &&
+			this._shape.equals(other._shape, (a, b) => {
+				const keysA = Object.keys(a);
+				const keysB = Object.keys(b);
+
+				if (keysA.length !== keysB.length)
+					return false;
+
+				for (const key of keysA) {
+					if (!(key in b) || !a[key]?.isEquals(b[key]!))
+						return false;
+				}
+
+				return true;
+			});
 	}
 
 	public toJSON(): ObjectValidatorDefinition<TD, SD> {

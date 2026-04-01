@@ -16,7 +16,7 @@ export class StringValidator<T = unknown> extends Validator<T> {
 			if (!JSON.isBoolean(definition['nullable']))
 				throw new DefinitionError(`Expected ${path}.nullable to be a Boolean`);
 
-			if(definition['nullable'])
+			if (definition['nullable'])
 				validatorInstance._nullable = Option.Some(null);
 		}
 
@@ -45,9 +45,9 @@ export class StringValidator<T = unknown> extends Validator<T> {
 	}
 
 	protected _nullable: Option<null> = Option.None();
-	protected _equals: Option<JSON.String> = Option.None();
 	protected _min: Option<number> = Option.None();
 	protected _max: Option<number> = Option.None();
+	protected _equals: Option<JSON.String> = Option.None();
 
 	public assert(data: unknown, path: string = 'data'): asserts data is T {
 		if (JSON.isString(data)) {
@@ -60,8 +60,8 @@ export class StringValidator<T = unknown> extends Validator<T> {
 			if (this._max.isSome() && this._max.value < data.length)
 				throw new AssertError(`Expected ${path} to be at most ${this._max.value} characters long`);
 		}
-		else if(JSON.isNull(data)) {
-			if(!this._nullable.isSome())
+		else if (JSON.isNull(data)) {
+			if (!this._nullable.isSome())
 				throw new AssertError(`Expected ${path} to be a String${this._nullable.isSome() ? ' or Null' : ''}`);
 		}
 		else
@@ -101,6 +101,16 @@ export class StringValidator<T = unknown> extends Validator<T> {
 			return false;
 
 		return true;
+	}
+
+	public isEquals(other: Validator): boolean {
+		if (!(other instanceof StringValidator))
+			return false;
+
+		return this._nullable.equals(other._nullable) &&
+			this._min.equals(other._min) &&
+			this._max.equals(other._max) &&
+			this._equals.equals(other._equals);
 	}
 
 	public toJSON(): StringValidatorDefinition {
