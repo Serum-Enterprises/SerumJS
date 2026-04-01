@@ -90,4 +90,16 @@ describe('Testing Option.js', () => {
 
 		expect(outcome).toBe('No value');
 	});
+
+	test('Testing Option.equals', () => {
+		expect(Option.None().equals(Option.None())).toBe(true);
+		expect(Option.Some(1).equals(Option.Some(1))).toBe(true);
+		expect(
+			Option.Some({a: 1})
+				.equals(Option.Some({a: 1}), (a, b) => a.a === b.a)
+		).toBe(true);
+
+		expect(Option.None().equals(Option.Some(1))).toBe(false);
+		expect(Option.Some(1).equals(Option.None())).toBe(false);
+	});
 });
