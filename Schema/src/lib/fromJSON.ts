@@ -1,12 +1,14 @@
 import {JSON} from '@serum-enterprises/json';
 import type {Validator} from '../Validator';
-import {JSONValidator} from '../Validators/JSON';
-import {BooleanValidator} from '../Validators/Boolean';
-import {NumberValidator} from '../Validators/Number';
-import {StringValidator} from '../Validators/String';
-import {ArrayValidator} from '../Validators/Array';
-import {ObjectValidator} from '../Validators/Object';
-import {UnionValidator} from '../Validators/Union';
+import {
+	JSONValidator,
+	BooleanValidator,
+	NumberValidator,
+	StringValidator,
+	ArrayValidator,
+	ObjectValidator,
+	UnionValidator
+} from '../Validators';
 import {DefinitionError} from './util';
 import {Definition} from '../Definitions';
 
