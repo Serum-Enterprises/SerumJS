@@ -3,52 +3,77 @@ import {fromJSON} from './lib/fromJSON';
 
 export {Validator};
 
-import {JSONValidator, JSONValidatorDefinition} from './validators/JSON';
-import {BooleanValidator, BooleanValidatorDefinition} from './validators/Boolean';
-import {NumberValidator, NumberValidatorDefinition} from './validators/Number';
-import {StringValidator, StringValidatorDefinition} from './validators/String';
-import {ArrayValidator, ArrayValidatorDefinition} from './validators/Array';
-import {ObjectValidator, ObjectValidatorDefinition} from './validators/Object';
+import {
+	JSONValidatorDefinition,
+	BooleanValidatorDefinition,
+	NumberValidatorDefinition,
+	StringValidatorDefinition,
+	ArrayValidatorDefinition,
+	ObjectValidatorDefinition
+} from './Definitions';
+
+import {
+	JSONValidator,
+	BooleanValidator,
+	NumberValidator,
+	StringValidator,
+	ArrayValidator,
+	ObjectValidator
+} from './Validators';
+
+import {
+	JSONBuilder,
+	BooleanBuilder,
+	NumberBuilder,
+	StringBuilder,
+	ArrayBuilder,
+	ObjectBuilder
+} from './Builders';
 
 export class Schema {
-	static get JSON(): JSONValidator {
-		return new JSONValidator();
+	// Static Factories for Builders
+	static get JSON(): JSONBuilder {
+		return new JSONBuilder();
 	}
 
-	static get Boolean(): BooleanValidator {
-		return new BooleanValidator();
+	static get Boolean(): BooleanBuilder {
+		return new BooleanBuilder();
 	}
 
-	static get Number(): NumberValidator {
-		return new NumberValidator();
+	static get Number(): NumberBuilder {
+		return new NumberBuilder();
 	}
 
-	static get String(): StringValidator {
-		return new StringValidator();
+	static get String(): StringBuilder {
+		return new StringBuilder();
 	}
 
-	static get Array(): ArrayValidator {
-		return new ArrayValidator();
+	static get Array(): ArrayBuilder {
+		return new ArrayBuilder();
 	}
 
-	static get Object(): ObjectValidator {
-		return new ObjectValidator();
+	static get Object(): ObjectBuilder {
+		return new ObjectBuilder();
 	}
 
+	// Static fromJSON. Returns a basic Validator with no Type Inference
 	static fromJSON(definition: unknown, path: string = 'definition'): Validator {
 		return fromJSON(definition, path);
 	}
 
+	// Utility Method for Checking if a variable holds a valid Definition
 	static assertDefinition(definition: unknown, path: string = 'definition'): asserts definition is Definition {
 		this.fromJSON(definition, path);
 	}
 
+	// Utility Method for validating a Definition
 	static validateDefinition(definition: unknown, path: string = 'definition'): Definition {
 		this.assertDefinition(definition, path);
 
 		return definition;
 	}
 
+	// Utility Method for Type-Guarding a Definition
 	static isDefinition(definition: unknown, path: string = 'definition'): definition is Definition {
 		try {
 			this.assertDefinition(definition, path);
@@ -60,23 +85,7 @@ export class Schema {
 	}
 }
 
-export const Validators = {
-	JSON: JSONValidator,
-	Boolean: BooleanValidator,
-	Number: NumberValidator,
-	String: StringValidator,
-	Array: ArrayValidator,
-	Object: ObjectValidator
-} as const;
-
-export type Definition =
-	JSONValidatorDefinition |
-	BooleanValidatorDefinition |
-	NumberValidatorDefinition |
-	StringValidatorDefinition |
-	ArrayValidatorDefinition |
-	ObjectValidatorDefinition;
-
+// Export all Definitions as a Namespace
 export namespace Definitions {
 	export type JSON = JSONValidatorDefinition;
 	export type Boolean = BooleanValidatorDefinition;
@@ -86,4 +95,34 @@ export namespace Definitions {
 	export type Object = ObjectValidatorDefinition;
 }
 
+// Utility Type describing all Definitions as a Union
+export type Definition =
+	JSONValidatorDefinition |
+	BooleanValidatorDefinition |
+	NumberValidatorDefinition |
+	StringValidatorDefinition |
+	ArrayValidatorDefinition |
+	ObjectValidatorDefinition
+
+// All Validators for re-use (for example, building custom Validators with these as a Basis)
+export const Validators = {
+	JSON: JSONValidator,
+	Boolean: BooleanValidator,
+	Number: NumberValidator,
+	String: StringValidator,
+	Array: ArrayValidator,
+	Object: ObjectValidator
+} as const;
+
+// All Builders for re-use
+export const Builders = {
+	JSON: JSONBuilder,
+	Boolean: BooleanBuilder,
+	Number: NumberBuilder,
+	String: StringBuilder,
+	Array: ArrayBuilder,
+	Object: ObjectBuilder
+}
+
+// Extra Utilities to infer a Definition Type or a Validator Return Type for statically defined Schemas
 export {InferDefinitionType, InferValidatorReturnType} from './lib/util';

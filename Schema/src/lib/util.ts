@@ -3,10 +3,6 @@ import type {Validator} from '../Validator';
 export type ApplyNullability<T, N extends boolean> =
 	N extends true ? T | null : Exclude<T, null>;
 
-export interface Definition {
-	type: string;
-}
-
 export type InferDefinitionType<V> = V extends { toJSON(): infer D } ? D : never;
 export type InferValidatorReturnType<V> = V extends Validator<infer T> ? T : unknown;
 

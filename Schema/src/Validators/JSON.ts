@@ -1,16 +1,13 @@
 import {JSON} from '@serum-enterprises/json';
 import {Validator} from '../Validator';
-import {Definition, AssertError} from '../lib/util';
-
-export interface JSONValidatorDefinition extends Definition {
-	type: 'json';
-}
+import {AssertError} from '../lib/util';
+import {Definition, JSONValidatorDefinition} from '../Definitions';
 
 export class JSONValidator<T extends JSON.JSON = JSON.JSON> extends Validator<T> {
 	public static fromJSON(
 		_definition: Definition & { [key: string]: unknown },
 		_path: string = 'definition'
-	): Validator {
+	): JSONValidator {
 		return new JSONValidator();
 	}
 
@@ -20,6 +17,10 @@ export class JSONValidator<T extends JSON.JSON = JSON.JSON> extends Validator<T>
 	}
 
 	public isSubset(other: Validator): boolean {
+		return other instanceof JSONValidator;
+	}
+
+	public isEquals(other: Validator): boolean {
 		return other instanceof JSONValidator;
 	}
 

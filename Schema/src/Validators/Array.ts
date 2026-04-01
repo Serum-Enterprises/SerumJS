@@ -2,76 +2,46 @@ import {JSON} from '@serum-enterprises/json';
 import {Option} from '@serum-enterprises/option';
 import {Validator} from '../Validator';
 import {fromJSON} from '../lib/fromJSON';
-import {
-	Definition, ApplyNullability,
-	InferDefinitionType, InferValidatorReturnType,
-	InferListDefinitionType, InferListReturnType,
-	AssertError, DefinitionError
-} from '../lib/util';
+import {AssertError, DefinitionError} from '../lib/util';
 import {JSONValidator} from './JSON';
-
-type ArrayResult<E, T> =
-	T extends readonly unknown[]
-		? [...{ [K in keyof T]: T[K] & E }, ...E[]]
-		: E[];
-
-export interface ArrayValidatorDefinition<
-	E extends Definition = Definition,
-	T extends readonly Definition[] = readonly Definition[]
-> extends Definition {
-	type: 'array';
-	nullable?: boolean;
-	min?: number;
-	max?: number;
-	every?: E;
-	tuple?: T;
-}
+import {Definition, ArrayValidatorDefinition} from '../Definitions';
 
 export class ArrayValidator<
-	// E & T are the Every and Tuple Return Types
-	E = unknown,
 	T = unknown,
 	// EV & TV are the Every and Tuple Definitions
 	ED extends Definition = Definition,
 	TD extends readonly Definition[] = readonly Definition[],
-	// N is the Nullable Flag
-	N extends boolean = false
-> extends Validator<ApplyNullability<ArrayResult<E, T>, N>> {
+> extends Validator<T> {
 	public static fromJSON(
 		definition: Definition & { [key: string]: unknown },
 		path: string = 'definition'
-	): Validator {
+	): ArrayValidator {
 		const validatorInstance = new ArrayValidator();
 
 		if ('nullable' in definition) {
 			if (!JSON.isBoolean(definition['nullable']))
 				throw new DefinitionError(`Expected ${path}.nullable to be a Boolean`);
 
-			validatorInstance.nullable(definition['nullable']);
+			if (definition['nullable'])
+				validatorInstance._nullable = Option.Some(null);
 		}
 
 		if ('min' in definition) {
 			if (!JSON.isNumber(definition['min']))
 				throw new DefinitionError(`Expected ${path}.min to be a Number`);
 
-			validatorInstance.min(definition['min'], `${path}.min`);
+			validatorInstance._min = Option.Some(definition['min']);
 		}
 
 		if ('max' in definition) {
 			if (!JSON.isNumber(definition['max']))
 				throw new DefinitionError(`Expected ${path}.max to be a Number`);
 
-			validatorInstance.max(definition['max'], `${path}.max`);
+			validatorInstance._max = Option.Some(definition['max']);
 		}
 
-		if ('every' in definition) {
-			if (!JSON.isObject(definition['every']))
-				throw new DefinitionError(`Expected ${path}.every to be an Object`);
-
-			validatorInstance.every(
-				fromJSON(definition['every'], `${path}.every`) as Validator
-			);
-		}
+		if ('every' in definition)
+			validatorInstance._every = Option.Some(fromJSON(definition['every'], `${path}.every`));
 
 		if ('tuple' in definition) {
 			if (!JSON.isShallowArray(definition['tuple']))
@@ -94,89 +64,19 @@ export class ArrayValidator<
 			if (errors.length > 0)
 				throw new DefinitionError(`Multiple Definition Errors detected at ${path} (see cause)`, {cause: errors});
 
-			validatorInstance.tuple(tupleSchemas, `${path}.tuple`);
+			validatorInstance._tuple = Option.Some(tupleSchemas);
 		}
 
 		return validatorInstance;
 	}
 
 	protected _nullable: Option<null> = Option.None();
-	protected _every: Option<Validator> = Option.None();
-	protected _tuple: Option<readonly Validator[]> = Option.None();
 	protected _min: Option<number> = Option.None();
 	protected _max: Option<number> = Option.None();
+	protected _every: Option<Validator> = Option.None();
+	protected _tuple: Option<readonly Validator[]> = Option.None();
 
-	public nullable<const F extends boolean = true>(flag?: F): ArrayValidator<E, T, ED, TD, F> {
-		this._nullable = (flag ?? true) ? Option.Some(null) : Option.None();
-
-		return this as unknown as ArrayValidator<E, T, ED, TD, F>;
-	}
-
-	public min(value: number, path: string = 'min'): this {
-		if (this._max.isSome() && this._max.value < value)
-			throw new DefinitionError(`Expected Minimum Rule to be smaller than or equal to Maximum Rule at Path ${path}`);
-
-		if (this._tuple.isSome() && value < this._tuple.value.length)
-			throw new DefinitionError(`Expected Minimum Rule to be larger than or equal to Tuple Length at Path ${path}`);
-
-		this._min = Option.Some(value);
-
-		return this;
-	}
-
-	public max(value: number, path: string = 'max'): this {
-		if (this._min.isSome() && this._min.value > value)
-			throw new DefinitionError(`Expected Maximum Rule to be larger than or equal to Minimum Rule at Path ${path}`);
-
-		if (this._tuple.isSome() && value < this._tuple.value.length)
-			throw new DefinitionError(`Expected Maximum Rule to be larger than or equal to Tuple Length at Path ${path}`);
-
-		this._max = Option.Some(value);
-
-		return this;
-	}
-
-	public every<const V extends Validator>(validator: V): ArrayValidator<
-		InferValidatorReturnType<V>,
-		T,
-		InferDefinitionType<V>,
-		TD,
-		N
-	> {
-		this._every = Option.Some(validator);
-
-		return this as unknown as ArrayValidator<InferValidatorReturnType<V>, T, InferDefinitionType<V>, TD, N>;
-	}
-
-	/**
-	 * Applies ONLY to prefix indices [0..validators.length - 1]
-	 * If every() is set, prefix elements are effectively `T[i] & E`.
-	 */
-	public tuple<const V extends readonly Validator[]>(
-		validators: V,
-		path: string = 'tuple'
-	): ArrayValidator<
-		E,
-		InferListReturnType<V>,
-		ED,
-		InferListDefinitionType<V>,
-		N
-	> {
-		if (this._min.isSome() && this._min.value < validators.length)
-			throw new DefinitionError(`Expected Tuple Length to be smaller than or equal to Minimum Rule at Path ${path}`);
-
-		if (this._max.isSome() && this._max.value < validators.length)
-			throw new DefinitionError(`Expected Tuple Length to be smaller than or equal to Maximum Rule at Path ${path}`);
-
-		this._tuple = Option.Some(validators);
-
-		return this as unknown as ArrayValidator<E, InferListReturnType<V>, ED, InferListDefinitionType<V>, N>;
-	}
-
-	public assert(
-		data: unknown,
-		path: string = 'data'
-	): asserts data is ApplyNullability<ArrayResult<E, T>, N> {
+	public assert(data: unknown, path: string = 'data'): asserts data is T {
 		if (JSON.isShallowArray(data)) {
 			if (this._min.isSome() && this._min.value > data.length)
 				throw new AssertError(`Expected ${path} to be at least ${this._min.value} Elements long`);
@@ -220,8 +120,8 @@ export class ArrayValidator<
 			if (errors.length > 0)
 				throw new AssertError(`Multiple Errors while asserting ${path} (see cause)`, {cause: errors});
 		}
-		else if(JSON.isNull(data)) {
-			if(!this._nullable.isSome())
+		else if (JSON.isNull(data)) {
+			if (!this._nullable.isSome())
 				throw new AssertError(`Expected ${path} to be an Array${this._nullable.isSome() ? ' or Null' : ''}`);
 		}
 		else
@@ -229,7 +129,7 @@ export class ArrayValidator<
 	}
 
 	public isSubset(other: Validator): boolean {
-		if(other instanceof JSONValidator)
+		if (other instanceof JSONValidator)
 			return true;
 
 		if (!(other instanceof ArrayValidator))
@@ -294,6 +194,27 @@ export class ArrayValidator<
 		}
 
 		return !(other._every.isSome() && (thisMax === Infinity ? true : thisMax > Math.max(thisTupleLen, otherTupleLen)) && (!this._every.isSome() || !this._every.value.isSubset(other._every.value)));
+	}
+
+	public isEquals(other: Validator): boolean {
+		if (!(other instanceof ArrayValidator))
+			return false;
+
+		return this._nullable.equals(other._nullable) &&
+			this._min.equals(other._min) &&
+			this._max.equals(other._max) &&
+			this._every.equals(other._every, (a, b) => a.isEquals(b)) &&
+			this._tuple.equals(other._tuple, (a, b) => {
+				if (a.length !== b.length)
+					return false;
+
+				for (let i = 0; i < a.length; i++) {
+					if (!a[i]!.isEquals(b[i]!))
+						return false;
+				}
+
+				return true;
+			});
 	}
 
 	public toJSON(): ArrayValidatorDefinition<ED, TD> {
