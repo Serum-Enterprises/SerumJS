@@ -1,52 +1,58 @@
 abstract class BaseOption<T> {
-	isSome(): this is Some<T> {
+	public isSome(): this is Some<T> {
 		return this instanceof Some;
 	}
 
-	isNone(): this is None {
+	public isNone(): this is None {
 		return this instanceof None;
 	}
 
-	onSome(fn: (value: T) => void): this {
+	public onSome(fn: (value: T) => void): this {
 		if (this.isSome())
 			fn((this as Some<T>).value);
 
 		return this;
 	}
 
-	onNone(fn: () => void): this {
+	public onNone(fn: () => void): this {
 		if (this.isNone())
 			fn();
 
 		return this;
 	}
 
-	map<R>(fn: (value: T) => R): Option<R> {
+	public map<R>(fn: (value: T) => R): Option<R> {
 		return this.match<Option<R>>(
 			value => Option.Some(fn(value)),
 			() => Option.None()
 		);
 	}
 
-	match<R>(onSome: (value: T) => R, onNone: () => R): R {
+	public match<R>(onSome: (value: T) => R, onNone: () => R): R {
 		if (this.isSome())
 			return onSome((this as Some<T>).value);
 		else
 			return onNone();
 	}
+
+	public equals<O>(
+		other: Option<O>,
+		fn: (a: T, b: O) => boolean = (a, b) => Object.is(a, b)
+	): boolean {
+		if (this.isNone() && other.isNone())
+			return true;
+
+		if (this.isSome() && other.isSome())
+			return fn(this.value, other.value);
+
+		return false;
+	}
 }
 
 export class Some<T> extends BaseOption<T> {
-	private readonly _value: T;
-
-	constructor(value: T) {
-		super();
-		this._value = value;
-	}
-
-	get value(): T {
-		return this._value;
-	}
+	public constructor(
+		public readonly value: T
+	) { super(); }
 }
 
 export class None extends BaseOption<never> {}
