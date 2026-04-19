@@ -1,5 +1,10 @@
-import {Definition, UnknownDefinition} from './Definitions';
 import type {SchemaDomain} from './SchemaDomain';
+
+export interface Definition {
+	type: string;
+}
+
+export type UnknownDefinition = Definition & Record<string, unknown>;
 
 export interface ValidatorClass<V extends Validator = Validator> {
 	fromJSON(data: UnknownDefinition, path: string, schemaDomain: SchemaDomain): V;

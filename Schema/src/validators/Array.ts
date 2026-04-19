@@ -1,7 +1,6 @@
 import {JSON} from '@serum-enterprises/json';
 import {Option} from '@serum-enterprises/option';
-import {Validator} from '../Validator';
-import {Definition, UnknownDefinition} from '../Definitions';
+import {Validator, Definition, UnknownDefinition} from '../Validator';
 import {AssertError, DefinitionError} from '../lib/errors';
 import {
 	InferDefinitionType, InferValidatorReturnType,

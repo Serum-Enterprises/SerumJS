@@ -1,6 +1,5 @@
 import {JSON} from '@serum-enterprises/json';
-import {Validator} from '../Validator';
-import {Definition, UnknownDefinition} from '../Definitions';
+import {Validator, Definition, UnknownDefinition} from '../Validator';
 import {AssertError} from '../lib/errors';
 import type {SchemaDomain} from '../SchemaDomain';
 
