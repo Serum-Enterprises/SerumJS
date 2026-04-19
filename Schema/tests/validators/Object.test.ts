@@ -62,6 +62,10 @@ describe('Testing Object Validator', () => {
 
 	test('Testing exact', () => {
 		expect(Schema.Object.exact()).toBeInstanceOf(ObjectValidator);
+		expect(Schema.Object.exact(true)).toBeInstanceOf(ObjectValidator);
+		expect(Schema.Object.exact(false)).toBeInstanceOf(ObjectValidator);
+
+
 	});
 
 	test('Testing toJSON', () => {
@@ -86,6 +90,7 @@ describe('Testing Object Validator', () => {
 		expect(Schema.fromJSON({type: 'object', shape: {a: {type: 'boolean'}, b: {type: 'number'}}})).toBeInstanceOf(ObjectValidator);
 		expect(() => Schema.fromJSON({type: 'object', shape: 'Hello World'})).toThrow(DefinitionError);
 		expect(() => Schema.fromJSON({type: 'object', shape: {a: 1, b: 2}})).toThrow(AggregateError);
+		expect(Schema.fromJSON({type: 'object', exact: false})).toBeInstanceOf(ObjectValidator);
 		expect(Schema.fromJSON({type: 'object', exact: true})).toBeInstanceOf(ObjectValidator);
 		expect(() => Schema.fromJSON({type: 'object', exact: 'Hello World'})).toThrow(DefinitionError);
 	});
