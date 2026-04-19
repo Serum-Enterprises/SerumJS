@@ -68,8 +68,7 @@ export class ArrayValidator<
 				try {
 					tupleSchemas.push(schemaDomain.fromJSON(tupleDef, `${path}.tuple[${index}]`));
 				} catch (e) {
-					if (e instanceof Error)
-						errors.push(e);
+					errors.push(e instanceof Error ? e : new Error(String(e), {cause: e}));
 				}
 			});
 
@@ -130,8 +129,7 @@ export class ArrayValidator<
 				try {
 					validator.assert(value, `${path}[${index}]`);
 				} catch (e) {
-					if (e instanceof Error)
-						errors.push(e);
+					errors.push(e instanceof Error ? e : new Error(String(e), {cause: e}));
 				}
 			});
 		}
@@ -144,8 +142,7 @@ export class ArrayValidator<
 				try {
 					validator.assert(data[index], `${path}[${index}]`);
 				} catch (e) {
-					if (e instanceof Error)
-						errors.push(e);
+					errors.push(e instanceof Error ? e : new Error(String(e), {cause: e}));
 				}
 			});
 		}

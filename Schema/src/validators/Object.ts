@@ -73,8 +73,7 @@ export class ObjectValidator<
 				try {
 					shape[key] = schemaDomain.fromJSON(value, `${path}.shape.${key}`);
 				} catch (e) {
-					if ((e instanceof Error))
-						errors.push(e);
+					errors.push(e instanceof Error ? e : new Error(String(e), {cause: e}));
 				}
 			}
 
@@ -152,8 +151,7 @@ export class ObjectValidator<
 				try {
 					validator.assert(data[key], `${path}.${key}`);
 				} catch (e) {
-					if (e instanceof Error)
-						errors.push(e);
+					errors.push(e instanceof Error ? e : new Error(String(e), {cause: e}));
 				}
 			}
 		}
@@ -165,8 +163,7 @@ export class ObjectValidator<
 
 					validator.assert(data[key], `${path}.${key}`);
 				} catch (e) {
-					if (e instanceof Error)
-						errors.push(e);
+					errors.push(e instanceof Error ? e : new Error(String(e), {cause: e}));
 				}
 			}
 
