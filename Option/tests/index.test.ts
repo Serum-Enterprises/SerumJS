@@ -1,4 +1,4 @@
-const { Option } = require('../build/Option');
+import {Option} from '../src';
 
 describe('Testing Option.js', () => {
 	test('Testing Option.Some', () => {
