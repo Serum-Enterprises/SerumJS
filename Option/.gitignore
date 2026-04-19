@@ -1,3 +1,19 @@
-/node_modules/
-/build/
-/types/
+# Dependencies
+node_modules/
+
+# Build Outputs
+dist/
+build/
+coverage/
+
+# env
+.env
+.env.*
+
+# logs
+*.log
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
