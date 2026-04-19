@@ -1,6 +1,6 @@
 import {JSON} from '@serum-enterprises/json';
 import {Validator, ValidatorClass} from './Validator';
-import {DefinitionError} from './lib/errors';
+import {DefinitionError, DomainError} from './lib/errors';
 import * as Validators from './validators';
 
 export const DefaultSchemaDomain = {
@@ -45,7 +45,7 @@ export class SchemaDomain {
 	) {
 		this._normalizedEntries = Object.entries(entries).reduce((result, [key, value]) => {
 			if(result.has(key.toLowerCase()))
-				throw new ReferenceError(`Duplicate Validator found`, {cause: [key.toLowerCase()]});
+				throw new DomainError(`Duplicate normalized key found`, {cause: [key.toLowerCase()]});
 
 			return result.set(key.toLowerCase(), value);
 		}, new Map())

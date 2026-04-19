@@ -1,5 +1,5 @@
 export {Validator, ValidatorClass} from './Validator';
-export {AssertError, DefinitionError} from './lib/errors';
+export {AssertError, DefinitionError, DomainError} from './lib/errors';
 
 export {
 	NeverValidator, NeverValidatorDefinition,

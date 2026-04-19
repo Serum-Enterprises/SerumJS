@@ -9,3 +9,5 @@ export class DefinitionError extends Error {
 		super(message, {cause: {...cause, path}});
 	}
 }
+
+export class DomainError extends Error {}
