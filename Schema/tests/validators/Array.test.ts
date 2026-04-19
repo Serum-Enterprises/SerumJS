@@ -1,6 +1,12 @@
 import {SchemaDomain, AssertError, ArrayValidator, DefinitionError} from '../../src';
 
 const Schema = SchemaDomain.create();
+const BadValidator = {
+	assert: () => { throw "Not an Error instance"; }
+} as any;
+const BadSchemaDomain = {
+	fromJSON: () => {throw "Not an Error instance";}
+} as any;
 
 describe('Testing Array Validator', () => {
 	test('Testing assert', () => {
@@ -20,12 +26,14 @@ describe('Testing Array Validator', () => {
 
 		expect(() => Schema.Array.every(Schema.Number).assert([1, 2, 3])).not.toThrow();
 		expect(() => Schema.Array.every(Schema.Number).assert([true, false])).toThrow(AggregateError);
+		expect(() => Schema.Array.every(BadValidator).assert([1, 2, 3])).toThrow(Error);
 
 		expect(() => Schema.Array.tuple([Schema.Boolean, Schema.Number]).assert([true, 1])).not.toThrow();
 		expect(() => Schema.Array.tuple([Schema.Boolean, Schema.Number]).assert([1, true])).toThrow();
 		expect(() => Schema.Array.tuple([Schema.Boolean]).assert([true, 1, 2])).not.toThrow();
 		expect(() => Schema.Array.tuple([Schema.Boolean]).assert([1, 2, 3])).toThrow();
 		expect(() => Schema.Array.tuple([Schema.Boolean, Schema.Number]).assert([true])).toThrow();
+		expect(() => Schema.Array.tuple([BadValidator]).assert([1, 2, 3])).toThrow(Error);
 	});
 
 	test('Testing min', () => {
@@ -65,5 +73,9 @@ describe('Testing Array Validator', () => {
 		expect(Schema.fromJSON({type: 'array', tuple: [{type: 'boolean'}, {type: 'number'}]})).toBeInstanceOf(ArrayValidator);
 		expect(() => Schema.fromJSON({type: 'array', tuple: 'Hello World'})).toThrow(DefinitionError);
 		expect(() => Schema.fromJSON({type: 'array', tuple: [1, 2, 3]})).toThrow(AggregateError);
+		expect(() => ArrayValidator.fromJSON({
+			type: 'array',
+			tuple: [{type: 'any'}]
+		}, 'definition', BadSchemaDomain)).toThrow(AggregateError);
 	});
 });

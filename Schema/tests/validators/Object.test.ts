@@ -1,6 +1,12 @@
 import {SchemaDomain, AssertError, ObjectValidator, DefinitionError} from '../../src';
 
 const Schema = SchemaDomain.create();
+const BadValidator = {
+	assert: () => { throw "Not an Error instance"; }
+} as any;
+const BadSchemaDomain = {
+	fromJSON: () => {throw "Not an Error instance";}
+} as any;
 
 describe('Testing Object Validator', () => {
 	test('Testing assert', () => {
@@ -20,6 +26,7 @@ describe('Testing Object Validator', () => {
 
 		expect(() => Schema.Object.every(Schema.Number).assert({a: 1, b: 2})).not.toThrow();
 		expect(() => Schema.Object.every(Schema.Number).assert({a: 1, b: true})).toThrow(AggregateError);
+		expect(() => Schema.Object.every(BadValidator).assert({a: 1, b: 2})).toThrow(Error);
 
 		expect(() => Schema.Object.shape({
 			a: Schema.Boolean,
@@ -32,7 +39,8 @@ describe('Testing Object Validator', () => {
 		expect(() => Schema.Object.shape({
 			a: Schema.Boolean,
 			b: Schema.Number
-		}).assert({a: 1, b: 2, c: 5})).toThrow(AggregateError)
+		}).assert({a: 1, b: 2, c: 5})).toThrow(AggregateError);
+		expect(() => Schema.Object.shape({a: BadValidator}).assert({a: 1, b: 2})).toThrow(Error);
 
 		expect(() => Schema.Object.exact().shape({
 			a: Schema.Boolean,
@@ -64,8 +72,6 @@ describe('Testing Object Validator', () => {
 		expect(Schema.Object.exact()).toBeInstanceOf(ObjectValidator);
 		expect(Schema.Object.exact(true)).toBeInstanceOf(ObjectValidator);
 		expect(Schema.Object.exact(false)).toBeInstanceOf(ObjectValidator);
-
-
 	});
 
 	test('Testing toJSON', () => {
@@ -87,9 +93,16 @@ describe('Testing Object Validator', () => {
 		expect(() => Schema.fromJSON({type: 'object', max: 'Hello World'})).toThrow(DefinitionError);
 		expect(Schema.fromJSON({type: 'object', every: {type: 'number'}})).toBeInstanceOf(ObjectValidator);
 		expect(() => Schema.fromJSON({type: 'object', every: 'Hello World'})).toThrow(DefinitionError);
-		expect(Schema.fromJSON({type: 'object', shape: {a: {type: 'boolean'}, b: {type: 'number'}}})).toBeInstanceOf(ObjectValidator);
+		expect(Schema.fromJSON({
+			type: 'object',
+			shape: {a: {type: 'boolean'}, b: {type: 'number'}}
+		})).toBeInstanceOf(ObjectValidator);
 		expect(() => Schema.fromJSON({type: 'object', shape: 'Hello World'})).toThrow(DefinitionError);
 		expect(() => Schema.fromJSON({type: 'object', shape: {a: 1, b: 2}})).toThrow(AggregateError);
+		expect(() => ObjectValidator.fromJSON({
+			type: 'object',
+			shape: {a: {type: 'any'}}
+		}, 'definition', BadSchemaDomain)).toThrow(AggregateError)
 		expect(Schema.fromJSON({type: 'object', exact: false})).toBeInstanceOf(ObjectValidator);
 		expect(Schema.fromJSON({type: 'object', exact: true})).toBeInstanceOf(ObjectValidator);
 		expect(() => Schema.fromJSON({type: 'object', exact: 'Hello World'})).toThrow(DefinitionError);
