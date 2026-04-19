@@ -27,6 +27,6 @@ describe('Testing Boolean Validator', () => {
 	test('Testing fromJSON', () => {
 		expect(Schema.fromJSON({type: 'boolean'})).toBeInstanceOf(BooleanValidator);
 		expect(Schema.fromJSON({type: 'boolean', equals: true})).toBeInstanceOf(BooleanValidator);
-		expect(Schema.fromJSON({type: 'boolean', equals: 'Hello World'})).toBeInstanceOf(DefinitionError);
+		expect(() => Schema.fromJSON({type: 'boolean', equals: 'Hello World'})).toThrow(DefinitionError);
 	});
 });
