@@ -5,13 +5,12 @@
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
 		"lib": ["esnext"],
-		"rootDir": ".",
+		"rootDir": "./src",
 		"outDir": "./dist/types",
 		"declaration": true,
 		"emitDeclarationOnly": true,
 		"sourceMap": false,
 		"inlineSources": false,
-		"types": ["@types/jest"]
 	},
-	"include": ["./src/**/*.ts", "./tests/**/*.test.ts"]
+	"include": ["./src/**/*.ts"]
 }
