@@ -1,29 +1,40 @@
 {
 	"name": "@serum-enterprises/option",
-	"version": "3.2.0",
+	"version": "3.3.0",
 	"engines": {
-		"node": ">=24.0.0"
+		"node": ">=16.0.0"
 	},
 	"description": "Rust-like Option for TS/JS Projects",
-	"main": "./build/Option.js",
-	"types": "./types/Option.d.ts",
+	"main": "./dist/index.cjs",
+	"types": "./dist/types/index.d.ts",
 	"scripts": {
-		"prepack": "npm run build",
-		"build": "tsc",
-		"test": "jest"
+		"build:types": "tsc -p tsconfig.build.json",
+		"build:cjs": "esbuild ./src/index.ts --platform=node --format=cjs --outfile=./dist/index.cjs",
+		"build:esm": "esbuild ./src/index.ts --platform=neutral --format=esm --outfile=./dist/index.mjs",
+		"build": "npm run build:types && npm run build:cjs && npm run build:esm",
+		"pretest": "esbuild './src/**/*.ts' './tests/**/*.test.ts' --sourcemap --platform=node --format=cjs --outdir=./build",
+		"test": "jest --testMatch '**/*.test.js' --roots build/tests",
+		"prepack": "npm run build && npm run test"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/Serum-Enterprises/SerumJS.git"
 	},
-	"author": "Philipp Steckenbauer <philipp@serum.enterprises>",
+	"author": "Serum Enterprises <office@serum.enterprises>",
+	"contributors": [
+		{
+			"name": "Philipp Steckenbauer",
+			"email": "philipp@serum.enterprises"
+		}
+	],
 	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/Serum-Enterprises/SerumJS/issues"
 	},
 	"devDependencies": {
 		"@types/jest": "^30.0.0",
+		"esbuild": "^0.28.0",
 		"jest": "^30.3.0",
-		"typescript": "^6.0.2"
+		"typescript": "^6.0.3"
 	}
 }

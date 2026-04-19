@@ -1,4 +1,22 @@
-/node_modules/
-/src/
-/tests/
-/tsconfig.json
+node_modules/
+
+# Configuration
+tsconfig*.json
+
+# Source & Artifacts
+src/
+build/
+tests/
+coverage/
+
+# env
+.env
+.env.*
+
+# logs
+*.log
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/

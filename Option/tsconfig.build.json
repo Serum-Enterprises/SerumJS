@@ -1,0 +1,16 @@
+{
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
+		"lib": ["esnext"],
+		"rootDir": "./src",
+		"outDir": "./dist/types",
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"sourceMap": false,
+		"inlineSources": false,
+	},
+	"include": ["./src/**/*.ts"]
+}

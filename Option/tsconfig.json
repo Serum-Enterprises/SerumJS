@@ -1,12 +1,17 @@
 {
 	"extends": "../tsconfig.base.json",
 	"compilerOptions": {
-		"target": "ESNext",
+		"target": "esnext",
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
-		"rootDir": "./src",
-		"outDir": "./build",
+		"lib": ["esnext"],
+		"rootDir": ".",
+		"outDir": "./dist/types",
 		"declaration": true,
-		"declarationDir": "./types"
-	}
+		"emitDeclarationOnly": true,
+		"sourceMap": false,
+		"inlineSources": false,
+		"types": ["@types/jest"]
+	},
+	"include": ["./src/**/*.ts", "./tests/**/*.test.ts"]
 }
