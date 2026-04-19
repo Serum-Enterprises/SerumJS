@@ -1,16 +1,27 @@
 {
 	"name": "@serum-enterprises/schema",
-	"version": "3.3.0-beta.0",
+	"version": "4.0.0-beta.0",
 	"engines": {
-		"node": ">=24.0.0"
+		"node": ">=16.0.0"
 	},
 	"description": "Modern Schema Validation Library inspired by Joi.dev",
-	"main": "./build/index.js",
-	"types": "./types/index.d.ts",
+	"main": "./dist/index.cjs",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/types/index.d.ts",
+			"import": "./dist/index.esm",
+			"require": "./dist/index.cjs",
+			"default": "./dist/index.esm"
+		}
+	},
 	"scripts": {
-		"prebuild": "tsc",
-		"build": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=build/index.js --sourcemap",
-		"test": "jest"
+		"build:types": "tsc -p tsconfig.build.json",
+		"build:cjs": "esbuild ./src/index.ts --platform=node --format=cjs --outfile=./dist/index.cjs",
+		"build:esm": "esbuild ./src/index.ts --platform=neutral --format=esm --outfile=./dist/index.mjs",
+		"build": "npm run build:types && npm run build:cjs && npm run build:esm",
+		"pretest": "esbuild './src/**/*.ts' './tests/**/*.test.ts' --sourcemap --platform=node --format=cjs --outdir=./build",
+		"test": "jest --testMatch '**/*.test.js' --roots build/tests"
 	},
 	"repository": {
 		"type": "git",
@@ -23,13 +34,13 @@
 	},
 	"devDependencies": {
 		"@types/jest": "^30.0.0",
-		"@types/node": "^25.3.0",
-		"esbuild": "^0.27.3",
-		"jest": "^30.2.0",
-		"typescript": "^5.9.3"
+		"@types/node": "^25.6.0",
+		"esbuild": "^0.28.0",
+		"jest": "^30.3.0",
+		"typescript": "^6.0.2"
 	},
 	"dependencies": {
 		"@serum-enterprises/json": "^3.1.0",
-		"@serum-enterprises/option": "^3.2.0"
+		"@serum-enterprises/option": "^3.0.1"
 	}
 }
