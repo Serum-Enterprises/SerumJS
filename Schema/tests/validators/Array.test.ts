@@ -54,6 +54,7 @@ describe('Testing Array Validator', () => {
 	});
 
 	test('Testing fromJSON', () => {
+		expect(ArrayValidator.fromJSON({type: 'array'}, undefined, Schema)).toBeInstanceOf(ArrayValidator);
 		expect(Schema.fromJSON({type: 'array'})).toBeInstanceOf(ArrayValidator);
 		expect(Schema.fromJSON({type: 'array', min: 1})).toBeInstanceOf(ArrayValidator);
 		expect(() => Schema.fromJSON({type: 'array', min: 'Hello World'})).toThrow(DefinitionError);

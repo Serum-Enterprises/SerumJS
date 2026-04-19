@@ -53,6 +53,7 @@ describe('Testing Number Validator', () => {
 	});
 
 	test('Testing fromJSON', () => {
+		expect(NumberValidator.fromJSON({type: 'number'}, undefined, Schema)).toBeInstanceOf(NumberValidator);
 		expect(Schema.fromJSON({type: 'number'})).toBeInstanceOf(NumberValidator);
 		expect(Schema.fromJSON({type: 'number', integer: true})).toBeInstanceOf(NumberValidator);
 		expect(Schema.fromJSON({type: 'number', integer: false})).toBeInstanceOf(NumberValidator);

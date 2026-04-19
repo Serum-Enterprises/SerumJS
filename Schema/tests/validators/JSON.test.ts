@@ -20,6 +20,7 @@ describe('Testing JSON Validator', () => {
 	});
 
 	test('Testing fromJSON', () => {
+		expect(JSONValidator.fromJSON({type: 'json'}, undefined, Schema)).toBeInstanceOf(JSONValidator);
 		expect(Schema.fromJSON({type: 'json'})).toBeInstanceOf(JSONValidator);
 		expect(Schema.fromJSON({type: 'json'}, 'customPath')).toBeInstanceOf(JSONValidator);
 	});

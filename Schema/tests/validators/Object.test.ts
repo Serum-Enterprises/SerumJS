@@ -75,6 +75,7 @@ describe('Testing Object Validator', () => {
 	});
 
 	test('Testing fromJSON', () => {
+		expect(ObjectValidator.fromJSON({type: 'object'}, undefined, Schema)).toBeInstanceOf(ObjectValidator);
 		expect(Schema.fromJSON({type: 'object'})).toBeInstanceOf(ObjectValidator);
 		expect(Schema.fromJSON({type: 'object', min: 1})).toBeInstanceOf(ObjectValidator);
 		expect(() => Schema.fromJSON({type: 'object', min: 'Hello World'})).toThrow(DefinitionError);

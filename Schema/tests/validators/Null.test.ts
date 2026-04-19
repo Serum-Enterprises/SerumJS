@@ -16,6 +16,7 @@ describe('Testing Null Validator', () => {
     });
 
     test('Testing fromJSON', () => {
+        expect(NullValidator.fromJSON({type: 'null'}, undefined, Schema)).toBeInstanceOf(NullValidator);
         expect(Schema.fromJSON({type: 'null'})).toBeInstanceOf(NullValidator);
         expect(Schema.fromJSON({type: 'null'}, 'customPath')).toBeInstanceOf(NullValidator);
     });
