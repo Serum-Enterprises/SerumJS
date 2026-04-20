@@ -42,6 +42,7 @@ describe('Testing String Validator', () => {
 		expect(Schema.String.max(1).isEqual(Schema.String.max(2))).toBe(false);
 		expect(Schema.String.equals("Hello").isEqual(Schema.String.equals("World"))).toBe(false);
 		expect(Schema.String.min(1).isEqual(Schema.String)).toBe(false);
+		expect(Schema.String.isEqual(Schema.Null)).toBe(false);
 	});
 
 	test('Testing toJSON', () => {

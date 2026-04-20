@@ -90,6 +90,8 @@ describe('Testing Object Validator', () => {
 		expect(Schema.Object.shape({a: Schema.Boolean}).isEqual(Schema.Object.shape({a: Schema.Boolean, b: Schema.Number}))).toBe(false);
 		expect(Schema.Object.exact().isEqual(Schema.Object)).toBe(false);
 		expect(Schema.Object.min(1).isEqual(Schema.Object)).toBe(false);
+		expect(Schema.Object.isEqual(Schema.Null)).toBe(false);
+		expect(Schema.Object.shape({a: Schema.Boolean}).isEqual(Schema.Object.shape({a: undefined as any}))).toBe(false);
 	});
 
 	test('Testing toJSON', () => {

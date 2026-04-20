@@ -54,6 +54,7 @@ describe('Testing Number Validator', () => {
 		expect(Schema.Number.max(1).isEqual(Schema.Number.max(2))).toBe(false);
 		expect(Schema.Number.equals(1).isEqual(Schema.Number.equals(2))).toBe(false);
 		expect(Schema.Number.min(1).isEqual(Schema.Number)).toBe(false);
+		expect(Schema.Number.isEqual(Schema.Null)).toBe(false);
 	});
 
 	test('Testing toJSON', () => {

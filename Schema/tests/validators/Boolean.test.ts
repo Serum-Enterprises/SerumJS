@@ -25,6 +25,7 @@ describe('Testing Boolean Validator', () => {
 
 		expect(Schema.Boolean.equals(true).isEqual(Schema.Boolean.equals(false))).toBe(false);
 		expect(Schema.Boolean.equals(true).isEqual(Schema.Boolean)).toBe(false);
+		expect(Schema.Boolean.isEqual(Schema.Null)).toBe(false);
 	});
 
 	test('Testing toJSON', () => {

@@ -65,6 +65,8 @@ describe('Testing Array Validator', () => {
 		expect(Schema.Array.tuple([Schema.Boolean]).isEqual(Schema.Array.tuple([Schema.Boolean, Schema.Number]))).toBe(false);
 		expect(Schema.Array.tuple([Schema.Boolean]).isEqual(Schema.Array.tuple([Schema.Number]))).toBe(false);
 		expect(Schema.Array.min(1).isEqual(Schema.Array)).toBe(false);
+		expect(Schema.Array.isEqual(Schema.Null)).toBe(false);
+		expect(Schema.Array.tuple([Schema.Boolean]).isEqual(Schema.Array.tuple([undefined as any]))).toBe(false);
 	});
 
 	test('Testing toJSON', () => {
