@@ -5,7 +5,7 @@ export class AssertError extends Error {
 }
 
 export class DefinitionError extends Error {
-	public constructor(message: string, path: string = 'data', cause: Record<string, unknown> = {}) {
+	public constructor(message: string, path: string = 'definition', cause: Record<string, unknown> = {}) {
 		super(message, {cause: {...cause, path}});
 	}
 }
