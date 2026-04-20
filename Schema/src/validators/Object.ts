@@ -182,7 +182,14 @@ export class ObjectValidator<
 			throw new AggregateError(errors);
 	}
 
-	public isEqual(other: this): boolean {
+	private _isObjectValidator(other: Validator): other is ObjectValidator {
+		return this.constructor === other.constructor;
+	}
+
+	public isEqual(other: Validator): other is this {
+		if(!this._isObjectValidator(other))
+			return false;
+
 		return this._min.equals(other._min)
 			&& this._max.equals(other._max)
 			&& this._every.equals(other._every, (a, b) => {

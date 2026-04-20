@@ -30,7 +30,7 @@ export abstract class Validator<T = unknown> {
 		}
 	}
 
-	public abstract isEqual(other: this): boolean;
+	public abstract isEqual(other: Validator): other is this;
 
 	public abstract toJSON(): Definition;
 }

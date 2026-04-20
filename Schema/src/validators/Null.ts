@@ -21,8 +21,8 @@ export class NullValidator<T = unknown> extends Validator<T> {
 			throw new AssertError(`Expected null`, path);
 	}
 
-	public isEqual(_other: this): boolean {
-		return true;
+	public isEqual(other: Validator): other is this {
+		return this.constructor === other.constructor;
 	}
 
 	public toJSON(): NullValidatorDefinition {

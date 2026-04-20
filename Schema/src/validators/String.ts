@@ -79,7 +79,14 @@ export class StringValidator<T = unknown> extends Validator<T> {
 			throw new AssertError(`Expected ${this._equals.value}`, path);
 	}
 
-	public isEqual(other: this): boolean {
+	private _isStringValidator(other: Validator): other is StringValidator {
+		return this.constructor === other.constructor;
+	}
+
+	public isEqual(other: Validator): other is this {
+		if(!this._isStringValidator(other))
+			return false;
+
 		return this._min.equals(other._min) &&
 			this._max.equals(other._max) &&
 			this._equals.equals(other._equals);

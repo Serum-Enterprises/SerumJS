@@ -151,7 +151,14 @@ export class ArrayValidator<
 			throw new AggregateError(errors);
 	}
 
-	public isEqual(other: this): boolean {
+	private _isArrayValidator(other: Validator): other is ArrayValidator {
+		return this.constructor === other.constructor;
+	}
+
+	public isEqual(other: Validator): other is this {
+		if(!this._isArrayValidator(other))
+			return false;
+
 		return this._min.equals(other._min)
 			&& this._max.equals(other._max)
 			&& this._every.equals(other._every, (a, b) => {

@@ -98,7 +98,14 @@ export class NumberValidator<T = unknown> extends Validator<T> {
 			throw new AssertError(`Expected ${this._equals.value}`, path);
 	}
 
-	public isEqual(other: this): boolean {
+	private _isNumberValidator(other: Validator): other is NumberValidator {
+		return this.constructor === other.constructor;
+	}
+
+	public isEqual(other: Validator): other is this {
+		if(!this._isNumberValidator(other))
+			return false;
+
 		return this._integer.equals(other._integer) &&
 			this._min.equals(other._min) &&
 			this._max.equals(other._max) &&
