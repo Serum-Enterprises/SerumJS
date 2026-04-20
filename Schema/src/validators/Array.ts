@@ -151,6 +151,33 @@ export class ArrayValidator<
 			throw new AggregateError(errors);
 	}
 
+	public isEqual(other: this): boolean {
+		return this._min.equals(other._min)
+			&& this._max.equals(other._max)
+			&& this._every.equals(other._every, (a, b) => {
+				if (a.constructor !== b.constructor)
+					return false;
+
+				return a.isEqual(b);
+			})
+			&& this._tuple.equals(other._tuple, (a, b) => {
+				if (a.length !== b.length)
+					return false;
+
+				return a.every((left, index) => {
+					const right = b[index];
+
+					if(!right)
+						return false;
+
+					if(left.constructor !== right.constructor)
+						return false;
+
+					return left.isEqual(right);
+				})
+			});
+	}
+
 	public toJSON(): ArrayValidatorDefinition<ED, TD> {
 		const definition: ArrayValidatorDefinition = {type: 'array'};
 

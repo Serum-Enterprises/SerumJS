@@ -43,6 +43,10 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 			throw new AssertError(`Expected ${this._equals.value}`, path);
 	}
 
+	public isEqual(other: this): boolean {
+		return this._equals.equals(other._equals);
+	}
+
 	public toJSON(): BooleanValidatorDefinition {
 		const definition: BooleanValidatorDefinition = {
 			type: 'boolean'

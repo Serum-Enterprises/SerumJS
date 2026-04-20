@@ -19,6 +19,10 @@ export class NeverValidator<T = unknown> extends Validator<T> {
 		throw new AssertError(`Expected never`, path);
 	}
 
+	public isEqual(_other: this): boolean {
+		return true;
+	}
+
 	public toJSON(): NeverValidatorDefinition {
 		return {
 			type: 'never'

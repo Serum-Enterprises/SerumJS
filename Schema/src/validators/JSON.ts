@@ -21,6 +21,10 @@ export class JSONValidator<T = unknown> extends Validator<T> {
 			throw new AssertError(`Expected valid JSON`, path);
 	}
 
+	public isEqual(_other: this): boolean {
+		return true;
+	}
+
 	public toJSON(): JSONValidatorDefinition {
 		return {
 			type: 'json'

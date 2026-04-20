@@ -118,7 +118,9 @@ export class ObjectValidator<
 		return this as unknown as ObjectValidator<InferValidatorReturnType<V>, S, InferDefinitionType<V>, SD, E>;
 	}
 
-	public shape<S extends { [key: string]: Validator }>(value: S): ObjectValidator<T, InferObjectReturnType<S>, TD, InferObjectDefinitionType<S>, E> {
+	public shape<S extends {
+		[key: string]: Validator
+	}>(value: S): ObjectValidator<T, InferObjectReturnType<S>, TD, InferObjectDefinitionType<S>, E> {
 		this._shape = Option.Some(value);
 
 		return this as unknown as ObjectValidator<T, InferObjectReturnType<S>, TD, InferObjectDefinitionType<S>, E>;
@@ -178,6 +180,41 @@ export class ObjectValidator<
 
 		if (errors.length > 0)
 			throw new AggregateError(errors);
+	}
+
+	public isEqual(other: this): boolean {
+		return this._min.equals(other._min)
+			&& this._max.equals(other._max)
+			&& this._every.equals(other._every, (a, b) => {
+				if (a.constructor !== b.constructor)
+					return false;
+
+				return a.isEqual(b);
+			})
+			&& this._shape.equals(other._shape, (a, b) => {
+				const aKeys = Object.entries(a);
+				const bKeys = Object.keys(b);
+
+				if (aKeys.length !== bKeys.length)
+					return false;
+
+				return aKeys.every(([key, value]) => {
+					if (!(key in b))
+						return false;
+
+					const left = value;
+					const right = b[key];
+
+					if (!right)
+						return false;
+
+					if (left.constructor !== right.constructor)
+						return false;
+
+					return left.isEqual(right);
+				});
+			})
+			&& this._exact.equals(other._exact);
 	}
 
 	public toJSON(): ObjectValidatorDefinition<TD, SD> {

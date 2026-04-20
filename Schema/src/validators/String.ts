@@ -79,6 +79,12 @@ export class StringValidator<T = unknown> extends Validator<T> {
 			throw new AssertError(`Expected ${this._equals.value}`, path);
 	}
 
+	public isEqual(other: this): boolean {
+		return this._min.equals(other._min) &&
+			this._max.equals(other._max) &&
+			this._equals.equals(other._equals);
+	}
+
 	public toJSON(): StringValidatorDefinition {
 		const definition: StringValidatorDefinition = {
 			type: 'string'
