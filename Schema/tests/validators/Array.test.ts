@@ -52,6 +52,21 @@ describe('Testing Array Validator', () => {
 		expect(Schema.Array.tuple([Schema.Boolean, Schema.Number])).toBeInstanceOf(ArrayValidator);
 	});
 
+	test('Testing isEqual', () => {
+		expect(Schema.Array.isEqual(Schema.Array)).toBe(true);
+		expect(Schema.Array.min(1).isEqual(Schema.Array.min(1))).toBe(true);
+		expect(Schema.Array.max(1).isEqual(Schema.Array.max(1))).toBe(true);
+		expect(Schema.Array.every(Schema.Number).isEqual(Schema.Array.every(Schema.Number))).toBe(true);
+		expect(Schema.Array.tuple([Schema.Boolean, Schema.Number]).isEqual(Schema.Array.tuple([Schema.Boolean, Schema.Number]))).toBe(true);
+
+		expect(Schema.Array.min(1).isEqual(Schema.Array.min(2))).toBe(false);
+		expect(Schema.Array.max(1).isEqual(Schema.Array.max(2))).toBe(false);
+		expect(Schema.Array.every(Schema.Number).isEqual(Schema.Array.every(Schema.String))).toBe(false);
+		expect(Schema.Array.tuple([Schema.Boolean]).isEqual(Schema.Array.tuple([Schema.Boolean, Schema.Number]))).toBe(false);
+		expect(Schema.Array.tuple([Schema.Boolean]).isEqual(Schema.Array.tuple([Schema.Number]))).toBe(false);
+		expect(Schema.Array.min(1).isEqual(Schema.Array)).toBe(false);
+	});
+
 	test('Testing toJSON', () => {
 		expect(Schema.Array.toJSON()).toEqual({type: 'array'});
 		expect(Schema.Array.min(1).toJSON()).toEqual({type: 'array', min: 1});

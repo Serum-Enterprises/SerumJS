@@ -42,6 +42,20 @@ describe('Testing Number Validator', () => {
 		expect(Schema.Number.equals(1)).toBeInstanceOf(NumberValidator);
 	});
 
+	test('Testing isEqual', () => {
+		expect(Schema.Number.isEqual(Schema.Number)).toBe(true);
+		expect(Schema.Number.integer().isEqual(Schema.Number.integer())).toBe(true);
+		expect(Schema.Number.min(1).isEqual(Schema.Number.min(1))).toBe(true);
+		expect(Schema.Number.max(1).isEqual(Schema.Number.max(1))).toBe(true);
+		expect(Schema.Number.equals(1).isEqual(Schema.Number.equals(1))).toBe(true);
+
+		expect(Schema.Number.integer().isEqual(Schema.Number)).toBe(false);
+		expect(Schema.Number.min(1).isEqual(Schema.Number.min(2))).toBe(false);
+		expect(Schema.Number.max(1).isEqual(Schema.Number.max(2))).toBe(false);
+		expect(Schema.Number.equals(1).isEqual(Schema.Number.equals(2))).toBe(false);
+		expect(Schema.Number.min(1).isEqual(Schema.Number)).toBe(false);
+	});
+
 	test('Testing toJSON', () => {
 		expect(Schema.Number.toJSON()).toEqual({type: 'number'});
 		expect(Schema.Number.integer().toJSON()).toEqual({type: 'number', integer: true});

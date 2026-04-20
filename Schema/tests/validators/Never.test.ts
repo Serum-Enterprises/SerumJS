@@ -19,6 +19,10 @@ describe('Testing Never Validator', () => {
         expect(Schema.Never.toJSON()).toEqual({type: 'never'});
     });
 
+    test('Testing isEqual', () => {
+        expect(Schema.Never.isEqual(Schema.Never)).toBe(true);
+    });
+
     test('Testing fromJSON', () => {
         expect(NeverValidator.fromJSON({type: 'never'}, undefined, Schema)).toBeInstanceOf(NeverValidator);
         expect(Schema.fromJSON({type: 'never'})).toBeInstanceOf(NeverValidator);

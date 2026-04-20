@@ -19,6 +19,10 @@ describe('Testing JSON Validator', () => {
 		expect(Schema.JSON.toJSON()).toEqual({type: 'json'});
 	});
 
+	test('Testing isEqual', () => {
+		expect(Schema.JSON.isEqual(Schema.JSON)).toBe(true);
+	});
+
 	test('Testing fromJSON', () => {
 		expect(JSONValidator.fromJSON({type: 'json'}, undefined, Schema)).toBeInstanceOf(JSONValidator);
 		expect(Schema.fromJSON({type: 'json'})).toBeInstanceOf(JSONValidator);

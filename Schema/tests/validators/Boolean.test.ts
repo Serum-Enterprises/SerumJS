@@ -19,6 +19,14 @@ describe('Testing Boolean Validator', () => {
 		expect(Schema.Boolean.equals(true)).toBeInstanceOf(BooleanValidator)
 	})
 
+	test('Testing isEqual', () => {
+		expect(Schema.Boolean.isEqual(Schema.Boolean)).toBe(true);
+		expect(Schema.Boolean.equals(true).isEqual(Schema.Boolean.equals(true))).toBe(true);
+
+		expect(Schema.Boolean.equals(true).isEqual(Schema.Boolean.equals(false))).toBe(false);
+		expect(Schema.Boolean.equals(true).isEqual(Schema.Boolean)).toBe(false);
+	});
+
 	test('Testing toJSON', () => {
 		expect(Schema.Boolean.toJSON()).toEqual({type: 'boolean'});
 		expect(Schema.Boolean.equals(true).toJSON()).toEqual({type: 'boolean', equals: true});

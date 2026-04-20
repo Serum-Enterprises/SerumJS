@@ -15,6 +15,10 @@ describe('Testing Null Validator', () => {
         expect(Schema.Null.toJSON()).toEqual({type: 'null'});
     });
 
+    test('Testing isEqual', () => {
+        expect(Schema.Null.isEqual(Schema.Null)).toBe(true);
+    });
+
     test('Testing fromJSON', () => {
         expect(NullValidator.fromJSON({type: 'null'}, undefined, Schema)).toBeInstanceOf(NullValidator);
         expect(Schema.fromJSON({type: 'null'})).toBeInstanceOf(NullValidator);

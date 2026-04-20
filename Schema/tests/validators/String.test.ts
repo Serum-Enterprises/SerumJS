@@ -32,6 +32,18 @@ describe('Testing String Validator', () => {
 		expect(Schema.String.equals("Hello World")).toBeInstanceOf(StringValidator);
 	});
 
+	test('Testing isEqual', () => {
+		expect(Schema.String.isEqual(Schema.String)).toBe(true);
+		expect(Schema.String.min(1).isEqual(Schema.String.min(1))).toBe(true);
+		expect(Schema.String.max(1).isEqual(Schema.String.max(1))).toBe(true);
+		expect(Schema.String.equals("Hello").isEqual(Schema.String.equals("Hello"))).toBe(true);
+
+		expect(Schema.String.min(1).isEqual(Schema.String.min(2))).toBe(false);
+		expect(Schema.String.max(1).isEqual(Schema.String.max(2))).toBe(false);
+		expect(Schema.String.equals("Hello").isEqual(Schema.String.equals("World"))).toBe(false);
+		expect(Schema.String.min(1).isEqual(Schema.String)).toBe(false);
+	});
+
 	test('Testing toJSON', () => {
 		expect(Schema.String.toJSON()).toEqual({type: 'string'});
 		expect(Schema.String.min(1).toJSON()).toEqual({type: 'string', min: 1});

@@ -74,6 +74,24 @@ describe('Testing Object Validator', () => {
 		expect(Schema.Object.exact(false)).toBeInstanceOf(ObjectValidator);
 	});
 
+	test('Testing isEqual', () => {
+		expect(Schema.Object.isEqual(Schema.Object)).toBe(true);
+		expect(Schema.Object.min(1).isEqual(Schema.Object.min(1))).toBe(true);
+		expect(Schema.Object.max(1).isEqual(Schema.Object.max(1))).toBe(true);
+		expect(Schema.Object.every(Schema.Number).isEqual(Schema.Object.every(Schema.Number))).toBe(true);
+		expect(Schema.Object.shape({a: Schema.Boolean}).isEqual(Schema.Object.shape({a: Schema.Boolean}))).toBe(true);
+		expect(Schema.Object.exact().isEqual(Schema.Object.exact())).toBe(true);
+
+		expect(Schema.Object.min(1).isEqual(Schema.Object.min(2))).toBe(false);
+		expect(Schema.Object.max(1).isEqual(Schema.Object.max(2))).toBe(false);
+		expect(Schema.Object.every(Schema.Number).isEqual(Schema.Object.every(Schema.String))).toBe(false);
+		expect(Schema.Object.shape({a: Schema.Boolean}).isEqual(Schema.Object.shape({a: Schema.Number}))).toBe(false);
+		expect(Schema.Object.shape({a: Schema.Boolean}).isEqual(Schema.Object.shape({b: Schema.Boolean}))).toBe(false);
+		expect(Schema.Object.shape({a: Schema.Boolean}).isEqual(Schema.Object.shape({a: Schema.Boolean, b: Schema.Number}))).toBe(false);
+		expect(Schema.Object.exact().isEqual(Schema.Object)).toBe(false);
+		expect(Schema.Object.min(1).isEqual(Schema.Object)).toBe(false);
+	});
+
 	test('Testing toJSON', () => {
 		expect(Schema.Object.toJSON()).toEqual({type: 'object'});
 		expect(Schema.Object.min(1).toJSON()).toEqual({type: 'object', min: 1});
