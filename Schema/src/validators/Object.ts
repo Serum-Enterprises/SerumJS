@@ -7,6 +7,8 @@ import {
 	InferObjectDefinitionType, InferObjectReturnType
 } from '../lib/types';
 import type {SchemaDomain} from '../SchemaDomain';
+import {BoundaryValidator, BoundaryDefinition} from './BoundaryValidator';
+import * as BoundaryHelper from './BoundaryValidator';
 
 type ObjectResult<T, S, E extends boolean> =
 	S extends { [key: string]: unknown }
@@ -19,10 +21,8 @@ export interface ObjectValidatorDefinition<
 	// Every & Shape Definitions (as E & S)
 	E extends Definition = Definition,
 	S extends Record<string, Definition> = Record<string, Definition>
-> extends Definition {
+> extends Definition, BoundaryDefinition {
 	type: 'object';
-	min?: number;
-	max?: number;
 	every?: E;
 	shape?: S;
 	exact?: boolean;
@@ -37,27 +37,17 @@ export class ObjectValidator<
 	SD extends { [key: string]: Definition } = { [key: string]: Definition },
 	// Exact Flag (as E)
 	E extends boolean = false
-> extends Validator<ObjectResult<T, S, E>> {
+> extends BoundaryValidator<ObjectResult<T, S, E>> {
 	public static fromJSON(
 		definition: UnknownDefinition,
 		path: string = "definition",
 		schemaDomain: SchemaDomain
 	): ObjectValidator {
 		const validatorInstance = new ObjectValidator();
+		const {max, min} = BoundaryHelper.fromJSON(definition, path);
 
-		if ("min" in definition) {
-			if (!JSON.isNumber(definition["min"]))
-				throw new DefinitionError(`Expected a Number`, `${path}.min`);
-
-			validatorInstance._min = Option.Some(definition['min']);
-		}
-
-		if ("max" in definition) {
-			if (!JSON.isNumber(definition["max"]))
-				throw new DefinitionError(`Expected a Number`, `${path}.max`);
-
-			validatorInstance._max = Option.Some(definition['max']);
-		}
+		validatorInstance._min = min;
+		validatorInstance._max = max;
 
 		if ("every" in definition)
 			validatorInstance._every = Option.Some(schemaDomain.fromJSON(definition['every'], `${path}.every`));
@@ -94,23 +84,9 @@ export class ObjectValidator<
 		return validatorInstance;
 	}
 
-	protected _min: Option<number> = Option.None();
-	protected _max: Option<number> = Option.None();
 	protected _every: Option<Validator> = Option.None();
 	protected _shape: Option<{ [key: string]: Validator }> = Option.None();
 	protected _exact: Option<null> = Option.None();
-
-	public min(value: number): this {
-		this._min = Option.Some(value);
-
-		return this;
-	}
-
-	public max(value: number): this {
-		this._max = Option.Some(value);
-
-		return this;
-	}
 
 	public every<V extends Validator>(validator: V): ObjectValidator<InferValidatorReturnType<V>, S, InferDefinitionType<V>, SD, E> {
 		this._every = Option.Some(validator);
@@ -225,7 +201,10 @@ export class ObjectValidator<
 	}
 
 	public toJSON(): ObjectValidatorDefinition<TD, SD> {
-		const schema: ObjectValidatorDefinition = {type: "object"};
+		const schema: ObjectValidatorDefinition = {
+			type: 'object',
+			...BoundaryHelper.toJSON({min: this._min, max: this._max})
+		};
 
 		if (this._min.isSome())
 			schema.min = this._min.value;
