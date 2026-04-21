@@ -30,7 +30,7 @@ find([1, 2, 3], 2).match(
 
 ## API
 
-Please check [Option.d.ts](./types/Option.d.ts) for the full API.
+Please check [Option.d.ts](./dist/types/index.d.ts) for the full API.
 
 ## LICENSE
 
