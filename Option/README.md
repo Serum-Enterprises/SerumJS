@@ -30,13 +30,13 @@ find([1, 2, 3], 2).match(
 
 ## API
 
-Please check [Option.d.ts](./types/Option.d.ts) for the full API.
+Please check [Option.d.ts](./dist/types/index.d.ts) for the full API.
 
 ## LICENSE
 
 MIT License
 
-Copyright (c) 2025 Serum Enterprises L.L.C-FZ
+Copyright (c) 2026 Serum Enterprises L.L.C-FZ
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
