@@ -91,6 +91,35 @@ describe('Testing Option.js', () => {
 		expect(outcome).toBe('No value');
 	});
 
+	test('Testing Option.clone with Some', () => {
+		const value = {a: 1};
+		const option = Option.Some(value);
+		const cloned = option.clone(v => ({...v}));
+
+		expect(cloned.isSome()).toBe(true);
+		expect(cloned).not.toBe(option);
+		expect(cloned.value).toEqual(value);
+		expect(cloned.value).not.toBe(value);
+	});
+
+	test('Testing Option.clone with Some using default clone function', () => {
+		const value = 42;
+		const option = Option.Some(value);
+		const cloned = option.clone();
+
+		expect(cloned.isSome()).toBe(true);
+		expect(cloned).not.toBe(option);
+		expect(cloned.value).toBe(value);
+	});
+
+	test('Testing Option.clone with None', () => {
+		const option = Option.None();
+		const cloned = option.clone();
+
+		expect(cloned.isNone()).toBe(true);
+		expect(cloned).not.toBe(option);
+	});
+
 	test('Testing Option.equals', () => {
 		expect(Option.None().equals(Option.None())).toBe(true);
 		expect(Option.Some(1).equals(Option.Some(1))).toBe(true);
