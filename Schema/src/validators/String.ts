@@ -3,6 +3,7 @@ import {Option} from '@serum-enterprises/option';
 import {Validator, Definition, UnknownDefinition} from '../Validator';
 import {AssertError, DefinitionError} from '../lib/errors';
 import type {SchemaDomain} from '../SchemaDomain';
+import {NeverValidator} from "./Never";
 import {BoundaryValidator, BoundaryDefinition} from './BoundaryValidator';
 import * as BoundaryHelper from './BoundaryValidator';
 
@@ -60,12 +61,43 @@ export class StringValidator<T = unknown> extends BoundaryValidator<T> {
 	}
 
 	public isEqual(other: Validator): other is this {
-		if(!this._isStringValidator(other))
+		if (!this._isStringValidator(other))
 			return false;
 
 		return this._min.equals(other._min) &&
 			this._max.equals(other._max) &&
 			this._equals.equals(other._equals);
+	}
+
+	protected isValid(): boolean {
+		if (this._min.isSome() && this._max.isSome() && this._min.value > this._max.value)
+			return false;
+
+		if (this._equals.isSome()) {
+			if (this._min.isSome() && this._min.value > this._equals.value.length)
+				return false;
+
+			if (this._max.isSome() && this._max.value < this._equals.value.length)
+				return false;
+		}
+
+		if (this._min.isSome() && this._max.isSome() && Math.ceil(this._min.value) > Math.floor(this._max.value))
+			return false;
+
+		return true;
+	}
+
+	public override normalize(): this | NeverValidator {
+		if (!this.isValid())
+			return new NeverValidator();
+
+		const validator = new StringValidator() as this;
+
+		validator._min = this._min.map(v => v);
+		validator._max = this._max.map(v => v);
+		validator._equals = this._equals.map(v => v);
+
+		return validator;
 	}
 
 	public toJSON(): StringValidatorDefinition {

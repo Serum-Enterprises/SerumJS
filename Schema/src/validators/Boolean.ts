@@ -54,6 +54,14 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 		return this._equals.equals(other._equals);
 	}
 
+	public override normalize(): this {
+		const validator = new BooleanValidator();
+
+		validator._equals = this._equals.map(v => v);
+
+		return validator as this;
+	}
+
 	public toJSON(): BooleanValidatorDefinition {
 		const definition: BooleanValidatorDefinition = {
 			type: 'boolean'

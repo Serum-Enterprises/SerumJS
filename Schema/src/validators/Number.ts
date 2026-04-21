@@ -3,6 +3,7 @@ import {Option} from '@serum-enterprises/option';
 import {Validator, Definition, UnknownDefinition} from '../Validator';
 import {AssertError, DefinitionError} from '../lib/errors';
 import type {SchemaDomain} from '../SchemaDomain';
+import {NeverValidator} from "./Never";
 import {BoundaryValidator, BoundaryDefinition} from './BoundaryValidator';
 import * as BoundaryHelper from './BoundaryValidator';
 
@@ -79,7 +80,7 @@ export class NumberValidator<T = unknown> extends BoundaryValidator<T> {
 	}
 
 	public isEqual(other: Validator): other is this {
-		if(!this._isNumberValidator(other))
+		if (!this._isNumberValidator(other))
 			return false;
 
 		return this._integer.equals(other._integer) &&
@@ -88,7 +89,42 @@ export class NumberValidator<T = unknown> extends BoundaryValidator<T> {
 			this._equals.equals(other._equals);
 	}
 
-	public toJSON(): NumberValidatorDefinition {
+	protected isValid(): boolean {
+		if (this._min.isSome() && this._max.isSome() && this._min.value > this._max.value)
+			return false;
+
+		if (this._equals.isSome()) {
+			if (this._min.isSome() && this._min.value > this._equals.value)
+				return false;
+
+			if (this._max.isSome() && this._max.value < this._equals.value)
+				return false;
+
+			if (this._integer.isSome() && !JSON.isInteger(this._equals.value))
+				return false;
+		}
+
+		if (this._integer.isSome() && this._min.isSome() && this._max.isSome() && Math.ceil(this._min.value) > Math.floor(this._max.value))
+			return false;
+
+		return true;
+	}
+
+	public override normalize(): this | NeverValidator {
+		if(!this.isValid())
+			return new NeverValidator();
+
+		const validator = new NumberValidator() as this;
+
+		validator._integer = this._integer.map(v => v);
+		validator._min = this._min.map(v => v);
+		validator._max = this._max.map(v => v);
+		validator._equals = this._equals.map(v => v);
+
+		return validator;
+	}
+
+	public override toJSON(): NumberValidatorDefinition {
 		const definition: NumberValidatorDefinition = {
 			type: 'number',
 			...BoundaryHelper.toJSON({min: this._min, max: this._max})
