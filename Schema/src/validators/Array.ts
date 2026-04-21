@@ -7,6 +7,8 @@ import {
 	InferListDefinitionType, InferListReturnType
 } from '../lib/types';
 import type {SchemaDomain} from '../SchemaDomain';
+import {BoundaryValidator, BoundaryDefinition} from './BoundaryValidator';
+import * as BoundaryHelper from './BoundaryValidator';
 
 type ArrayResult<E, T> =
 	T extends readonly unknown[]
@@ -17,10 +19,8 @@ export interface ArrayValidatorDefinition<
 	// Every & Tuple Definitions (as E & T)
 	E extends Definition = Definition,
 	T extends readonly Definition[] = readonly Definition[]
-> extends Definition {
+> extends Definition, BoundaryDefinition {
 	type: 'array';
-	min?: number;
-	max?: number;
 	every?: E;
 	tuple?: T;
 }
@@ -32,27 +32,17 @@ export class ArrayValidator<
 	// Every & Tuple Definitions (as ED & TD)
 	ED extends Definition = Definition,
 	TD extends readonly Definition[] = readonly Definition[],
-> extends Validator<ArrayResult<E, T>> {
+> extends BoundaryValidator<ArrayResult<E, T>> {
 	public static fromJSON(
 		definition: UnknownDefinition,
 		path: string = 'definition',
 		schemaDomain: SchemaDomain
 	): ArrayValidator {
 		const validatorInstance = new ArrayValidator();
+		const {max, min} = BoundaryHelper.fromJSON(definition, path);
 
-		if ('min' in definition) {
-			if (!JSON.isNumber(definition['min']))
-				throw new DefinitionError(`Expected a Number`, `${path}.min`);
-
-			validatorInstance._min = Option.Some(definition['min']);
-		}
-
-		if ('max' in definition) {
-			if (!JSON.isNumber(definition['max']))
-				throw new DefinitionError(`Expected a Number`, `${path}.max`);
-
-			validatorInstance._max = Option.Some(definition['max']);
-		}
+		validatorInstance._min = min;
+		validatorInstance._max = max;
 
 		if ('every' in definition)
 			validatorInstance._every = Option.Some(schemaDomain.fromJSON(definition['every'], `${path}.every`));
@@ -81,22 +71,8 @@ export class ArrayValidator<
 		return validatorInstance;
 	}
 
-	protected _min: Option<number> = Option.None();
-	protected _max: Option<number> = Option.None();
 	protected _every: Option<Validator> = Option.None();
 	protected _tuple: Option<readonly Validator[]> = Option.None();
-
-	public min(value: number): this {
-		this._min = Option.Some(value);
-
-		return this;
-	}
-
-	public max(value: number): this {
-		this._max = Option.Some(value);
-
-		return this;
-	}
 
 	public every<const V extends Validator>(validator: V): ArrayValidator<InferValidatorReturnType<V>, T, InferDefinitionType<V>, TD> {
 		this._every = Option.Some(validator);
@@ -186,13 +162,10 @@ export class ArrayValidator<
 	}
 
 	public toJSON(): ArrayValidatorDefinition<ED, TD> {
-		const definition: ArrayValidatorDefinition = {type: 'array'};
-
-		if (this._min.isSome())
-			definition.min = this._min.value;
-
-		if (this._max.isSome())
-			definition.max = this._max.value;
+		const definition: ArrayValidatorDefinition = {
+			type: 'array',
+			...BoundaryHelper.toJSON({min: this._min, max: this._max})
+		};
 
 		if (this._every.isSome())
 			definition.every = this._every.value.toJSON();

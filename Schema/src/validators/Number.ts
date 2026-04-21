@@ -3,22 +3,26 @@ import {Option} from '@serum-enterprises/option';
 import {Validator, Definition, UnknownDefinition} from '../Validator';
 import {AssertError, DefinitionError} from '../lib/errors';
 import type {SchemaDomain} from '../SchemaDomain';
+import {BoundaryValidator, BoundaryDefinition} from './BoundaryValidator';
+import * as BoundaryHelper from './BoundaryValidator';
 
-export interface NumberValidatorDefinition extends Definition {
+export interface NumberValidatorDefinition extends Definition, BoundaryDefinition {
 	type: 'number';
 	integer?: boolean;
-	min?: number;
-	max?: number;
 	equals?: number;
 }
 
-export class NumberValidator<T = unknown> extends Validator<T> {
+export class NumberValidator<T = unknown> extends BoundaryValidator<T> {
 	public static fromJSON(
 		definition: UnknownDefinition,
 		path: string = 'definition',
 		_schemaDomain: SchemaDomain
 	): NumberValidator {
 		const validatorInstance = new NumberValidator();
+		const {max, min} = BoundaryHelper.fromJSON(definition, path);
+
+		validatorInstance._min = min;
+		validatorInstance._max = max;
 
 		if ('integer' in definition) {
 			if (!JSON.isBoolean(definition['integer']))
@@ -26,20 +30,6 @@ export class NumberValidator<T = unknown> extends Validator<T> {
 
 			if (definition['integer'])
 				validatorInstance._integer = Option.Some(null);
-		}
-
-		if ('min' in definition) {
-			if (!JSON.isNumber(definition['min']))
-				throw new DefinitionError(`Expected a Number`, `${path}.min`);
-
-			validatorInstance._min = Option.Some(definition['min']);
-		}
-
-		if ('max' in definition) {
-			if (!JSON.isNumber(definition['max']))
-				throw new DefinitionError(`Expected a Number`, `${path}.max`);
-
-			validatorInstance._max = Option.Some(definition['max']);
 		}
 
 		if ('equals' in definition) {
@@ -53,24 +43,10 @@ export class NumberValidator<T = unknown> extends Validator<T> {
 	}
 
 	protected _integer: Option<null> = Option.None();
-	protected _min: Option<number> = Option.None();
-	protected _max: Option<number> = Option.None();
 	protected _equals: Option<JSON.Number> = Option.None();
 
 	public integer(flag: boolean = true): this {
 		this._integer = flag ? Option.Some(null) : Option.None();
-
-		return this;
-	}
-
-	public min(value: number): this {
-		this._min = Option.Some(value);
-
-		return this;
-	}
-
-	public max(value: number): this {
-		this._max = Option.Some(value);
 
 		return this;
 	}
@@ -114,17 +90,12 @@ export class NumberValidator<T = unknown> extends Validator<T> {
 
 	public toJSON(): NumberValidatorDefinition {
 		const definition: NumberValidatorDefinition = {
-			type: 'number'
+			type: 'number',
+			...BoundaryHelper.toJSON({min: this._min, max: this._max})
 		};
 
 		if (this._integer.isSome())
 			definition['integer'] = true;
-
-		if (this._min.isSome())
-			definition['min'] = this._min.value;
-
-		if (this._max.isSome())
-			definition['max'] = this._max.value;
 
 		if (this._equals.isSome())
 			definition['equals'] = this._equals.value;

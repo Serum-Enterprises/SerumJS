@@ -3,35 +3,25 @@ import {Option} from '@serum-enterprises/option';
 import {Validator, Definition, UnknownDefinition} from '../Validator';
 import {AssertError, DefinitionError} from '../lib/errors';
 import type {SchemaDomain} from '../SchemaDomain';
+import {BoundaryValidator, BoundaryDefinition} from './BoundaryValidator';
+import * as BoundaryHelper from './BoundaryValidator';
 
-export interface StringValidatorDefinition extends Definition {
+export interface StringValidatorDefinition extends Definition, BoundaryDefinition {
 	type: 'string';
-	min?: number;
-	max?: number;
 	equals?: string;
 }
 
-export class StringValidator<T = unknown> extends Validator<T> {
+export class StringValidator<T = unknown> extends BoundaryValidator<T> {
 	public static fromJSON(
 		definition: UnknownDefinition,
 		path: string = 'definition',
 		_schemaDomain: SchemaDomain
 	): StringValidator {
 		const validatorInstance = new StringValidator();
+		const {max, min} = BoundaryHelper.fromJSON(definition, path);
 
-		if ('min' in definition) {
-			if (!JSON.isNumber(definition['min']))
-				throw new DefinitionError(`Expected a Number`, `${path}.min`);
-
-			validatorInstance._min = Option.Some(definition['min']);
-		}
-
-		if ('max' in definition) {
-			if (!JSON.isNumber(definition['max']))
-				throw new DefinitionError(`Expected a Number`, `${path}.max`);
-
-			validatorInstance._max = Option.Some(definition['max']);
-		}
+		validatorInstance._min = min;
+		validatorInstance._max = max;
 
 		if ('equals' in definition) {
 			if (!JSON.isString(definition['equals']))
@@ -43,21 +33,7 @@ export class StringValidator<T = unknown> extends Validator<T> {
 		return validatorInstance;
 	}
 
-	protected _min: Option<number> = Option.None();
-	protected _max: Option<number> = Option.None();
 	protected _equals: Option<JSON.String> = Option.None();
-
-	public min(value: number): this {
-		this._min = Option.Some(value);
-
-		return this;
-	}
-
-	public max(value: number): this {
-		this._max = Option.Some(value);
-
-		return this;
-	}
 
 	public equals<const V extends string>(value: V): StringValidator<V> {
 		this._equals = Option.Some(value);
@@ -94,7 +70,8 @@ export class StringValidator<T = unknown> extends Validator<T> {
 
 	public toJSON(): StringValidatorDefinition {
 		const definition: StringValidatorDefinition = {
-			type: 'string'
+			type: 'string',
+			...BoundaryHelper.toJSON({min: this._min, max: this._max})
 		};
 
 		if (this._min.isSome())
