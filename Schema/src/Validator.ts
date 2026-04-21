@@ -1,4 +1,5 @@
 import type {SchemaDomain} from './SchemaDomain';
+import type {NeverValidator} from './validators';
 
 export interface Definition {
 	type: string;
@@ -31,6 +32,10 @@ export abstract class Validator<T = unknown> {
 	}
 
 	public abstract isEqual(other: Validator): other is this;
+
+	public normalize(): this | NeverValidator {
+		return new (this.constructor as new () => this)();
+	}
 
 	public abstract toJSON(): Definition;
 }
