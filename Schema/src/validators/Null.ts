@@ -25,6 +25,10 @@ export class NullValidator<T = unknown> extends Validator<T> {
 		return this.constructor === other.constructor;
 	}
 
+	public override normalize(): this {
+		return super.normalize() as this;
+	}
+
 	public toJSON(): NullValidatorDefinition {
 		return {
 			type: 'null'
