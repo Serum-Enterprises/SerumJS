@@ -35,9 +35,6 @@ abstract class BaseOption<T> {
 			return onNone();
 	}
 
-	public abstract clone(): Option<T>;
-	public abstract clone<R>(cloneValue: (value: T) => R): Option<R>;
-
 	public equals<O>(
 		other: Option<O>,
 		fn: (a: T, b: O) => boolean = (a, b) => Object.is(a, b)
@@ -50,6 +47,8 @@ abstract class BaseOption<T> {
 
 		return false;
 	}
+
+	public abstract clone<R>(cloneValue?: (value: T) => R): Option<T | R>;
 }
 
 export class Some<T> extends BaseOption<T> {
@@ -59,8 +58,8 @@ export class Some<T> extends BaseOption<T> {
 
 	public clone(): Some<T>;
 	public clone<R>(cloneValue: (value: T) => R): Some<R>;
-	public clone<R>(cloneValue: (value: T) => R = v => v as unknown as R): Some<R> {
-		return Option.Some(cloneValue(this.value));
+	public clone<R>(cloneValue?: (value: T) => R): Some<T | R> {
+		return Option.Some(cloneValue ? cloneValue(this.value) : this.value);
 	}
 }
 
