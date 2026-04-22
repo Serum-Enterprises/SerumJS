@@ -1,5 +1,4 @@
 import {JSON} from '@serum-enterprises/json';
-import {Option} from '@serum-enterprises/option';
 import {Validator, Definition, UnknownDefinition} from '../Validator';
 import {AssertError, DefinitionError} from '../lib/errors';
 import {
@@ -45,7 +44,7 @@ export class ArrayValidator<
 		validatorInstance._max = max;
 
 		if ('every' in definition)
-			validatorInstance._every = Option.Some(schemaDomain.fromJSON(definition['every'], `${path}.every`));
+			validatorInstance._every = schemaDomain.fromJSON(definition['every'], `${path}.every`);
 
 		if ('tuple' in definition) {
 			if (!JSON.isShallowArray(definition['tuple']))
@@ -65,23 +64,23 @@ export class ArrayValidator<
 			if (errors.length > 0)
 				throw new AggregateError(errors);
 
-			validatorInstance._tuple = Option.Some(tupleSchemas);
+			validatorInstance._tuple = tupleSchemas;
 		}
 
 		return validatorInstance;
 	}
 
-	protected _every: Option<Validator> = Option.None();
-	protected _tuple: Option<readonly Validator[]> = Option.None();
+	protected _every: Validator | null = null;
+	protected _tuple: (readonly Validator[]) | null = null;
 
 	public every<const V extends Validator>(validator: V): ArrayValidator<InferValidatorReturnType<V>, T, InferDefinitionType<V>, TD> {
-		this._every = Option.Some(validator);
+		this._every = validator;
 
 		return this as unknown as ArrayValidator<InferValidatorReturnType<V>, T, InferDefinitionType<V>, TD>;
 	}
 
 	public tuple<const V extends readonly Validator[]>(validators: V): ArrayValidator<E, InferListReturnType<V>, ED, InferListDefinitionType<V>> {
-		this._tuple = Option.Some(validators);
+		this._tuple = validators;
 
 		return this as unknown as ArrayValidator<E, InferListReturnType<V>, ED, InferListDefinitionType<V>>;
 	}
@@ -90,16 +89,16 @@ export class ArrayValidator<
 		if (!JSON.isShallowArray(data))
 			throw new AssertError(`Expected an Array`, path);
 
-		if (this._min.isSome() && this._min.value > data.length)
-			throw new AssertError(`Expected at least ${this._min.value} elements`, path);
+		if (this._min !== null && this._min > data.length)
+			throw new AssertError(`Expected at least ${this._min} elements`, path);
 
-		if (this._max.isSome() && this._max.value < data.length)
-			throw new AssertError(`Expected at most ${this._max.value} elements`, path);
+		if (this._max !== null && this._max < data.length)
+			throw new AssertError(`Expected at most ${this._max} elements`, path);
 
 		const errors: AssertError[] = [];
 
-		if (this._every.isSome()) {
-			const validator: Validator = this._every.value;
+		if (this._every !== null) {
+			const validator: Validator = this._every;
 
 			data.forEach((value, index) => {
 				try {
@@ -110,11 +109,11 @@ export class ArrayValidator<
 			});
 		}
 
-		if (this._tuple.isSome()) {
-			if (data.length < this._tuple.value.length)
-				throw new AssertError(`Expected at least ${this._tuple.value.length} elements`, path);
+		if (this._tuple !== null) {
+			if (data.length < this._tuple.length)
+				throw new AssertError(`Expected at least ${this._tuple.length} elements`, path);
 
-			this._tuple.value.forEach((validator: Validator, index) => {
+			this._tuple.forEach((validator: Validator, index) => {
 				try {
 					validator.assert(data[index], `${path}[${index}]`);
 				} catch (e) {
@@ -132,33 +131,44 @@ export class ArrayValidator<
 	}
 
 	public isEqual(other: Validator): other is this {
-		if(!this._isArrayValidator(other))
+		if (!this._isArrayValidator(other))
 			return false;
 
-		return this._min.equals(other._min)
-			&& this._max.equals(other._max)
-			&& this._every.equals(other._every, (a, b) => {
-				if (a.constructor !== b.constructor)
-					return false;
+		let result = true;
 
-				return a.isEqual(b);
-			})
-			&& this._tuple.equals(other._tuple, (a, b) => {
-				if (a.length !== b.length)
-					return false;
+		result &&= this._min === other._min && this._max === other._max;
 
-				return a.every((left, index) => {
-					const right = b[index];
+		if (this._every === null || other._every === null)
+			result &&= this._every === other._every;
+		else
+			result &&= this._every.isEqual(other._every);
 
-					if(!right)
-						return false;
+		if (this._tuple === null || other._tuple === null) {
+			result &&= this._tuple === other._tuple;
+		} else {
+			const otherTuple = other._tuple;
 
-					if(left.constructor !== right.constructor)
-						return false;
+			result &&= this._tuple.length === otherTuple.length;
 
-					return left.isEqual(right);
-				})
-			});
+			for (let index = 0; index < this._tuple.length && result; index++) {
+				const left = this._tuple[index];
+				const right = otherTuple[index];
+
+				result &&= right !== undefined && left !== undefined && left.isEqual(right);
+			}
+		}
+		return result;
+	}
+
+	public clone(): this {
+		const validator = new ArrayValidator() as this;
+
+		validator._min = this._min;
+		validator._max = this._max;
+		validator._every = this._every ? this._every.clone() : this._every;
+		validator._tuple = this._tuple ? this._tuple.map(v => v.clone()) : this._tuple;
+
+		return validator;
 	}
 
 	public toJSON(): ArrayValidatorDefinition<ED, TD> {
@@ -167,11 +177,11 @@ export class ArrayValidator<
 			...BoundaryHelper.toJSON({min: this._min, max: this._max})
 		};
 
-		if (this._every.isSome())
-			definition.every = this._every.value.toJSON();
+		if (this._every !== null)
+			definition.every = this._every.toJSON();
 
-		if (this._tuple.isSome())
-			definition.tuple = this._tuple.value.map(validator => validator.toJSON());
+		if (this._tuple !== null)
+			definition.tuple = this._tuple.map(v => v.toJSON());
 
 		return definition as ArrayValidatorDefinition<ED, TD>;
 	}
