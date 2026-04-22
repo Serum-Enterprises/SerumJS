@@ -73,12 +73,8 @@ export class NumberValidator<T = unknown> extends BoundaryValidator<T> {
 			throw new AssertError(`Expected ${this._equals}`, path);
 	}
 
-	private _isNumberValidator(other: Validator): other is NumberValidator {
-		return this.constructor === other.constructor;
-	}
-
 	public isEqual(other: Validator): other is this {
-		if (!this._isNumberValidator(other))
+		if (!this.isSameSubclass(other))
 			return false;
 
 		return this._integer === other._integer &&

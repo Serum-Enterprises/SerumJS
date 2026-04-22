@@ -22,7 +22,7 @@ export class NullValidator<T = unknown> extends Validator<T> {
 	}
 
 	public isEqual(other: Validator): other is this {
-		return this.constructor === other.constructor;
+		return this.isSameSubclass(other);
 	}
 
 	public override normalize(): this {

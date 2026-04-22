@@ -126,12 +126,8 @@ export class ArrayValidator<
 			throw new AggregateError(errors);
 	}
 
-	private _isArrayValidator(other: Validator): other is ArrayValidator {
-		return this.constructor === other.constructor;
-	}
-
 	public isEqual(other: Validator): other is this {
-		if (!this._isArrayValidator(other))
+		if (!this.isSameSubclass(other))
 			return false;
 
 		let result = true;

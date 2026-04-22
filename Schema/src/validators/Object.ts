@@ -156,12 +156,8 @@ export class ObjectValidator<
 			throw new AggregateError(errors);
 	}
 
-	private _isObjectValidator(other: Validator): other is ObjectValidator {
-		return this.constructor === other.constructor;
-	}
-
 	public isEqual(other: Validator): other is this {
-		if (!this._isObjectValidator(other))
+		if (!this.isSameSubclass(other))
 			return false;
 
 		let result = true;

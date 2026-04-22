@@ -55,12 +55,8 @@ export class StringValidator<T = unknown> extends BoundaryValidator<T> {
 			throw new AssertError(`Expected ${this._equals}`, path);
 	}
 
-	private _isStringValidator(other: Validator): other is StringValidator {
-		return this.constructor === other.constructor;
-	}
-
 	public isEqual(other: Validator): other is this {
-		if (!this._isStringValidator(other))
+		if (!this.isSameSubclass(other))
 			return false;
 
 		return this._min === other._min &&

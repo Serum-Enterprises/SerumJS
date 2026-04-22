@@ -42,12 +42,8 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 			throw new AssertError(`Expected ${this._equals}`, path);
 	}
 
-	private _isBooleanValidator(other: Validator): other is BooleanValidator {
-		return this.constructor === other.constructor;
-	}
-
 	public isEqual(other: Validator): other is this {
-		if(!this._isBooleanValidator(other))
+		if(!this.isSameSubclass(other))
 			return false;
 
 		return this._equals === other._equals;
