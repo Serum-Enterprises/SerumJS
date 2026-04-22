@@ -1,5 +1,4 @@
 import {JSON} from '@serum-enterprises/json';
-import {Option} from '@serum-enterprises/option';
 import {Validator, Definition, UnknownDefinition} from '../Validator';
 import {AssertError, DefinitionError} from '../lib/errors';
 import type {SchemaDomain} from '../SchemaDomain';
@@ -21,16 +20,16 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 			if (!JSON.isBoolean(definition['equals']))
 				throw new DefinitionError(`Expected a Boolean`, `${path}.equals`);
 
-			validatorInstance._equals = Option.Some(definition['equals']);
+			validatorInstance._equals = definition['equals'];
 		}
 
 		return validatorInstance;
 	}
 
-	protected _equals: Option<boolean> = Option.None();
+	protected _equals: boolean | null = null;
 
 	public equals<const V extends boolean>(value: V): BooleanValidator<V> {
-		this._equals = Option.Some(value);
+		this._equals = value;
 
 		return this as unknown as BooleanValidator<V>;
 	}
@@ -39,8 +38,8 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 		if (!JSON.isBoolean(data))
 			throw new AssertError(`Expected a Boolean`, path);
 
-		if (this._equals.isSome() && this._equals.value !== data)
-			throw new AssertError(`Expected ${this._equals.value}`, path);
+		if (this._equals !== null && this._equals !== data)
+			throw new AssertError(`Expected ${this._equals}`, path);
 	}
 
 	private _isBooleanValidator(other: Validator): other is BooleanValidator {
@@ -51,15 +50,23 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 		if(!this._isBooleanValidator(other))
 			return false;
 
-		return this._equals.equals(other._equals);
+		return this._equals === other._equals;
 	}
 
 	public override normalize(): this {
 		const validator = new BooleanValidator();
 
-		validator._equals = this._equals.map(v => v);
+		validator._equals = this._equals;
 
 		return validator as this;
+	}
+
+	public clone(): this {
+		const validator = new BooleanValidator() as this;
+
+		validator._equals = this._equals;
+
+		return validator;
 	}
 
 	public toJSON(): BooleanValidatorDefinition {
@@ -67,8 +74,8 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 			type: 'boolean'
 		};
 
-		if (this._equals.isSome())
-			definition['equals'] = this._equals.value;
+		if (this._equals !== null)
+			definition['equals'] = this._equals;
 
 		return definition;
 	}

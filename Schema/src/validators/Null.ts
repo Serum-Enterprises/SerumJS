@@ -29,6 +29,10 @@ export class NullValidator<T = unknown> extends Validator<T> {
 		return super.normalize() as this;
 	}
 
+	public clone(): this {
+		return new NullValidator() as this;
+	}
+
 	public toJSON(): NullValidatorDefinition {
 		return {
 			type: 'null'

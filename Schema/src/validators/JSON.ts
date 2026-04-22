@@ -29,6 +29,10 @@ export class JSONValidator<T = unknown> extends Validator<T> {
 		return super.normalize() as this;
 	}
 
+	public clone(): this {
+		return new JSONValidator() as this;
+	}
+
 	public toJSON(): JSONValidatorDefinition {
 		return {
 			type: 'json'
