@@ -37,5 +37,6 @@ export abstract class Validator<T = unknown> {
 		return new (this.constructor as new () => this)();
 	}
 
+	public abstract clone(): this;
 	public abstract toJSON(): Definition;
 }
