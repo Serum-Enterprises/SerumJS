@@ -31,6 +31,10 @@ export abstract class Validator<T = unknown> {
 		}
 	}
 
+	public isSameSubclass(other: Validator): other is this {
+		return this.constructor === other.constructor;
+	}
+
 	public abstract isEqual(other: Validator): other is this;
 
 	public normalize(): this | NeverValidator {
