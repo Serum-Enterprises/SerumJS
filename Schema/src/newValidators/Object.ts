@@ -94,6 +94,39 @@ export class ObjectValidator<
 	protected _shape: { [key: string]: Validator } | null = null;
 	protected _exact: boolean = false;
 
+	public isEqual(other: Validator): other is this {
+		if (!this.isSameSubclass(other))
+			return false;
+
+		let result = true;
+
+		result = result && this._min === other._min && this._max === other._max && this._exact === other._exact;
+
+		if (this._every === null || other._every === null)
+			result = result && this._every === other._every;
+		else
+			result = result && this._every.isEqual(other._every);
+
+		if (this._shape === null || other._shape === null) {
+			result = result && this._shape === other._shape;
+		}
+		else {
+			const thisKeys = Object.keys(this._shape);
+			const otherKeys = Object.keys(other._shape);
+
+			result = result && thisKeys.length === otherKeys.length;
+
+			for (const key of thisKeys) {
+				const left = this._shape[key];
+				const right = other._shape[key];
+
+				result = result && right !== undefined && left !== undefined && left.isEqual(right);
+			}
+		}
+
+		return result;
+	}
+
 	public clone(): this {
 		const validator = new ObjectValidator();
 

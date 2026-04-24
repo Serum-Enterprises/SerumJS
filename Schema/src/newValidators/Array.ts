@@ -81,6 +81,37 @@ export class ArrayValidator<
 	protected _every: Validator | null = null;
 	protected _tuple: (readonly Validator[]) | null = null;
 
+	public isEqual(other: Validator): other is this {
+		if (!this.isSameSubclass(other))
+			return false;
+
+		let result = true;
+
+		result = result && this._min === other._min && this._max === other._max;
+
+		if (this._every === null || other._every === null)
+			result = result && this._every === other._every;
+		else
+			result = result && this._every.isEqual(other._every);
+
+		if (this._tuple === null || other._tuple === null)
+			result = result && this._tuple === other._tuple;
+		else {
+			const otherTuple = other._tuple;
+
+			result = result && this._tuple.length === otherTuple.length;
+
+			for (let index = 0; index < this._tuple.length && result; index++) {
+				const left = this._tuple[index];
+				const right = otherTuple[index];
+
+				result = result && right !== undefined && left !== undefined && left.isEqual(right);
+			}
+		}
+
+		return result;
+	}
+
 	public clone(): this {
 		const validator = new ArrayValidator() as this;
 
@@ -103,10 +134,10 @@ export class ArrayValidator<
 		if (this._max !== null)
 			definition.max = this._max;
 
-		if(this._every !== null)
+		if (this._every !== null)
 			definition.every = this._every.toJSON() as EVERYDEFINITION;
 
-		if(this._tuple !== null)
+		if (this._tuple !== null)
 			definition.tuple = this._tuple.map(v => v.toJSON());
 
 		return definition as ArrayValidatorDefinition<EVERYDEFINITION, TUPLEDEFINITION>;

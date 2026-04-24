@@ -14,6 +14,10 @@ export class NullValidator extends Validator<null> {
 		return new NullValidator();
 	}
 
+	public isEqual(other: Validator): other is this {
+		return this.isSameSubclass(other);
+	}
+
 	public clone(): this {
 		return new NullValidator() as this;
 	}

@@ -50,6 +50,30 @@ export class UnionValidator<
 
 	protected _variants: (readonly Validator[]) = [];
 
+	public isEqual(other: Validator): other is this {
+		if (!this.isSameSubclass(other))
+			return false;
+
+		let result = true;
+
+		if (this._variants === null || other._variants === null)
+			result = result && this._variants === other._variants;
+		else {
+			const otherTuple = other._variants;
+
+			result = result && this._variants.length === otherTuple.length;
+
+			for (let index = 0; index < this._variants.length && result; index++) {
+				const left = this._variants[index];
+				const right = otherTuple[index];
+
+				result = result && right !== undefined && left !== undefined && left.isEqual(right);
+			}
+		}
+
+		return result;
+	}
+
 	public clone(): this {
 		const validator = new UnionValidator() as this;
 

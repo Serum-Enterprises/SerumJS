@@ -55,6 +55,14 @@ export class NumberValidator<T extends number = number> extends Validator<T> {
 	protected _max: number | null = null;
 	protected _equals: number | null = null;
 
+	public isEqual(other: Validator): other is this {
+		return this.isSameSubclass(other) &&
+			this._integer === other._integer &&
+			this._min === other._min &&
+			this._max === other._max &&
+			this._equals === other._equals;
+	}
+
 	public clone(): this {
 		const validator = new NumberValidator() as this;
 

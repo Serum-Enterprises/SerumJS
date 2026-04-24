@@ -14,6 +14,10 @@ export class NeverValidator extends Validator<never> {
 		return new NeverValidator();
 	}
 
+	public isEqual(other: Validator): other is this {
+		return this.isSameSubclass(other);
+	}
+
 	public clone(): this {
 		return new NeverValidator() as this;
 	}

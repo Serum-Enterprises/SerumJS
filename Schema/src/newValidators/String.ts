@@ -46,6 +46,13 @@ export class StringValidator<T extends string = string> extends Validator<T> {
 	protected _max: number | null = null;
 	protected _equals: string | null = null;
 
+	public isEqual(other: Validator): other is this {
+		return this.isSameSubclass(other) &&
+			this._min === other._min &&
+			this._max === other._max &&
+			this._equals === other._equals;
+	}
+
 	public clone(): this {
 		const validator = new StringValidator() as this;
 
