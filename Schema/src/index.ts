@@ -9,7 +9,9 @@ export {
 	NumberValidator, NumberValidatorDefinition,
 	StringValidator, StringValidatorDefinition,
 	ArrayValidator, ArrayValidatorDefinition,
-	ObjectValidator, ObjectValidatorDefinition
+	ObjectValidator, ObjectValidatorDefinition,
+	UnionValidator, UnionValidatorDefinition,
+	IntersectValidator, IntersectValidatorDefinition
 } from './validators';
 
 export {SchemaDomain} from './SchemaDomain';
