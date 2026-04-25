@@ -34,7 +34,7 @@ export class NullValidator extends Validator<null> {
 	}
 
 	public merge(other: Validator, path: string = 'validator'): NullValidator {
-		if (this.isSameValidator(other))
+		if (!this.isSameValidator(other))
 			throw new MergeError(`Conflicting Validator Subclasses`, path, {cause: {left: this, right: other}});
 
 		return new NullValidator() as this;
