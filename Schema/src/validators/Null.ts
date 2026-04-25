@@ -41,7 +41,7 @@ export class NullValidator extends Validator<null> {
 	}
 
 	public normalize(): this {
-		return new NullValidator() as this;
+		return this.clone();
 	}
 
 	public isSubset(other: Validator): boolean {

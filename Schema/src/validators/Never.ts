@@ -39,7 +39,7 @@ export class NeverValidator extends Validator<never> {
 	}
 
 	public normalize(): this {
-		return new NeverValidator() as this;
+		return this.clone();
 	}
 
 	public isSubset(_other: Validator): boolean {
