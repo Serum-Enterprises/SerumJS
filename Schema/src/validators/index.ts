@@ -6,3 +6,5 @@ export {NumberValidator, NumberValidatorDefinition} from './Number';
 export {StringValidator, StringValidatorDefinition} from './String';
 export {ArrayValidator, ArrayValidatorDefinition} from './Array';
 export {ObjectValidator, ObjectValidatorDefinition} from './Object';
+export {UnionValidator, UnionValidatorDefinition} from './Union';
+export {IntersectValidator, IntersectValidatorDefinition} from './Intersect';
