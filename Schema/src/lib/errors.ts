@@ -10,4 +10,10 @@ export class DefinitionError extends Error {
 	}
 }
 
+export class MergeError extends Error {
+	public constructor(message: string, path: string = 'validator', cause: ErrorOptions = {}) {
+		super(message, {cause: {...cause, path}});
+	}
+}
+
 export class DomainError extends Error {}
