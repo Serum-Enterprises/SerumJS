@@ -8,7 +8,7 @@ export interface BooleanValidatorDefinition extends Definition {
 	equals?: boolean;
 }
 
-export class BooleanValidator<T = unknown> extends Validator<T> {
+export class BooleanValidator<T extends boolean = boolean> extends Validator<T> {
 	public static fromJSON(
 		definition: UnknownDefinition,
 		path: string = 'definition',
