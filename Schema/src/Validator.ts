@@ -33,10 +33,10 @@ export abstract class Validator<T = unknown> {
 	public abstract clone(): this;
 	public abstract isEqual(other: Validator): other is this;
 	public abstract merge(other: Validator, path?: string): Validator;
-	public abstract normalize(): this | NeverValidator;
+	public abstract normalize(): Validator;
 	protected abstract _isSubset(other: Validator): boolean;
 	public isSubset(other: Validator): boolean {
-		return (this.normalize() as Validator)._isSubset(other.normalize());
+		return this.normalize()._isSubset(other.normalize());
 	}
 
 	public abstract toJSON(): Definition;
