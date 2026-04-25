@@ -11,7 +11,9 @@ export const DefaultSchemaDomain = {
 	Number: Validators.NumberValidator,
 	String: Validators.StringValidator,
 	Array: Validators.ArrayValidator,
-	Object: Validators.ObjectValidator
+	Object: Validators.ObjectValidator,
+	Union: Validators.UnionValidator,
+	Intersect: Validators.IntersectValidator
 } as const;
 
 type DynamicSchemaDomain<T extends Record<string, ValidatorClass>> = SchemaDomain & {
