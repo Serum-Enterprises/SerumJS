@@ -29,6 +29,7 @@ export abstract class Validator<T = unknown> {
 		}
 	}
 
+	public abstract isSameValidator(other: Validator): other is Validator;
 	public abstract clone(): this;
 	public abstract isEqual(other: Validator): other is this;
 	public abstract merge(other: Validator, path?: string): Validator;

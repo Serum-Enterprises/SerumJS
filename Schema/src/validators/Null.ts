@@ -21,16 +21,20 @@ export class NullValidator extends Validator<null> {
 			throw new AssertError(`Expected null`, path);
 	}
 
+	public isSameValidator(other: Validator): other is NullValidator {
+		return this.constructor === other.constructor;
+	}
+
 	public clone(): this {
 		return new NullValidator() as this;
 	}
 
 	public isEqual(other: Validator): other is this {
-		return this.constructor === other.constructor;
+		return this.isSameValidator(other);
 	}
 
 	public merge(other: Validator, path: string = 'validator'): NullValidator {
-		if (this.constructor !== other.constructor)
+		if (this.isSameValidator(other))
 			throw new MergeError(`Conflicting Validator Subclasses`, path, {cause: {left: this, right: other}});
 
 		return new NullValidator() as this;
@@ -41,7 +45,7 @@ export class NullValidator extends Validator<null> {
 	}
 
 	public isSubset(other: Validator): boolean {
-		return this.constructor === other.constructor;
+		return this.isSameValidator(other);
 	}
 
 	public toJSON(): NullValidatorDefinition {

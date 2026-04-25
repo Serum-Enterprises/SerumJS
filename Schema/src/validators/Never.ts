@@ -19,16 +19,20 @@ export class NeverValidator extends Validator<never> {
 		throw new AssertError(`Expected never`, path);
 	}
 
+	public isSameValidator(other: Validator): other is NeverValidator {
+		return this.constructor === other.constructor;
+	}
+
 	public clone(): this {
 		return new NeverValidator() as this;
 	}
 
 	public isEqual(other: Validator): other is this {
-		return this.constructor === other.constructor;
+		return this.isSameValidator(other);
 	}
 
 	public merge(other: Validator, path: string = 'validator'): NeverValidator {
-		if (this.constructor !== other.constructor)
+		if (this.isSameValidator(other))
 			throw new MergeError(`Conflicting Validator Subclasses`, path, {cause: {left: this, right: other}});
 
 		return new NeverValidator() as this;
