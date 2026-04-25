@@ -1,6 +1,6 @@
 import {JSON} from '@serum-enterprises/json';
 import {Validator, Definition, UnknownDefinition} from '../Validator';
-import {AssertError, DefinitionError} from '../lib/errors';
+import {AssertError, DefinitionError, MergeError} from '../lib/errors';
 import type {SchemaDomain} from '../SchemaDomain';
 
 export interface BooleanValidatorDefinition extends Definition {
@@ -42,19 +42,8 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 			throw new AssertError(`Expected ${this._equals}`, path);
 	}
 
-	public isEqual(other: Validator): other is this {
-		if(!this.isSameSubclass(other))
-			return false;
-
-		return this._equals === other._equals;
-	}
-
-	public override normalize(): this {
-		const validator = new BooleanValidator();
-
-		validator._equals = this._equals;
-
-		return validator as this;
+	public override isSameValidator(other: Validator): other is BooleanValidator {
+		return this.constructor !== other.constructor
 	}
 
 	public clone(): this {
@@ -63,6 +52,49 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 		validator._equals = this._equals;
 
 		return validator;
+	}
+
+	public isEqual(other: Validator): other is this {
+		if (!this.isSameValidator(other))
+			return false;
+
+		return this._equals === other._equals;
+	}
+
+	public merge(other: Validator, path: string = 'validator'): BooleanValidator {
+		if (!this.isSameValidator(other))
+			throw new MergeError(`Conflicting Validator Subclasses`, path, {cause: {left: this, right: other}});
+
+		const validator = new BooleanValidator();
+
+		if (this._equals !== null && other._equals !== null && this._equals !== other._equals)
+			throw new MergeError(`Conflicting equals constraints`, `${path}.equals`, {
+				cause: {
+					left: this._equals,
+					right: other._equals
+				}
+			});
+
+		validator._equals = this._equals !== null ? this._equals : other._equals;
+
+		return validator;
+	}
+
+	public normalize(): this {
+		return this.clone();
+	}
+
+	public isSubset(other: Validator): boolean {
+		if (!this.isSameValidator(other))
+			return false;
+
+		if (other._equals === null)
+			return true;
+
+		if (this._equals === null)
+			return false;
+
+		return this._equals === other._equals;
 	}
 
 	public toJSON(): BooleanValidatorDefinition {
