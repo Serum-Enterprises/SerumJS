@@ -42,7 +42,7 @@ export class NeverValidator extends Validator<never> {
 		return this.clone();
 	}
 
-	public isSubset(_other: Validator): boolean {
+	protected _isSubset(_other: Validator): boolean {
 		return true;
 	}
 

@@ -44,7 +44,7 @@ export class NullValidator extends Validator<null> {
 		return this.clone();
 	}
 
-	public isSubset(other: Validator): boolean {
+	protected _isSubset(other: Validator): boolean {
 		return this.isSameValidator(other);
 	}
 

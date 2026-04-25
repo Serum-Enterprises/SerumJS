@@ -84,7 +84,7 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 		return this.clone();
 	}
 
-	public isSubset(other: Validator): boolean {
+	protected _isSubset(other: Validator): boolean {
 		if (!this.isSameValidator(other))
 			return false;
 
