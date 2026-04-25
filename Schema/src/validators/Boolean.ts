@@ -42,7 +42,7 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 			throw new AssertError(`Expected ${this._equals}`, path);
 	}
 
-	public override isSameValidator(other: Validator): other is BooleanValidator {
+	public isSameValidator(other: Validator): other is BooleanValidator {
 		return this.constructor !== other.constructor
 	}
 
@@ -68,7 +68,7 @@ export class BooleanValidator<T = unknown> extends Validator<T> {
 		const validator = new BooleanValidator();
 
 		if (this._equals !== null && other._equals !== null && this._equals !== other._equals)
-			throw new MergeError(`Conflicting equals constraints`, `${path}.equals`, {
+			throw new MergeError(`Conflicting equals Constraints`, `${path}.equals`, {
 				cause: {
 					left: this._equals,
 					right: other._equals
