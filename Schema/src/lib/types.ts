@@ -23,10 +23,10 @@ export type InferObjectReturnType<T> = T extends { [key: string]: Validator } ?
 	{ [K in keyof T]: InferValidatorReturnType<T[K]> } :
 	unknown;
 
-export type JSON = null | number | string | JSON[] | { [key: string]: JSON };
+export type JSON = null | boolean | number | string | JSON[] | { [key: string]: JSON };
 
 export function isJSON(value: unknown): value is JSON {
-	if(value === null || Number.isFinite(value) || typeof value === 'string')
+	if(value === null || typeof value === 'boolean' || Number.isFinite(value) || typeof value === 'string')
 		return true;
 
 	if(Array.isArray(value))
