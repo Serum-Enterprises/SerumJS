@@ -1,6 +1,7 @@
-import {Validator, Definition, UnknownDefinition} from '../Validator';
+import {Validator} from '../Validator';
 import {AssertError, MergeError} from '../lib/errors';
-import type {SchemaDomain} from '../SchemaDomain';
+import type {Domain} from '../Domain';
+import {Definition, UnknownDefinition} from "../lib/types";
 
 export interface NeverValidatorDefinition extends Definition {
 	type: 'never';
@@ -10,7 +11,7 @@ export class NeverValidator extends Validator<never> {
 	public static fromJSON(
 		_definition: UnknownDefinition,
 		_path: string = 'definition',
-		_schemaDomain: SchemaDomain
+		_schemaDomain: Domain
 	): NeverValidator {
 		return new NeverValidator();
 	}
@@ -19,19 +20,15 @@ export class NeverValidator extends Validator<never> {
 		throw new AssertError(`Expected never`, path);
 	}
 
-	public isSameValidator(other: Validator): other is NeverValidator {
-		return this.constructor === other.constructor;
-	}
-
-	public clone(): NeverValidator {
-		return new NeverValidator() as this;
-	}
-
 	public isEqual(other: Validator): other is this {
 		return this.isSameValidator(other);
 	}
 
-	public merge(other: Validator, path: string = 'validator'): NeverValidator {
+	public clone(): this {
+		return new NeverValidator() as this;
+	}
+
+	protected _merge(other: Validator, path: string = 'validator'): NeverValidator {
 		if (this.isSameValidator(other))
 			throw new MergeError(`Conflicting Validator Subclasses`, path, {cause: {left: this, right: other}});
 
