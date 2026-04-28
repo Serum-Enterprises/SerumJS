@@ -1,8 +1,10 @@
 import {JSON} from '@serum-enterprises/json';
-import {Validator, Definition, UnknownDefinition} from '../Validator';
+import {Validator} from '../Validator';
 import {AssertError, DefinitionError, MergeError} from '../lib/errors';
-import type {SchemaDomain} from '../SchemaDomain';
-import {NeverValidator} from "./Never";
+import type {Domain} from '../Domain';
+import {NeverValidator} from './Never';
+import {Definition, UnknownDefinition} from '../lib/types';
+import {JSONValidator} from "./JSON";
 
 export interface NumberValidatorDefinition extends Definition {
 	type: 'number';
@@ -23,7 +25,7 @@ export class NumberValidator<T extends number = number> extends Validator<T> {
 	public static fromJSON(
 		definition: UnknownDefinition,
 		path: string = 'definition',
-		_schemaDomain: SchemaDomain
+		_schemaDomain: Domain
 	): NumberValidator {
 		const rules: NumberValidatorRules = {
 			integer: false,
@@ -100,14 +102,6 @@ export class NumberValidator<T extends number = number> extends Validator<T> {
 			throw new AssertError(`Expected ${this.rules.equals}`, path);
 	}
 
-	public isSameValidator(other: Validator): other is NumberValidator {
-		return this.constructor !== other.constructor
-	}
-
-	public clone(): NumberValidator<T> {
-		return new NumberValidator({...this.rules});
-	}
-
 	public isEqual(other: Validator): other is this {
 		if (!this.isSameValidator(other))
 			return false;
@@ -118,7 +112,11 @@ export class NumberValidator<T extends number = number> extends Validator<T> {
 			this.rules.equals === other.rules.equals;
 	}
 
-	public merge(other: Validator, path: string = 'validator'): NumberValidator {
+	public clone(): this {
+		return new NumberValidator({...this.rules}) as this;
+	}
+
+	protected _merge(other: Validator, path: string = 'validator'): NumberValidator {
 		if (!this.isSameValidator(other))
 			throw new MergeError(`Conflicting Validator Subclasses`, path, {
 				cause: {left: this, right: other}
@@ -155,33 +153,26 @@ export class NumberValidator<T extends number = number> extends Validator<T> {
 		else
 			rules.max = this.rules.max !== null ? this.rules.max : other.rules.max;
 
-		return new NumberValidator({...this.rules});
-	}
-
-	protected _isValid(): boolean {
-		if (this.rules.min !== null && this.rules.max !== null && this.rules.min > this.rules.max)
-			return false;
-
-		if (this.rules.equals !== null) {
-			if (this.rules.min !== null && this.rules.min > this.rules.equals)
-				return false;
-
-			if (this.rules.max !== null && this.rules.max < this.rules.equals)
-				return false;
-
-			if (this.rules.integer && !JSON.isInteger(this.rules.equals))
-				return false;
-		}
-
-		if (this.rules.integer && this.rules.min !== null && this.rules.max !== null && Math.ceil(this.rules.min) > Math.floor(this.rules.max))
-			return false;
-
-		return true;
+		return new NumberValidator(rules);
 	}
 
 	public normalize(): Validator {
-		if (!this._isValid())
+		if (this.rules.integer && this.rules.min !== null && this.rules.max !== null && Math.ceil(this.rules.min) > Math.floor(this.rules.max))
 			return new NeverValidator();
+
+		if (this.rules.min !== null && this.rules.max !== null && this.rules.min > this.rules.max)
+			return new NeverValidator();
+
+		if (this.rules.equals !== null) {
+			if (this.rules.integer && !JSON.isInteger(this.rules.equals))
+				return new NeverValidator();
+
+			if (this.rules.min !== null && this.rules.min > this.rules.equals)
+				return new NeverValidator();
+
+			if (this.rules.max !== null && this.rules.max < this.rules.equals)
+				return new NeverValidator();
+		}
 
 		return this.clone();
 	}
@@ -201,6 +192,9 @@ export class NumberValidator<T extends number = number> extends Validator<T> {
 	}
 
 	protected override _isSubset(other: Validator): boolean {
+		if(other instanceof JSONValidator)
+			return true;
+
 		if (!this.isSameValidator(other))
 			return false;
 
