@@ -1,7 +1,9 @@
 import {JSON} from '@serum-enterprises/json';
-import {Validator, Definition, UnknownDefinition} from '../Validator';
+import {Validator} from '../Validator';
 import {AssertError, DefinitionError, MergeError} from '../lib/errors';
-import type {SchemaDomain} from '../SchemaDomain';
+import type {Domain} from '../Domain';
+import {Definition, UnknownDefinition} from "../lib/types";
+import {JSONValidator} from "./JSON";
 
 export interface BooleanValidatorDefinition extends Definition {
 	type: 'boolean';
@@ -16,20 +18,16 @@ export class BooleanValidator<T extends boolean = boolean> extends Validator<T> 
 	public static fromJSON(
 		definition: UnknownDefinition,
 		path: string = 'definition',
-		_schemaDomain: SchemaDomain
+		_schemaDomain: Domain
 	): BooleanValidator {
-		const rules: BooleanValidatorRules = {
-			equals: null
-		}
-
 		if ('equals' in definition) {
 			if (!JSON.isBoolean(definition['equals']))
 				throw new DefinitionError(`Expected a Boolean`, `${path}.equals`);
 
-			rules.equals = definition['equals'];
+			return new BooleanValidator({equals: definition['equals']});
 		}
 
-		return new BooleanValidator(rules);
+		return new BooleanValidator({equals: null});
 	}
 
 	public constructor(
@@ -41,19 +39,11 @@ export class BooleanValidator<T extends boolean = boolean> extends Validator<T> 
 	}
 
 	public assert(data: unknown, path: string = 'data'): asserts data is T {
-		if (!JSON.isBoolean(data))
+		if (typeof data !== 'boolean')
 			throw new AssertError(`Expected a Boolean`, path);
 
 		if (this.rules.equals !== null && this.rules.equals !== data)
 			throw new AssertError(`Expected ${this.rules.equals}`, path);
-	}
-
-	public isSameValidator(other: Validator): other is BooleanValidator {
-		return this.constructor !== other.constructor
-	}
-
-	public clone(): BooleanValidator<T> {
-		return new BooleanValidator({...this.rules}) as this;
 	}
 
 	public isEqual(other: Validator): other is this {
@@ -63,7 +53,11 @@ export class BooleanValidator<T extends boolean = boolean> extends Validator<T> 
 		return this.rules.equals === other.rules.equals;
 	}
 
-	public merge(other: Validator, path: string = 'validator'): BooleanValidator {
+	public clone(): this {
+		return new BooleanValidator({...this.rules}) as this;
+	}
+
+	protected _merge(other: Validator, path: string = 'validator'): BooleanValidator {
 		if (!this.isSameValidator(other))
 			throw new MergeError(`Conflicting Validator Subclasses`, path, {cause: {left: this, right: other}});
 
@@ -87,6 +81,9 @@ export class BooleanValidator<T extends boolean = boolean> extends Validator<T> 
 	}
 
 	protected _isSubset(other: Validator): boolean {
+		if(other instanceof JSONValidator)
+			return true;
+
 		if (!this.isSameValidator(other))
 			return false;
 
