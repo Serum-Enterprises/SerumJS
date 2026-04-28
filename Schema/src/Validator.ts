@@ -1,4 +1,4 @@
-import type {SchemaDomain} from './SchemaDomain';
+import type {Domain} from './Domain';
 
 export interface Definition {
 	type: string;
@@ -7,7 +7,7 @@ export interface Definition {
 export type UnknownDefinition = Definition & Record<string, unknown>;
 
 export interface ValidatorClass<V extends Validator = Validator> {
-	fromJSON(data: UnknownDefinition, path: string, schemaDomain: SchemaDomain): V;
+	fromJSON(data: UnknownDefinition, path: string, domain: Domain): V;
 
 	new(): V;
 }
@@ -28,10 +28,15 @@ export abstract class Validator<T = unknown> {
 		}
 	}
 
-	public abstract isSameValidator(other: Validator): other is Validator;
-	public abstract clone(): Validator;
+	public isSameValidator(other: Validator): other is this {
+		return this.constructor === other.constructor;
+	}
 	public abstract isEqual(other: Validator): other is this;
-	public abstract merge(other: Validator, path?: string): Validator;
+	public abstract clone(): this;
+	protected abstract _merge(other: Validator, path?: string): Validator;
+	public merge(other: Validator, path: string = 'validator'): Validator {
+		return this.normalize()._merge(other.normalize(), path).normalize();
+	}
 	public abstract normalize(): Validator;
 	protected abstract _isSubset(other: Validator): boolean;
 	public isSubset(other: Validator): boolean {

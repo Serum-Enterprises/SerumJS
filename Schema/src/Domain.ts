@@ -3,7 +3,7 @@ import {Validator, ValidatorClass} from './Validator';
 import {DefinitionError, DomainError} from './lib/errors';
 import * as Validators from './validators';
 
-export const DefaultSchemaDomain = {
+export const DefaultDomain = {
 	Never: Validators.NeverValidator,
 	Null: Validators.NullValidator,
 	JSON: Validators.JSONValidator,
@@ -16,16 +16,16 @@ export const DefaultSchemaDomain = {
 	Intersect: Validators.IntersectValidator
 } as const;
 
-type DynamicSchemaDomain<T extends Record<string, ValidatorClass>> = SchemaDomain & {
+type DynamicDomain<T extends Record<string, ValidatorClass>> = Domain & {
 	readonly [K in keyof T]: InstanceType<T[K]>;
 };
 
-export class SchemaDomain {
-	public static create<T extends Record<string, ValidatorClass<any>> = typeof DefaultSchemaDomain>(
+export class Domain {
+	public static create<T extends Record<string, ValidatorClass<any>> = typeof DefaultDomain>(
 		entries?: T
-	): DynamicSchemaDomain<T> {
-		const domainEntries = entries ? entries : DefaultSchemaDomain;
-		const domain: DynamicSchemaDomain<T> = new SchemaDomain(domainEntries) as DynamicSchemaDomain<T>;
+	): DynamicDomain<T> {
+		const domainEntries = entries ? entries : DefaultDomain;
+		const domain: DynamicDomain<T> = new Domain(domainEntries) as DynamicDomain<T>;
 
 		for (const [key, validator] of Object.entries(domainEntries) as [keyof T, T[keyof T]][]) {
 			Object.defineProperty(domain, key, {

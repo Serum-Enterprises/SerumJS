@@ -14,7 +14,7 @@ export {
 	IntersectValidator, IntersectValidatorDefinition
 } from './validators';
 
-export {SchemaDomain} from './SchemaDomain';
+export {Domain} from './Domain';
 
 // Extra Utilities to infer a Definition Type or a Validator Return Type for statically defined Schemas
 export {InferDefinitionType, InferValidatorReturnType} from './lib/types';
