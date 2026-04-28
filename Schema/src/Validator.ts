@@ -1,10 +1,5 @@
 import type {Domain} from './Domain';
-
-export interface Definition {
-	type: string;
-}
-
-export type UnknownDefinition = Definition & Record<string, unknown>;
+import {Definition, UnknownDefinition} from "./lib/types";
 
 export interface ValidatorClass<V extends Validator = Validator> {
 	fromJSON(data: UnknownDefinition, path: string, domain: Domain): V;
