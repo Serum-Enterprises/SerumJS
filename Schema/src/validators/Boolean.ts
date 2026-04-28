@@ -8,79 +8,81 @@ export interface BooleanValidatorDefinition extends Definition {
 	equals?: boolean;
 }
 
+interface BooleanValidatorRules {
+	equals: boolean | null;
+}
+
 export class BooleanValidator<T extends boolean = boolean> extends Validator<T> {
 	public static fromJSON(
 		definition: UnknownDefinition,
 		path: string = 'definition',
 		_schemaDomain: SchemaDomain
 	): BooleanValidator {
-		const validatorInstance = new BooleanValidator();
+		const rules: BooleanValidatorRules = {
+			equals: null
+		}
 
 		if ('equals' in definition) {
 			if (!JSON.isBoolean(definition['equals']))
 				throw new DefinitionError(`Expected a Boolean`, `${path}.equals`);
 
-			validatorInstance._equals = definition['equals'];
+			rules.equals = definition['equals'];
 		}
 
-		return validatorInstance;
+		return new BooleanValidator(rules);
 	}
 
-	protected _equals: boolean | null = null;
+	public constructor(
+		public readonly rules: Readonly<BooleanValidatorRules> = {equals: null}
+	) {super()}
 
-	public equals<const V extends boolean>(value: V): BooleanValidator<V> {
-		this._equals = value;
-
-		return this as unknown as BooleanValidator<V>;
+	public equals<const V extends boolean>(equals: V): BooleanValidator<V> {
+		return new BooleanValidator<V>({...this.rules, equals});
 	}
 
 	public assert(data: unknown, path: string = 'data'): asserts data is T {
 		if (!JSON.isBoolean(data))
 			throw new AssertError(`Expected a Boolean`, path);
 
-		if (this._equals !== null && this._equals !== data)
-			throw new AssertError(`Expected ${this._equals}`, path);
+		if (this.rules.equals !== null && this.rules.equals !== data)
+			throw new AssertError(`Expected ${this.rules.equals}`, path);
 	}
 
 	public isSameValidator(other: Validator): other is BooleanValidator {
 		return this.constructor !== other.constructor
 	}
 
-	public clone(): this {
-		const validator = new BooleanValidator() as this;
-
-		validator._equals = this._equals;
-
-		return validator;
+	public clone(): BooleanValidator<T> {
+		return new BooleanValidator({...this.rules}) as this;
 	}
 
 	public isEqual(other: Validator): other is this {
 		if (!this.isSameValidator(other))
 			return false;
 
-		return this._equals === other._equals;
+		return this.rules.equals === other.rules.equals;
 	}
 
 	public merge(other: Validator, path: string = 'validator'): BooleanValidator {
 		if (!this.isSameValidator(other))
 			throw new MergeError(`Conflicting Validator Subclasses`, path, {cause: {left: this, right: other}});
 
-		const validator = new BooleanValidator();
+		const rules: BooleanValidatorRules = {equals: null};
 
-		if (this._equals !== null && other._equals !== null && this._equals !== other._equals)
+		if (this.rules.equals !== null && other.rules.equals !== null && this.rules.equals !== other.rules.equals)
 			throw new MergeError(`Conflicting equals Constraints`, `${path}.equals`, {
 				cause: {
-					left: this._equals,
-					right: other._equals
+					left: this.rules.equals,
+					right: other.rules.equals
 				}
 			});
 
-		validator._equals = this._equals !== null ? this._equals : other._equals;
+		rules.equals = this.rules.equals !== null ? this.rules.equals : other.rules.equals;
 
-		return validator;
+		return new BooleanValidator(rules);
 	}
 
-	public normalize(): this {
+	public normalize(): Validator {
 		return this.clone();
 	}
 
@@ -88,13 +90,13 @@ export class BooleanValidator<T extends boolean = boolean> extends Validator<T> 
 		if (!this.isSameValidator(other))
 			return false;
 
-		if (other._equals === null)
+		if (other.rules.equals === null)
 			return true;
 
-		if (this._equals === null)
+		if (this.rules.equals === null)
 			return false;
 
-		return this._equals === other._equals;
+		return this.rules.equals === other.rules.equals;
 	}
 
 	public toJSON(): BooleanValidatorDefinition {
@@ -102,8 +104,8 @@ export class BooleanValidator<T extends boolean = boolean> extends Validator<T> 
 			type: 'boolean'
 		};
 
-		if (this._equals !== null)
-			definition['equals'] = this._equals;
+		if (this.rules.equals !== null)
+			definition['equals'] = this.rules.equals;
 
 		return definition;
 	}

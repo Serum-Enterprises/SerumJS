@@ -25,6 +25,13 @@ export interface ArrayValidatorDefinition<
 	tuple?: TUPLEDEFINITION;
 }
 
+interface ArrayValidatorRules {
+	min: number | null;
+	max: number | null;
+	every: Validator | null;
+	tuple: (readonly Validator[]) | null;
+}
+
 export class ArrayValidator<
 	EVERY = unknown,
 	TUPLE = unknown,
@@ -36,24 +43,29 @@ export class ArrayValidator<
 		path: string = 'definition',
 		schemaDomain: SchemaDomain
 	): ArrayValidator {
-		const validator = new ArrayValidator();
+		const rules: ArrayValidatorRules = {
+			min: null,
+			max: null,
+			every: null,
+			tuple: []
+		}
 
 		if ('min' in definition) {
 			if (!JSON.isNumber(definition['min']))
 				throw new DefinitionError(`Expected a Number`, `${path}.min`);
 
-			validator._min = definition['min'];
+			rules.min = definition['min'];
 		}
 
 		if ('max' in definition) {
 			if (!JSON.isNumber(definition['max']))
 				throw new DefinitionError(`Expected a Number`, `${path}.max`);
 
-			validator._max = definition['max'];
+			rules.max = definition['max'];
 		}
 
 		if ('every' in definition)
-			validator._every = schemaDomain.fromJSON(definition['every'], `${path}.every`);
+			rules.every = schemaDomain.fromJSON(definition['every'], `${path}.every`);
 
 		if ('tuple' in definition) {
 			if (!JSON.isShallowArray(definition['tuple']))
@@ -73,55 +85,46 @@ export class ArrayValidator<
 			if (errors.length > 0)
 				throw new AggregateError(errors);
 
-			validator._tuple = tupleSchemas;
+			rules.tuple = tupleSchemas;
 		}
 
-		return validator;
+		return new ArrayValidator(rules);
 	}
 
-	protected _min: number | null = null;
-	protected _max: number | null = null;
-	protected _every: Validator | null = null;
-	protected _tuple: (readonly Validator[]) | null = null;
+	public constructor(
+		public readonly rules:  Readonly<ArrayValidatorRules> = {min: null, max: null, every: null, tuple: null}
+	) {super();}
 
-	public min(value: number): this {
-		this._min = value;
-
-		return this;
+	public min(min: number): ArrayValidator<EVERY, TUPLE, EVERYDEFINITION, TUPLEDEFINITION> {
+		return new ArrayValidator<EVERY, TUPLE, EVERYDEFINITION, TUPLEDEFINITION>({...this.rules, min});
 	}
 
-	public max(value: number): this {
-		this._max = value;
-
-		return this;
+	public max(max: number): ArrayValidator<EVERY, TUPLE, EVERYDEFINITION, TUPLEDEFINITION> {
+		return new ArrayValidator<EVERY, TUPLE, EVERYDEFINITION, TUPLEDEFINITION>({...this.rules, max});
 	}
 
-	public every<const V extends Validator>(validator: V): ArrayValidator<InferValidatorReturnType<V>, TUPLE, InferDefinitionType<V>, TUPLEDEFINITION> {
-		this._every = validator;
-
-		return this as unknown as ArrayValidator<InferValidatorReturnType<V>, TUPLE, InferDefinitionType<V>, TUPLEDEFINITION>;
+	public every<const V extends Validator>(every: V): ArrayValidator<InferValidatorReturnType<V>, TUPLE, InferDefinitionType<V>, TUPLEDEFINITION> {
+		return new ArrayValidator<InferValidatorReturnType<V>, TUPLE, InferDefinitionType<V>, TUPLEDEFINITION>({...this.rules, every});
 	}
 
-	public tuple<const V extends readonly Validator[]>(validators: V): ArrayValidator<EVERY, InferListReturnType<V>, EVERYDEFINITION, InferListDefinitionType<V>> {
-		this._tuple = validators;
-
-		return this as unknown as ArrayValidator<EVERY, InferListReturnType<V>, EVERYDEFINITION, InferListDefinitionType<V>>;
+	public tuple<const V extends readonly Validator[]>(tuple: V): ArrayValidator<EVERY, InferListReturnType<V>, EVERYDEFINITION, InferListDefinitionType<V>> {
+		return new ArrayValidator<EVERY, InferListReturnType<V>, EVERYDEFINITION, InferListDefinitionType<V>>({...this.rules, tuple});
 	}
 
 	public assert(data: unknown, path: string = 'data'): asserts data is TUPLE {
 		if (!JSON.isShallowArray(data))
 			throw new AssertError(`Expected an Array`, path);
 
-		if (this._min !== null && this._min > data.length)
-			throw new AssertError(`Expected at least ${this._min} elements`, path);
+		if (this.rules.min !== null && this.rules.min > data.length)
+			throw new AssertError(`Expected at least ${this.rules.min} elements`, path);
 
-		if (this._max !== null && this._max < data.length)
-			throw new AssertError(`Expected at most ${this._max} elements`, path);
+		if (this.rules.max !== null && this.rules.max < data.length)
+			throw new AssertError(`Expected at most ${this.rules.max} elements`, path);
 
 		const errors: AssertError[] = [];
 
-		if (this._every !== null) {
-			const validator: Validator = this._every;
+		if (this.rules.every !== null) {
+			const validator: Validator = this.rules.every;
 
 			data.forEach((value, index) => {
 				try {
@@ -132,11 +135,11 @@ export class ArrayValidator<
 			});
 		}
 
-		if (this._tuple !== null) {
-			if (data.length < this._tuple.length)
-				throw new AssertError(`Expected at least ${this._tuple.length} elements`, path);
+		if (this.rules.tuple !== null) {
+			if (data.length < this.rules.tuple.length)
+				throw new AssertError(`Expected at least ${this.rules.tuple.length} elements`, path);
 
-			this._tuple.forEach((validator: Validator, index) => {
+			this.rules.tuple.forEach((validator: Validator, index) => {
 				try {
 					validator.assert(data[index], `${path}[${index}]`);
 				} catch (e) {
@@ -153,43 +156,40 @@ export class ArrayValidator<
 		return this.constructor === other.constructor;
 	}
 
-	public clone(): this {
-		const validator = new ArrayValidator() as this;
-
-		validator._min = this._min;
-		validator._max = this._max;
-		validator._every = this._every ? this._every.clone() : this._every;
-		validator._tuple = this._tuple ? this._tuple.map(v => v.clone()) : this._tuple;
-
-		return validator;
+	public clone(): ArrayValidator<EVERY, TUPLE, EVERYDEFINITION, TUPLEDEFINITION> {
+		return new ArrayValidator<EVERY, TUPLE, EVERYDEFINITION, TUPLEDEFINITION>({
+			...this.rules,
+			every: this.rules.every ? this.rules.every.clone() : this.rules.every,
+			tuple: this.rules.tuple ? this.rules.tuple.map(v => v.clone()) : this.rules.tuple
+		});
 	}
 
 	public isEqual(other: Validator): other is this {
 		if (!this.isSameValidator(other))
 			return false;
 
-		if (this._min !== other._min)
+		if (this.rules.min !== other.rules.min)
 			return false;
 
-		if (this._max !== other._max)
+		if (this.rules.max !== other.rules.max)
 			return false;
 
-		if (this._every === null !== (other._every === null))
+		if (this.rules.every === null !== (other.rules.every === null))
 			return false;
 
-		if (this._every !== null && other._every !== null && !this._every.isEqual(other._every))
+		if (this.rules.every !== null && other.rules.every !== null && !this.rules.every.isEqual(other.rules.every))
 			return false;
 
-		if (this._tuple === null !== (other._tuple === null))
+		if (this.rules.tuple === null !== (other.rules.tuple === null))
 			return false;
 
-		if (this._tuple !== null && other._tuple !== null) {
-			if (this._tuple.length !== other._tuple.length)
+		if (this.rules.tuple !== null && other.rules.tuple !== null) {
+			if (this.rules.tuple.length !== other.rules.tuple.length)
 				return false;
 
-			for (let index = 0; index < this._tuple.length; index++) {
-				const left = this._tuple[index];
-				const right = other._tuple[index];
+			for (let index = 0; index < this.rules.tuple.length; index++) {
+				const left = this.rules.tuple[index];
+				const right = other.rules.tuple[index];
 
 				if (left === undefined || right === undefined)
 					return false;
@@ -202,17 +202,78 @@ export class ArrayValidator<
 		return true;
 	}
 
-	protected _effectiveMin(): number {
-		const tupleMin = this._tuple !== null ? this._tuple.length : 0;
+	public merge(other: Validator, path: string = 'validator'): ArrayValidator {
+		if (!this.isSameValidator(other))
+			throw new MergeError(`Conflicting Validator Subclasses`, path, {
+				cause: {left: this, right: other}
+			});
 
-		if (this._min === null)
+		const rules: ArrayValidatorRules = {
+			min: null,
+			max: null,
+			every: null,
+			tuple: []
+		}
+
+		if (this.rules.min !== null && other.rules.min !== null)
+			rules.min = Math.max(this.rules.min, other.rules.min);
+		else
+			rules.min = this.rules.min !== null ? this.rules.min : other.rules.min;
+
+		if (this.rules.max !== null && other.rules.max !== null)
+			rules.max = Math.min(this.rules.max, other.rules.max);
+		else
+			rules.max = this.rules.max !== null ? this.rules.max : other.rules.max;
+
+		if (this.rules.every !== null && other.rules.every !== null)
+			rules.every = this.rules.every.merge(other.rules.every, `${path}.every`);
+		else
+			rules.every = this.rules.every !== null
+				? this.rules.every.clone()
+				: other.rules.every !== null
+					? other.rules.every.clone()
+					: null;
+
+		if (this.rules.tuple !== null && other.rules.tuple !== null) {
+			const length = Math.max(this.rules.tuple.length, other.rules.tuple.length);
+			const tuple: Validator[] = [];
+
+			for (let index = 0; index < length; index++) {
+				const left = this.rules.tuple[index];
+				const right = other.rules.tuple[index];
+
+				if (left !== undefined && right !== undefined)
+					tuple[index] = left.merge(right, `${path}.tuple[${index}]`);
+				else if (left !== undefined)
+					tuple[index] = left.clone();
+				else if (right !== undefined)
+					tuple[index] = right.clone();
+			}
+
+			rules.tuple = tuple;
+		}
+		else {
+			rules.tuple = this.rules.tuple !== null
+				? this.rules.tuple.map(v => v.clone())
+				: other.rules.tuple !== null
+					? other.rules.tuple.map(v => v.clone())
+					: null;
+		}
+
+		return new ArrayValidator(rules);
+	}
+
+	protected _effectiveMin(): number {
+		const tupleMin = this.rules.tuple !== null ? this.rules.tuple.length : 0;
+
+		if (this.rules.min === null)
 			return tupleMin;
 
-		return Math.max(this._min, tupleMin);
+		return Math.max(this.rules.min, tupleMin);
 	}
 
 	protected _effectiveMax(): number | null {
-		return this._max;
+		return this.rules.max;
 	}
 
 	protected _isValid(): boolean {
@@ -225,67 +286,11 @@ export class ArrayValidator<
 		return true;
 	}
 
-	public normalize(): this | NeverValidator {
+	public normalize(): Validator {
 		if (!this._isValid())
 			return new NeverValidator();
 
 		return this.clone();
-	}
-
-	public merge(other: Validator, path: string = 'validator'): ArrayValidator {
-		if (!this.isSameValidator(other))
-			throw new MergeError(`Conflicting Validator Subclasses`, path, {
-				cause: {left: this, right: other}
-			});
-
-		const validator = new ArrayValidator();
-
-		if (this._min !== null && other._min !== null)
-			validator._min = Math.max(this._min, other._min);
-		else
-			validator._min = this._min !== null ? this._min : other._min;
-
-		if (this._max !== null && other._max !== null)
-			validator._max = Math.min(this._max, other._max);
-		else
-			validator._max = this._max !== null ? this._max : other._max;
-
-		if (this._every !== null && other._every !== null)
-			validator._every = this._every.merge(other._every, `${path}.every`);
-		else
-			validator._every = this._every !== null
-				? this._every.clone()
-				: other._every !== null
-					? other._every.clone()
-					: null;
-
-		if (this._tuple !== null && other._tuple !== null) {
-			const length = Math.max(this._tuple.length, other._tuple.length);
-			const tuple: Validator[] = [];
-
-			for (let index = 0; index < length; index++) {
-				const left = this._tuple[index];
-				const right = other._tuple[index];
-
-				if (left !== undefined && right !== undefined)
-					tuple[index] = left.merge(right, `${path}.tuple[${index}]`);
-				else if (left !== undefined)
-					tuple[index] = left.clone();
-				else if (right !== undefined)
-					tuple[index] = right.clone();
-			}
-
-			validator._tuple = tuple;
-		}
-		else {
-			validator._tuple = this._tuple !== null
-				? this._tuple.map(v => v.clone())
-				: other._tuple !== null
-					? other._tuple.map(v => v.clone())
-					: null;
-		}
-
-		return validator;
 	}
 
 	protected override _isSubset(other: Validator): boolean {
@@ -308,14 +313,14 @@ export class ArrayValidator<
 				return false;
 		}
 
-		if (other._every !== null) {
-			if (this._every !== null) {
-				if (!this._every.isSubset(other._every))
+		if (other.rules.every !== null) {
+			if (this.rules.every !== null) {
+				if (!this.rules.every.isSubset(other.rules.every))
 					return false;
 			}
-			else if (this._tuple !== null && thisMax !== null && thisMax <= this._tuple.length) {
-				for (const variant of this._tuple) {
-					if (!variant.isSubset(other._every))
+			else if (this.rules.tuple !== null && thisMax !== null && thisMax <= this.rules.tuple.length) {
+				for (const variant of this.rules.tuple) {
+					if (!variant.isSubset(other.rules.every))
 						return false;
 				}
 			}
@@ -324,16 +329,16 @@ export class ArrayValidator<
 			}
 		}
 
-		if (other._tuple !== null) {
-			if (this._tuple === null)
+		if (other.rules.tuple !== null) {
+			if (this.rules.tuple === null)
 				return false;
 
-			if (this._tuple.length < other._tuple.length)
+			if (this.rules.tuple.length < other.rules.tuple.length)
 				return false;
 
-			for (let index = 0; index < other._tuple.length; index++) {
-				const left = this._tuple[index];
-				const right = other._tuple[index];
+			for (let index = 0; index < other.rules.tuple.length; index++) {
+				const left = this.rules.tuple[index];
+				const right = other.rules.tuple[index];
 
 				if (left === undefined || right === undefined)
 					return false;
@@ -351,17 +356,17 @@ export class ArrayValidator<
 			type: 'array'
 		};
 
-		if (this._min !== null)
-			definition.min = this._min;
+		if (this.rules.min !== null)
+			definition.min = this.rules.min;
 
-		if (this._max !== null)
-			definition.max = this._max;
+		if (this.rules.max !== null)
+			definition.max = this.rules.max;
 
-		if (this._every !== null)
-			definition.every = this._every.toJSON();
+		if (this.rules.every !== null)
+			definition.every = this.rules.every.toJSON();
 
-		if (this._tuple !== null)
-			definition.tuple = this._tuple.map(v => v.toJSON());
+		if (this.rules.tuple !== null)
+			definition.tuple = this.rules.tuple.map(v => v.toJSON());
 
 		return definition as ArrayValidatorDefinition<EVERYDEFINITION, TUPLEDEFINITION>;
 	}

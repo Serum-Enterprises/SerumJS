@@ -35,6 +35,14 @@ export interface ObjectValidatorDefinition<
 	exact?: boolean;
 }
 
+interface ObjectValidatorRules {
+	min: number | null;
+	max: number | null;
+	every: Validator | null;
+	shape: Readonly<Record<string, Validator>> | null;
+	exact: boolean;
+}
+
 export class ObjectValidator<
 	EVERY = unknown,
 	SHAPE = Record<string, unknown>,
@@ -47,24 +55,30 @@ export class ObjectValidator<
 		path: string = 'definition',
 		schemaDomain: SchemaDomain
 	): ObjectValidator {
-		const validator = new ObjectValidator();
+		const rules: ObjectValidatorRules = {
+			min: null,
+			max: null,
+			every: null,
+			shape: null,
+			exact: false
+		};
 
 		if ('min' in definition) {
 			if (!JSON.isNumber(definition['min']))
 				throw new DefinitionError(`Expected a Number`, `${path}.min`);
 
-			validator._min = definition['min'];
+			rules.min = definition['min'];
 		}
 
 		if ('max' in definition) {
 			if (!JSON.isNumber(definition['max']))
 				throw new DefinitionError(`Expected a Number`, `${path}.max`);
 
-			validator._max = definition['max'];
+			rules.max = definition['max'];
 		}
 
 		if ('every' in definition)
-			validator._every = schemaDomain.fromJSON(definition['every'], `${path}.every`);
+			rules.every = schemaDomain.fromJSON(definition['every'], `${path}.every`);
 
 		if ('shape' in definition) {
 			if (!JSON.isShallowObject(definition['shape']))
@@ -84,39 +98,53 @@ export class ObjectValidator<
 			if (errors.length > 0)
 				throw new AggregateError(errors);
 
-			validator._shape = shape;
+			rules.shape = shape;
 		}
 
 		if ('exact' in definition) {
 			if (!JSON.isBoolean(definition['exact']))
 				throw new DefinitionError(`Expected a Boolean`, `${path}.exact`);
 
-			validator._exact = definition['exact'];
+			rules.exact = definition['exact'];
 		}
 
-		return validator;
+		return new ObjectValidator(rules);
 	}
 
-	protected _min: number | null = null;
-	protected _max: number | null = null;
-	protected _every: Validator | null = null;
-	protected _shape: Record<string, Validator> | null = null;
-	protected _exact: boolean = false;
+	public constructor(
+		public readonly rules: Readonly<ObjectValidatorRules> = {
+			min: null,
+			max: null,
+			every: null,
+			shape: null,
+			exact: false
+		}
+	) {super();}
 
-	public min(value: number): this {
-		this._min = value;
-
-		return this;
+	public min(min: number): ObjectValidator<EVERY, SHAPE, EXACT, EVERYDEFINITION, SHAPEDEFINITION> {
+		return new ObjectValidator<EVERY, SHAPE, EXACT, EVERYDEFINITION, SHAPEDEFINITION>({
+			...this.rules,
+			every: this.rules.every ? this.rules.every.clone(): this.rules.every,
+			shape: this.rules.shape ?
+				Object.fromEntries(Object.entries(this.rules.shape).map(([key, value]) => [key, value.clone()])) :
+				this.rules.shape,
+			min
+		});
 	}
 
-	public max(value: number): this {
-		this._max = value;
-
-		return this;
+	public max(max: number): ObjectValidator<EVERY, SHAPE, EXACT, EVERYDEFINITION, SHAPEDEFINITION> {
+		return new ObjectValidator<EVERY, SHAPE, EXACT, EVERYDEFINITION, SHAPEDEFINITION>({
+			...this.rules,
+			every: this.rules.every ? this.rules.every.clone(): this.rules.every,
+			shape: this.rules.shape ?
+				Object.fromEntries(Object.entries(this.rules.shape).map(([key, value]) => [key, value.clone()])) :
+				this.rules.shape,
+			max
+		});
 	}
 
 	public every<const V extends Validator>(
-		validator: V
+		every: V
 	): ObjectValidator<
 		InferValidatorReturnType<V>,
 		SHAPE,
@@ -124,15 +152,19 @@ export class ObjectValidator<
 		InferDefinitionType<V>,
 		SHAPEDEFINITION
 	> {
-		this._every = validator;
-
-		return this as unknown as ObjectValidator<
+		return new ObjectValidator<
 			InferValidatorReturnType<V>,
 			SHAPE,
 			EXACT,
 			InferDefinitionType<V>,
 			SHAPEDEFINITION
-		>;
+		>({
+			...this.rules,
+			every,
+			shape: this.rules.shape ?
+				Object.fromEntries(Object.entries(this.rules.shape).map(([key, value]) => [key, value.clone()])) :
+				this.rules.shape,
+		});
 	}
 
 	public shape<const S extends Record<string, Validator>>(
@@ -144,15 +176,17 @@ export class ObjectValidator<
 		EVERYDEFINITION,
 		ShapeDefinition<S>
 	> {
-		this._shape = shape;
-
-		return this as unknown as ObjectValidator<
+		return new ObjectValidator<
 			EVERY,
 			ShapeResult<S>,
 			EXACT,
 			EVERYDEFINITION,
 			ShapeDefinition<S>
-		>;
+		>({
+			...this.rules,
+			every: this.rules.every ? this.rules.every.clone() : this.rules.every,
+			shape,
+		});
 	}
 
 	public exact(): ObjectValidator<
@@ -162,15 +196,14 @@ export class ObjectValidator<
 		EVERYDEFINITION,
 		SHAPEDEFINITION
 	> {
-		this._exact = true;
-
-		return this as unknown as ObjectValidator<
-			EVERY,
-			SHAPE,
-			true,
-			EVERYDEFINITION,
-			SHAPEDEFINITION
-		>;
+		return new ObjectValidator<EVERY, SHAPE, true, EVERYDEFINITION, SHAPEDEFINITION>({
+			...this.rules,
+			exact: true,
+			every: this.rules.every ? this.rules.every.clone(): this.rules.every,
+			shape: this.rules.shape ?
+				Object.fromEntries(Object.entries(this.rules.shape).map(([key, value]) => [key, value.clone()])) :
+				this.rules.shape,
+		});
 	}
 
 	public assert(data: unknown, path: string = 'data'): asserts data is ObjectResult<EVERY, SHAPE, EXACT> {
@@ -179,16 +212,16 @@ export class ObjectValidator<
 
 		const keys = Object.keys(data);
 
-		if (this._min !== null && keys.length < this._min)
-			throw new AssertError(`Expected at least ${this._min} properties`, path);
+		if (this.rules.min !== null && keys.length < this.rules.min)
+			throw new AssertError(`Expected at least ${this.rules.min} properties`, path);
 
-		if (this._max !== null && keys.length > this._max)
-			throw new AssertError(`Expected at most ${this._max} properties`, path);
+		if (this.rules.max !== null && keys.length > this.rules.max)
+			throw new AssertError(`Expected at most ${this.rules.max} properties`, path);
 
 		const errors: Error[] = [];
 
-		if (this._shape !== null) {
-			for (const [key, validator] of Object.entries(this._shape)) {
+		if (this.rules.shape !== null) {
+			for (const [key, validator] of Object.entries(this.rules.shape)) {
 				if (!(key in data)) {
 					errors.push(new AssertError(`Expected property`, `${path}.${key}`));
 					continue;
@@ -204,17 +237,17 @@ export class ObjectValidator<
 			}
 		}
 
-		if (this._exact && this._shape !== null) {
+		if (this.rules.exact && this.rules.shape !== null) {
 			for (const key of keys) {
-				if (!(key in this._shape))
+				if (!(key in this.rules.shape))
 					errors.push(new AssertError(`Unexpected property`, `${path}.${key}`));
 			}
 		}
 
-		if (this._every !== null) {
+		if (this.rules.every !== null) {
 			for (const [key, value] of Object.entries(data)) {
 				try {
-					const everyValidator: Validator = this._every;
+					const everyValidator: Validator = this.rules.every;
 
 					everyValidator.assert(value, `${path}.${key}`);
 				} catch (e) {
@@ -232,58 +265,47 @@ export class ObjectValidator<
 	}
 
 	public clone(): this {
-		const validator = new ObjectValidator() as this;
-
-		validator._min = this._min;
-		validator._max = this._max;
-		validator._every = this._every ? this._every.clone() : null;
-		validator._exact = this._exact;
-
-		if (this._shape !== null) {
-			validator._shape = {};
-
-			for (const [key, value] of Object.entries(this._shape))
-				validator._shape[key] = value.clone();
-		}
-		else {
-			validator._shape = null;
-		}
-
-		return validator;
+		return new ObjectValidator<EVERY, SHAPE, EXACT, EVERYDEFINITION, SHAPEDEFINITION>({
+			...this.rules,
+			every: this.rules.every ? this.rules.every.clone(): this.rules.every,
+			shape: this.rules.shape ?
+				Object.fromEntries(Object.entries(this.rules.shape).map(([key, value]) => [key, value.clone()])) :
+				this.rules.shape,
+		}) as this;
 	}
 
 	public isEqual(other: Validator): other is this {
 		if (!this.isSameValidator(other))
 			return false;
 
-		if (this._min !== other._min)
+		if (this.rules.min !== other.rules.min)
 			return false;
 
-		if (this._max !== other._max)
+		if (this.rules.max !== other.rules.max)
 			return false;
 
-		if (this._exact !== other._exact)
+		if (this.rules.exact !== other.rules.exact)
 			return false;
 
-		if (this._every === null !== (other._every === null))
+		if (this.rules.every === null !== (other.rules.every === null))
 			return false;
 
-		if (this._every !== null && other._every !== null && !this._every.isEqual(other._every))
+		if (this.rules.every !== null && other.rules.every !== null && !this.rules.every.isEqual(other.rules.every))
 			return false;
 
-		if (this._shape === null !== (other._shape === null))
+		if (this.rules.shape === null !== (other.rules.shape === null))
 			return false;
 
-		if (this._shape !== null && other._shape !== null) {
-			const leftKeys = Object.keys(this._shape);
-			const rightKeys = Object.keys(other._shape);
+		if (this.rules.shape !== null && other.rules.shape !== null) {
+			const leftKeys = Object.keys(this.rules.shape);
+			const rightKeys = Object.keys(other.rules.shape);
 
 			if (leftKeys.length !== rightKeys.length)
 				return false;
 
 			for (const key of leftKeys) {
-				const left = this._shape[key];
-				const right = other._shape[key];
+				const left = this.rules.shape[key];
+				const right = other.rules.shape[key];
 
 				if (right === undefined || left === undefined)
 					return false;
@@ -297,19 +319,19 @@ export class ObjectValidator<
 	}
 
 	protected _effectiveMin(): number {
-		const shapeMin = this._shape !== null ? Object.keys(this._shape).length : 0;
+		const shapeMin = this.rules.shape !== null ? Object.keys(this.rules.shape).length : 0;
 
-		if (this._min === null)
+		if (this.rules.min === null)
 			return shapeMin;
 
-		return Math.max(this._min, shapeMin);
+		return Math.max(this.rules.min, shapeMin);
 	}
 
 	protected _effectiveMax(): number | null {
-		if (this._exact && this._shape !== null)
-			return Object.keys(this._shape).length;
+		if (this.rules.exact && this.rules.shape !== null)
+			return Object.keys(this.rules.shape).length;
 
-		return this._max;
+		return this.rules.max;
 	}
 
 	protected _isValid(): boolean {
@@ -329,44 +351,56 @@ export class ObjectValidator<
 		return this.clone();
 	}
 
-	public merge(other: Validator, path: string = 'validator'): ObjectValidator {
+	public merge(other: Validator, path: string = 'validator'): ObjectValidator<
+		EVERY,
+		SHAPE,
+		EXACT,
+		EVERYDEFINITION,
+		SHAPEDEFINITION
+	> {
 		if (!this.isSameValidator(other))
 			throw new MergeError(`Conflicting Validator Subclasses`, path, {
 				cause: {left: this, right: other}
 			});
 
-		const validator = new ObjectValidator();
+		const rules: ObjectValidatorRules = {
+			min: null,
+			max: null,
+			exact: false,
+			every: null,
+			shape: null
+		}
 
-		if (this._min !== null && other._min !== null)
-			validator._min = Math.max(this._min, other._min);
+		if (this.rules.min !== null && other.rules.min !== null)
+			rules.min = Math.max(this.rules.min, other.rules.min);
 		else
-			validator._min = this._min !== null ? this._min : other._min;
+			rules.min = this.rules.min !== null ? this.rules.min : other.rules.min;
 
-		if (this._max !== null && other._max !== null)
-			validator._max = Math.min(this._max, other._max);
+		if (this.rules.max !== null && other.rules.max !== null)
+			rules.max = Math.min(this.rules.max, other.rules.max);
 		else
-			validator._max = this._max !== null ? this._max : other._max;
+			rules.max = this.rules.max !== null ? this.rules.max : other.rules.max;
 
-		validator._exact = this._exact || other._exact;
+		rules.exact = this.rules.exact || other.rules.exact;
 
-		if (this._every !== null && other._every !== null)
-			validator._every = this._every.merge(other._every, `${path}.every`);
+		if (this.rules.every !== null && other.rules.every !== null)
+			rules.every = this.rules.every.merge(other.rules.every, `${path}.every`);
 		else
-			validator._every = this._every !== null
-				? this._every.clone()
-				: other._every !== null
-					? other._every.clone()
+			rules.every = this.rules.every !== null
+				? this.rules.every.clone()
+				: other.rules.every !== null
+					? other.rules.every.clone()
 					: null;
 
 		const shape: Record<string, Validator> = {};
 
-		if (this._shape !== null) {
-			for (const [key, value] of Object.entries(this._shape))
+		if (this.rules.shape !== null) {
+			for (const [key, value] of Object.entries(this.rules.shape))
 				shape[key] = value.clone();
 		}
 
-		if (other._shape !== null) {
-			for (const [key, value] of Object.entries(other._shape)) {
+		if (other.rules.shape !== null) {
+			for (const [key, value] of Object.entries(other.rules.shape)) {
 				if (shape[key] !== undefined)
 					shape[key] = shape[key].merge(value, `${path}.shape.${key}`);
 				else
@@ -374,9 +408,9 @@ export class ObjectValidator<
 			}
 		}
 
-		validator._shape = Object.keys(shape).length > 0 ? shape : null;
+		rules.shape = Object.keys(shape).length > 0 ? shape : null;
 
-		return validator;
+		return new ObjectValidator(rules);
 	}
 
 	protected override _isSubset(other: Validator): boolean {
@@ -399,12 +433,12 @@ export class ObjectValidator<
 				return false;
 		}
 
-		if (other._exact) {
-			if (!this._exact)
+		if (other.rules.exact) {
+			if (!this.rules.exact)
 				return false;
 
-			const thisKeys = Object.keys(this._shape ?? {});
-			const otherKeys = Object.keys(other._shape ?? {});
+			const thisKeys = Object.keys(this.rules.shape ?? {});
+			const otherKeys = Object.keys(other.rules.shape ?? {});
 
 			if (thisKeys.length !== otherKeys.length)
 				return false;
@@ -415,12 +449,12 @@ export class ObjectValidator<
 			}
 		}
 
-		if (other._shape !== null) {
-			if (this._shape === null)
+		if (other.rules.shape !== null) {
+			if (this.rules.shape === null)
 				return false;
 
-			for (const [key, otherValidator] of Object.entries(other._shape)) {
-				const thisValidator = this._shape[key];
+			for (const [key, otherValidator] of Object.entries(other.rules.shape)) {
+				const thisValidator = this.rules.shape[key];
 
 				if (thisValidator === undefined)
 					return false;
@@ -430,14 +464,14 @@ export class ObjectValidator<
 			}
 		}
 
-		if (other._every !== null) {
-			if (this._every !== null) {
-				if (!this._every.isSubset(other._every))
+		if (other.rules.every !== null) {
+			if (this.rules.every !== null) {
+				if (!this.rules.every.isSubset(other.rules.every))
 					return false;
 			}
-			else if (this._exact && this._shape !== null) {
-				for (const validator of Object.values(this._shape)) {
-					if (!validator.isSubset(other._every))
+			else if (this.rules.exact && this.rules.shape !== null) {
+				for (const validator of Object.values(this.rules.shape)) {
+					if (!validator.isSubset(other.rules.every))
 						return false;
 				}
 			}
@@ -454,25 +488,25 @@ export class ObjectValidator<
 			type: 'object'
 		};
 
-		if (this._min !== null)
-			definition.min = this._min;
+		if (this.rules.min !== null)
+			definition.min = this.rules.min;
 
-		if (this._max !== null)
-			definition.max = this._max;
+		if (this.rules.max !== null)
+			definition.max = this.rules.max;
 
-		if (this._every !== null)
-			definition.every = this._every.toJSON();
+		if (this.rules.every !== null)
+			definition.every = this.rules.every.toJSON();
 
-		if (this._shape !== null) {
+		if (this.rules.shape !== null) {
 			const shape: Record<string, Definition> = {};
 
-			for (const [key, value] of Object.entries(this._shape))
+			for (const [key, value] of Object.entries(this.rules.shape))
 				shape[key] = value.toJSON();
 
 			definition.shape = shape;
 		}
 
-		if (this._exact)
+		if (this.rules.exact)
 			definition.exact = true;
 
 		return definition as ObjectValidatorDefinition<EVERYDEFINITION, SHAPEDEFINITION>;

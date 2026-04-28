@@ -1,5 +1,4 @@
 import type {SchemaDomain} from './SchemaDomain';
-import type {NeverValidator} from './validators';
 
 export interface Definition {
 	type: string;
@@ -30,7 +29,7 @@ export abstract class Validator<T = unknown> {
 	}
 
 	public abstract isSameValidator(other: Validator): other is Validator;
-	public abstract clone(): this;
+	public abstract clone(): Validator;
 	public abstract isEqual(other: Validator): other is this;
 	public abstract merge(other: Validator, path?: string): Validator;
 	public abstract normalize(): Validator;

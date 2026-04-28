@@ -25,7 +25,7 @@ export class NullValidator extends Validator<null> {
 		return this.constructor === other.constructor;
 	}
 
-	public clone(): this {
+	public clone(): NullValidator {
 		return new NullValidator() as this;
 	}
 
@@ -40,7 +40,7 @@ export class NullValidator extends Validator<null> {
 		return new NullValidator() as this;
 	}
 
-	public normalize(): this {
+	public normalize(): Validator {
 		return this.clone();
 	}
 

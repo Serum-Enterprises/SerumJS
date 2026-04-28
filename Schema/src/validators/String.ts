@@ -11,205 +11,206 @@ export interface StringValidatorDefinition extends Definition {
 	equals?: string;
 }
 
+interface StringValidatorRules {
+	min: number | null,
+	max: number | null,
+	equals: string | null
+}
+
 export class StringValidator<T extends string = string> extends Validator<T> {
 	public static fromJSON(
 		definition: UnknownDefinition,
 		path: string = 'definition',
 		_schemaDomain: SchemaDomain
 	): StringValidator {
-		const validator = new StringValidator();
+		const rules: StringValidatorRules = {
+			min: null,
+			max: null,
+			equals: null
+		};
 
 		if ('min' in definition) {
 			if (!JSON.isNumber(definition['min']))
 				throw new DefinitionError(`Expected a Number`, `${path}.min`);
 
-			validator._min = definition['min'];
+			rules.min = definition['min'];
 		}
 
 		if ('max' in definition) {
 			if (!JSON.isNumber(definition['max']))
 				throw new DefinitionError(`Expected a Number`, `${path}.max`);
 
-			validator._max = definition['max'];
+			rules.max = definition['max'];
 		}
 
 		if ('equals' in definition) {
 			if (!JSON.isString(definition['equals']))
 				throw new DefinitionError(`Expected a String`, `${path}.equals`);
 
-			validator._equals = definition['equals'];
+			rules.equals = definition['equals'];
 		}
 
-		return validator;
+		return new StringValidator(rules);
 	}
 
-	protected _min: number | null = null;
-	protected _max: number | null = null;
-	protected _equals: string | null = null;
+	public constructor(
+		public readonly rules: Readonly<StringValidatorRules> = {min: null, max: null, equals: null}
+	) {super()}
 
-	public min(value: number): this {
-		this._min = value;
-
-		return this;
+	public min(min: number): StringValidator<T> {
+		return new StringValidator<T>({...this.rules, min});
 	}
 
-	public max(value: number): this {
-		this._max = value;
-
-		return this;
+	public max(max: number): StringValidator<T> {
+		return new StringValidator<T>({...this.rules, max});
 	}
 
-	public equals<const V extends string>(value: V): StringValidator<V> {
-		this._equals = value;
-
-		return this as unknown as StringValidator<V>;
+	public equals<const V extends string>(equals: V): StringValidator<V> {
+		return new StringValidator<V>({...this.rules, equals});
 	}
 
 	public assert(data: unknown, path: string = 'data'): asserts data is T {
 		if (!JSON.isString(data))
 			throw new AssertError(`Expected a String`, path);
 
-		if (this._min !== null && this._min > data.length)
-			throw new AssertError(`Expected at least ${this._min} characters`, path);
+		if (this.rules.min !== null && this.rules.min > data.length)
+			throw new AssertError(`Expected at least ${this.rules.min} characters`, path);
 
-		if (this._max !== null && this._max < data.length)
-			throw new AssertError(`Expected at most ${this._max} characters`, path);
+		if (this.rules.max !== null && this.rules.max < data.length)
+			throw new AssertError(`Expected at most ${this.rules.max} characters`, path);
 
-		if (this._equals !== null && this._equals !== data)
-			throw new AssertError(`Expected ${this._equals}`, path);
+		if (this.rules.equals !== null && this.rules.equals !== data)
+			throw new AssertError(`Expected ${this.rules.equals}`, path);
 	}
 
 	public isSameValidator(other: Validator): other is StringValidator {
 		return this.constructor === other.constructor;
 	}
 
-	public clone(): this {
-		const validator = new StringValidator() as this;
-
-		validator._min = this._min;
-		validator._max = this._max;
-		validator._equals = this._equals;
-
-		return validator;
+	public clone(): StringValidator<T> {
+		return new StringValidator({...this.rules});
 	}
 
 	public isEqual(other: Validator): other is this {
 		if (!this.isSameValidator(other))
 			return false;
 
-		return this._min === other._min &&
-			this._max === other._max &&
-			this._equals === other._equals;
+		return this.rules.min === other.rules.min &&
+			this.rules.max === other.rules.max &&
+			this.rules.equals === other.rules.equals;
+	}
+
+	public merge(other: Validator, path: string = 'validator'): StringValidator {
+		if (!this.isSameValidator(other))
+			throw new MergeError(`Conflicting Validator Subclasses`, path, {
+				cause: {left: this, right: other}
+			});
+
+		const rules: StringValidatorRules = {
+			min: null,
+			max: null,
+			equals: null
+		};
+
+		if (this.rules.equals !== null && other.rules.equals !== null && this.rules.equals !== other.rules.equals)
+			throw new MergeError(`Conflicting equals Constraints`, `${path}.equals`, {
+				cause: {
+					left: this.rules.equals,
+					right: other.rules.equals
+				}
+			});
+
+		rules.equals = this.rules.equals !== null
+			? this.rules.equals
+			: other.rules.equals;
+
+		if (this.rules.min !== null && other.rules.min !== null)
+			rules.min = Math.max(this.rules.min, other.rules.min);
+		else
+			rules.min = this.rules.min !== null ? this.rules.min : other.rules.min;
+
+		if (this.rules.max !== null && other.rules.max !== null)
+			rules.max = Math.min(this.rules.max, other.rules.max);
+		else
+			rules.max = this.rules.max !== null ? this.rules.max : other.rules.max;
+
+		return new StringValidator(rules);
 	}
 
 	protected _isValid(): boolean {
-		if (this._min !== null && this._max !== null && this._min > this._max)
+		if (this.rules.min !== null && this.rules.max !== null && this.rules.min > this.rules.max)
 			return false;
 
-		if (this._equals !== null) {
-			if (this._min !== null && this._equals.length < this._min)
+		if (this.rules.equals !== null) {
+			if (this.rules.min !== null && this.rules.equals.length < this.rules.min)
 				return false;
 
-			if (this._max !== null && this._equals.length > this._max)
+			if (this.rules.max !== null && this.rules.equals.length > this.rules.max)
 				return false;
 		}
 
 		return true;
 	}
 
-	public normalize(): this | NeverValidator {
+	public normalize(): Validator {
 		if (!this._isValid())
 			return new NeverValidator();
 
 		return this.clone();
 	}
 
-	public merge(other: Validator, path: string = 'validator'): StringValidator {
-		if (!this.isSameValidator(other))
-			throw new MergeError(`Conflicting Validator Subclasses`, path, {
-				cause: { left: this, right: other }
-			});
-
-		const validator = new StringValidator();
-
-		if (this._equals !== null && other._equals !== null && this._equals !== other._equals)
-			throw new MergeError(`Conflicting equals Constraints`, `${path}.equals`, {
-				cause: {
-					left: this._equals,
-					right: other._equals
-				}
-			});
-
-		validator._equals = this._equals !== null
-			? this._equals
-			: other._equals;
-
-		if (this._min !== null && other._min !== null)
-			validator._min = Math.max(this._min, other._min);
-		else
-			validator._min = this._min !== null ? this._min : other._min;
-
-		if (this._max !== null && other._max !== null)
-			validator._max = Math.min(this._max, other._max);
-		else
-			validator._max = this._max !== null ? this._max : other._max;
-
-		return validator;
-	}
-
 	protected override _isSubset(other: Validator): boolean {
 		if (!this.isSameValidator(other))
 			return false;
 
-		if (this._equals !== null) {
-			if (other._equals !== null)
-				return this._equals === other._equals;
+		if (this.rules.equals !== null) {
+			if (other.rules.equals !== null)
+				return this.rules.equals === other.rules.equals;
 
-			if (other._min !== null && this._equals.length < other._min)
+			if (other.rules.min !== null && this.rules.equals.length < other.rules.min)
 				return false;
 
-			if (other._max !== null && this._equals.length > other._max)
+			if (other.rules.max !== null && this.rules.equals.length > other.rules.max)
 				return false;
 
 			return true;
 		}
 
-		if (other._equals !== null)
+		if (other.rules.equals !== null)
 			return false;
 
-		if (other._min !== null) {
-			if (this._min === null)
+		if (other.rules.min !== null) {
+			if (this.rules.min === null)
 				return false;
 
-			if (this._min < other._min)
+			if (this.rules.min < other.rules.min)
 				return false;
 		}
 
-		if (other._max !== null) {
-			if (this._max === null)
+		if (other.rules.max !== null) {
+			if (this.rules.max === null)
 				return false;
 
-			if (this._max > other._max)
+			if (this.rules.max > other.rules.max)
 				return false;
 		}
 
 		return true;
 	}
 
-
 	public toJSON(): StringValidatorDefinition {
 		const definition: StringValidatorDefinition = {
 			type: 'string'
 		};
 
-		if (this._min !== null)
-			definition['min'] = this._min;
+		if (this.rules.min !== null)
+			definition['min'] = this.rules.min;
 
-		if (this._max !== null)
-			definition['max'] = this._max;
+		if (this.rules.max !== null)
+			definition['max'] = this.rules.max;
 
-		if (this._equals !== null)
-			definition['equals'] = this._equals;
+		if (this.rules.equals !== null)
+			definition['equals'] = this.rules.equals;
 
 		return definition;
 	}

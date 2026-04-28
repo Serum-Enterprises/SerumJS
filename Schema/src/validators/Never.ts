@@ -23,7 +23,7 @@ export class NeverValidator extends Validator<never> {
 		return this.constructor === other.constructor;
 	}
 
-	public clone(): this {
+	public clone(): NeverValidator {
 		return new NeverValidator() as this;
 	}
 
@@ -38,7 +38,7 @@ export class NeverValidator extends Validator<never> {
 		return new NeverValidator() as this;
 	}
 
-	public normalize(): this {
+	public normalize(): Validator {
 		return this.clone();
 	}
 

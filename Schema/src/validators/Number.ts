@@ -12,114 +12,110 @@ export interface NumberValidatorDefinition extends Definition {
 	equals?: number;
 }
 
+interface NumberValidatorRules {
+	integer: boolean;
+	min: number | null;
+	max: number | null;
+	equals: number | null;
+}
+
 export class NumberValidator<T extends number = number> extends Validator<T> {
 	public static fromJSON(
 		definition: UnknownDefinition,
 		path: string = 'definition',
 		_schemaDomain: SchemaDomain
 	): NumberValidator {
-		const validator = new NumberValidator();
+		const rules: NumberValidatorRules = {
+			integer: false,
+			min: null,
+			max: null,
+			equals: null
+		};
 
 		if ('integer' in definition) {
 			if (!JSON.isBoolean(definition['integer']))
 				throw new DefinitionError(`Expected a Boolean`, `${path}.integer`);
 
-			validator._integer = definition['integer'];
+			rules.integer = definition['integer'];
 		}
 
 		if ('min' in definition) {
 			if (!JSON.isNumber(definition['min']))
 				throw new DefinitionError(`Expected a Number`, `${path}.min`);
 
-			validator._min = definition['min'];
+			rules.min = definition['min'];
 		}
 
 		if ('max' in definition) {
 			if (!JSON.isNumber(definition['max']))
 				throw new DefinitionError(`Expected a Number`, `${path}.max`);
 
-			validator._max = definition['max'];
+			rules.max = definition['max'];
 		}
 
 		if ('equals' in definition) {
 			if (!JSON.isNumber(definition['equals']))
 				throw new DefinitionError(`Expected a Number`, `${path}.equals`);
 
-			validator._equals = definition['equals'];
+			rules.equals = definition['equals'];
 		}
 
-		return validator;
+		return new NumberValidator(rules);
 	}
 
-	protected _integer: boolean = false;
-	protected _min: number | null = null;
-	protected _max: number | null = null;
-	protected _equals: number | null = null;
+	public constructor(
+		public readonly rules: Readonly<NumberValidatorRules> = {integer: false, min: null, max: null, equals: null}
+	) {super()}
 
-	public integer(flag: boolean = true): this {
-		this._integer = flag;
-
-		return this;
+	public integer(integer: boolean = true): NumberValidator<T> {
+		return new NumberValidator({...this.rules, integer});
 	}
 
-	public min(value: number): this {
-		this._min = value;
-
-		return this;
+	public min(min: number): NumberValidator<T> {
+		return new NumberValidator<T>({...this.rules, min});
 	}
 
-	public max(value: number): this {
-		this._max = value;
-
-		return this;
+	public max(max: number): NumberValidator<T> {
+		return new NumberValidator({...this.rules, max});
 	}
 
-	public equals<const V extends number>(value: V): NumberValidator<V> {
-		this._equals = value;
-
-		return this as unknown as NumberValidator<V>;
+	public equals<const V extends number>(equals: V): NumberValidator<V> {
+		return new NumberValidator<V>({...this.rules, equals});
 	}
 
 	public assert(data: unknown, path: string = 'data'): asserts data is T {
 		if (!JSON.isNumber(data))
 			throw new AssertError(`Expected a Number`, path);
 
-		if (this._integer && !Number.isInteger(data))
+		if (this.rules.integer && !Number.isInteger(data))
 			throw new AssertError(`Expected an Integer`, path);
 
-		if (this._min !== null && this._min > data)
-			throw new AssertError(`Expected at least ${this._min}`, path);
+		if (this.rules.min !== null && this.rules.min > data)
+			throw new AssertError(`Expected at least ${this.rules.min}`, path);
 
-		if (this._max !== null && this._max < data)
-			throw new AssertError(`Expected at most ${this._max}`, path);
+		if (this.rules.max !== null && this.rules.max < data)
+			throw new AssertError(`Expected at most ${this.rules.max}`, path);
 
-		if (this._equals !== null && this._equals !== data)
-			throw new AssertError(`Expected ${this._equals}`, path);
+		if (this.rules.equals !== null && this.rules.equals !== data)
+			throw new AssertError(`Expected ${this.rules.equals}`, path);
 	}
 
 	public isSameValidator(other: Validator): other is NumberValidator {
 		return this.constructor !== other.constructor
 	}
 
-	public clone(): this {
-		const validator = new NumberValidator() as this;
-
-		validator._integer = this._integer;
-		validator._min = this._min;
-		validator._max = this._max;
-		validator._equals = this._equals;
-
-		return validator;
+	public clone(): NumberValidator<T> {
+		return new NumberValidator({...this.rules});
 	}
 
 	public isEqual(other: Validator): other is this {
 		if (!this.isSameValidator(other))
 			return false;
 
-		return this._integer === other._integer &&
-			this._min === other._min &&
-			this._max === other._max &&
-			this._equals === other._equals;
+		return this.rules.integer === other.rules.integer &&
+			this.rules.min === other.rules.min &&
+			this.rules.max === other.rules.max &&
+			this.rules.equals === other.rules.equals;
 	}
 
 	public merge(other: Validator, path: string = 'validator'): NumberValidator {
@@ -128,57 +124,62 @@ export class NumberValidator<T extends number = number> extends Validator<T> {
 				cause: {left: this, right: other}
 			});
 
-		const validator = new NumberValidator();
+		const rules: NumberValidatorRules = {
+			integer: false,
+			min: null,
+			max: null,
+			equals: null
+		};
 
-		if (this._equals !== null && other._equals !== null && this._equals !== other._equals)
+		if (this.rules.equals !== null && other.rules.equals !== null && this.rules.equals !== other.rules.equals)
 			throw new MergeError(`Conflicting equals Constraints`, `${path}.equals`, {
 				cause: {
-					left: this._equals,
-					right: other._equals
+					left: this.rules.equals,
+					right: other.rules.equals
 				}
 			});
 
-		validator._equals = this._equals !== null
-			? this._equals
-			: other._equals;
+		rules.equals = this.rules.equals !== null
+			? this.rules.equals
+			: other.rules.equals;
 
-		validator._integer = this._integer || other._integer;
+		rules.integer = this.rules.integer || other.rules.integer;
 
-		if (this._min !== null && other._min !== null)
-			validator._min = Math.max(this._min, other._min);
+		if (this.rules.min !== null && other.rules.min !== null)
+			rules.min = Math.max(this.rules.min, other.rules.min);
 		else
-			validator._min = this._min !== null ? this._min : other._min;
+			rules.min = this.rules.min !== null ? this.rules.min : other.rules.min;
 
-		if (this._max !== null && other._max !== null)
-			validator._max = Math.min(this._max, other._max);
+		if (this.rules.max !== null && other.rules.max !== null)
+			rules.max = Math.min(this.rules.max, other.rules.max);
 		else
-			validator._max = this._max !== null ? this._max : other._max;
+			rules.max = this.rules.max !== null ? this.rules.max : other.rules.max;
 
-		return validator;
+		return new NumberValidator({...this.rules});
 	}
 
 	protected _isValid(): boolean {
-		if (this._min !== null && this._max !== null && this._min > this._max)
+		if (this.rules.min !== null && this.rules.max !== null && this.rules.min > this.rules.max)
 			return false;
 
-		if (this._equals !== null) {
-			if (this._min !== null && this._min > this._equals)
+		if (this.rules.equals !== null) {
+			if (this.rules.min !== null && this.rules.min > this.rules.equals)
 				return false;
 
-			if (this._max !== null && this._max < this._equals)
+			if (this.rules.max !== null && this.rules.max < this.rules.equals)
 				return false;
 
-			if (this._integer && !JSON.isInteger(this._equals))
+			if (this.rules.integer && !JSON.isInteger(this.rules.equals))
 				return false;
 		}
 
-		if (this._integer && this._min !== null && this._max !== null && Math.ceil(this._min) > Math.floor(this._max))
+		if (this.rules.integer && this.rules.min !== null && this.rules.max !== null && Math.ceil(this.rules.min) > Math.floor(this.rules.max))
 			return false;
 
 		return true;
 	}
 
-	public normalize(): this | NeverValidator {
+	public normalize(): Validator {
 		if (!this._isValid())
 			return new NeverValidator();
 
@@ -186,46 +187,46 @@ export class NumberValidator<T extends number = number> extends Validator<T> {
 	}
 
 	protected _effectiveMin(): number | null {
-		if (this._min === null)
+		if (this.rules.min === null)
 			return null;
 
-		return this._integer ? Math.ceil(this._min) : this._min;
+		return this.rules.integer ? Math.ceil(this.rules.min) : this.rules.min;
 	}
 
 	protected _effectiveMax(): number | null {
-		if (this._max === null)
+		if (this.rules.max === null)
 			return null;
 
-		return this._integer ? Math.floor(this._max) : this._max;
+		return this.rules.integer ? Math.floor(this.rules.max) : this.rules.max;
 	}
 
 	protected override _isSubset(other: Validator): boolean {
 		if (!this.isSameValidator(other))
 			return false;
 
-		if (this._equals !== null) {
-			if (other._equals !== null)
-				return this._equals === other._equals;
+		if (this.rules.equals !== null) {
+			if (other.rules.equals !== null)
+				return this.rules.equals === other.rules.equals;
 
-			if (other._integer && !JSON.isInteger(this._equals))
+			if (other.rules.integer && !JSON.isInteger(this.rules.equals))
 				return false;
 
 			const otherMin = other._effectiveMin();
 			const otherMax = other._effectiveMax();
 
-			if (otherMin !== null && this._equals < otherMin)
+			if (otherMin !== null && this.rules.equals < otherMin)
 				return false;
 
-			if (otherMax !== null && this._equals > otherMax)
+			if (otherMax !== null && this.rules.equals > otherMax)
 				return false;
 
 			return true;
 		}
 
-		if (other._equals !== null)
+		if (other.rules.equals !== null)
 			return false;
 
-		if (other._integer && !this._integer)
+		if (other.rules.integer && !this.rules.integer)
 			return false;
 
 		const thisMin = this._effectiveMin();
@@ -257,17 +258,17 @@ export class NumberValidator<T extends number = number> extends Validator<T> {
 			type: 'number'
 		};
 
-		if (this._integer)
+		if (this.rules.integer)
 			definition['integer'] = true;
 
-		if (this._min !== null)
-			definition['min'] = this._min;
+		if (this.rules.min !== null)
+			definition['min'] = this.rules.min;
 
-		if (this._max !== null)
-			definition['max'] = this._max;
+		if (this.rules.max !== null)
+			definition['max'] = this.rules.max;
 
-		if (this._equals !== null)
-			definition['equals'] = this._equals;
+		if (this.rules.equals !== null)
+			definition['equals'] = this.rules.equals;
 
 		return definition;
 	}
