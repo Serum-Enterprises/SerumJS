@@ -1,70 +1,96 @@
 import {JSON} from '@serum-enterprises/json';
-import {Validator, ValidatorClass} from './Validator';
-import {DefinitionError, DomainError} from './lib/errors';
-import * as Validators from './validators';
+import {Validator, ValidatorClass} from "./Validator";
+import {UnknownDefinition} from "./lib/types";
+import {DefinitionError, DomainError} from "./lib/errors";
 
-export const DefaultDomain = {
-	Never: Validators.NeverValidator,
-	Null: Validators.NullValidator,
-	JSON: Validators.JSONValidator,
-	Boolean: Validators.BooleanValidator,
-	Number: Validators.NumberValidator,
-	String: Validators.StringValidator,
-	Array: Validators.ArrayValidator,
-	Object: Validators.ObjectValidator,
-	Union: Validators.UnionValidator,
-	Intersect: Validators.IntersectValidator
-} as const;
-
-type DynamicDomain<T extends Record<string, ValidatorClass>> = Domain & {
-	readonly [K in keyof T]: InstanceType<T[K]>;
+type DynamicDomain<
+	D extends Record<string, Domain>,
+	V extends Record<string, ValidatorClass>
+> = Domain & D & {
+	readonly [K in keyof V]: V[K] extends ValidatorClass<infer R> ? R : never;
 };
 
 export class Domain {
-	public static create<T extends Record<string, ValidatorClass<any>> = typeof DefaultDomain>(
-		entries?: T
-	): DynamicDomain<T> {
-		const domainEntries = entries ? entries : DefaultDomain;
-		const domain: DynamicDomain<T> = new Domain(domainEntries) as DynamicDomain<T>;
+	public static create<
+		D extends Record<string, Domain>,
+		V extends Record<string, ValidatorClass>
+	>(domains: D, validators: V): DynamicDomain<D, V> {
+		return new Domain(domains, validators) as DynamicDomain<D, V>;
+	}
 
-		for (const [key, validator] of Object.entries(domainEntries) as [keyof T, T[keyof T]][]) {
-			Object.defineProperty(domain, key, {
-				get() {
-					return new validator();
-				},
+	public readonly domains: Map<string, Domain> = new Map();
+	public readonly validators: Map<string, ValidatorClass> = new Map();
+
+	public constructor(
+		domains: Readonly<Record<string, Domain>> = {},
+		validators: Readonly<Record<string, ValidatorClass>> = {}
+	) {
+		for (const [name, domain] of Object.entries(domains)) {
+			const lowerCaseName = name.toLowerCase();
+
+			if (this.domains.has(lowerCaseName) || name in this)
+				throw new DomainError(`Duplicate Key detected`, {cause: {name}});
+
+			this.domains.set(lowerCaseName, domain);
+
+			Object.defineProperty(this, name, {
 				enumerable: true,
-				configurable: true
+				configurable: false,
+				get() {
+					return domain;
+				}
 			});
 		}
 
-		return domain;
+		for (const [name, validator] of Object.entries(validators)) {
+			const lowerCaseName = name.toLowerCase();
+
+			if (this.validators.has(lowerCaseName) || name in this)
+				throw new DomainError(`Duplicate Key detected`, {cause: {name}});
+
+			this.validators.set(lowerCaseName, validator);
+
+			Object.defineProperty(this, name, {
+				enumerable: true,
+				configurable: false,
+				get() {
+					return new validator();
+				}
+			});
+		}
 	}
 
-	private readonly _normalizedEntries: ReadonlyMap<string, ValidatorClass>;
+	protected _fromJSON(typeList: [string, ...string[]], definition: UnknownDefinition, path: string, rootDomain: Domain): Validator {
+		if (typeList.length > 1) {
+			const domain = this.domains.get(typeList[0]);
 
-	private constructor(
-		public readonly entries: Readonly<Record<string, ValidatorClass>>
-	) {
-		this._normalizedEntries = Object.entries(entries).reduce((result, [key, value]) => {
-			if(result.has(key.toLowerCase()))
-				throw new DomainError(`Duplicate normalized key found`, {cause: [key.toLowerCase()]});
+			if (!domain)
+				throw new DefinitionError(`Domain not found for ${typeList[0]}`, path, {cause: definition.type});
 
-			return result.set(key.toLowerCase(), value);
-		}, new Map())
+			return domain._fromJSON(typeList.slice(1) as [string, ...string[]], definition, path, rootDomain);
+		}
+		else {
+			const validator = this.validators.get(typeList[0]);
+
+			if (!validator)
+				throw new DefinitionError(`Validator not found for ${typeList[0]}`, path, {cause: definition.type});
+
+			return validator.fromJSON(definition, path, rootDomain);
+		}
 	}
 
-	public fromJSON(data: unknown, path: string = 'data'): Validator {
-		if (!JSON.isShallowObject(data))
+	public fromJSON(definition: unknown, path: string = 'definition'): Validator {
+		if (!JSON.isShallowObject(definition))
 			throw new DefinitionError(`Expected an Object`, path);
 
-		if (!JSON.isString(data["type"]))
+		if (!JSON.isString(definition['type']))
 			throw new DefinitionError(`Expected a String`, `${path}.type`);
 
-		const validator = this._normalizedEntries.get(data['type'].toLowerCase());
+		const typeList = definition['type'].toLowerCase().split('.').filter(Boolean);
 
-		if (!validator)
-			throw new DefinitionError(`Expected a registered Validator Name`, `${path}.type`);
+		if (typeList.length < 1)
+			throw new DefinitionError(`Expected a valid Validator Identifier`, `${path}.type`);
 
-		return validator.fromJSON(data as { type: string } & Record<string, unknown>, path, this);
+		return this._fromJSON(typeList as [string, ...string[]], definition as UnknownDefinition, path, this);
 	}
 }

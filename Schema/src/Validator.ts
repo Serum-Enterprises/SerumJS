@@ -1,19 +1,31 @@
 import type {Domain} from './Domain';
-import {Definition, UnknownDefinition} from "./lib/types";
+import type {Definition, ReadonlyRule, UnknownDefinition} from './lib/types';
 
-export interface ValidatorClass<V extends Validator = Validator> {
+export interface ValidatorClass<
+	V extends Validator = Validator,
+	R extends Readonly<Record<string, ReadonlyRule>> = Readonly<Record<string, ReadonlyRule>>
+> {
 	fromJSON(data: UnknownDefinition, path: string, domain: Domain): V;
 
-	new(): V;
+	new(rules?: R): V;
 }
 
-export abstract class Validator<T = unknown> {
+export abstract class Validator<
+	T = unknown,
+	R extends Readonly<Record<string, ReadonlyRule>> = Readonly<Record<string, ReadonlyRule>>
+> {
+	public constructor(
+		public readonly rules: R,
+	) {}
+
 	public abstract assert(data: unknown, path?: string): asserts data is T;
+
 	public validate(data: unknown, path: string = 'data'): T {
 		this.assert(data, path);
 
 		return data;
 	}
+
 	public test(data: unknown, path: string = 'data'): data is T {
 		try {
 			this.assert(data, path);
@@ -23,20 +35,7 @@ export abstract class Validator<T = unknown> {
 		}
 	}
 
-	public isSameValidator(other: Validator): other is this {
-		return this.constructor === other.constructor;
-	}
-	public abstract isEqual(other: Validator): other is this;
 	public abstract clone(): this;
-	protected abstract _merge(other: Validator, path?: string): Validator;
-	public merge(other: Validator, path: string = 'validator'): Validator {
-		return this.normalize()._merge(other.normalize(), path).normalize();
-	}
-	public abstract normalize(): Validator;
-	protected abstract _isSubset(other: Validator): boolean;
-	public isSubset(other: Validator): boolean {
-		return this.normalize()._isSubset(other.normalize());
-	}
 
 	public abstract toJSON(): Definition;
 }
