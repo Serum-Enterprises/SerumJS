@@ -1,95 +1,95 @@
 import {JSON} from '@serum-enterprises/json';
 import {Validator, ValidatorClass} from "./Validator";
-import {UnknownDefinition, InferValidatorInstanceType} from "./lib/types";
+import {UnknownDefinition} from "./lib/types";
 import {DefinitionError, DomainError} from "./lib/errors";
+import {Operations} from "./lib/Operations";
+import {IntersectValidator, NeverValidator, UnionValidator, UnknownValidator} from "./validators";
 
-type DynamicDomain<
-	D extends Record<string, Domain>,
-	V extends Record<string, ValidatorClass>
-> = Domain & D & { readonly [K in keyof V]: InferValidatorInstanceType<V[K]> };
+export type ReadonlyValidatorRegistry = {
+	readonly validators: Readonly<Record<string, ValidatorClass>>;
+};
+
+type DynamicDomain<R extends Readonly<Record<string, ReadonlyValidatorRegistry>>> = Domain & R;
 
 export class Domain {
-	public static create<
-		D extends Record<string, Domain>,
-		V extends Record<string, ValidatorClass>
-	>(domains: D, validators: V): DynamicDomain<D, V> {
-		return new Domain(domains, validators) as DynamicDomain<D, V>;
+	public static create<const R extends Readonly<Record<string, ReadonlyValidatorRegistry>>>(
+		registries: R,
+		operations: readonly Operations[],
+	): DynamicDomain<R> {
+		return new Domain(registries, operations) as DynamicDomain<R>;
 	}
 
-	private readonly _identifiers: Map<string, string> = new Map();
+	private readonly _registry: Map<string, ValidatorClass> = new Map();
+	private readonly _operations: Operations;
 
 	public constructor(
-		public readonly domains: Readonly<Record<string, Domain>> = {},
-		public readonly validators: Readonly<Record<string, ValidatorClass>> = {}
+		validatorRegistries: Readonly<Record<string, ReadonlyValidatorRegistry>>,
+		operations: readonly Operations[]
 	) {
-		for (const [name, domain] of Object.entries(domains)) {
-			this._registerIdentifier(name);
+		for (const [registryName, validatorRegistry] of Object.entries(validatorRegistries)) {
+			const registryID = registryName.toLowerCase();
 
-			Object.defineProperty(this, name, {
+			if (registryID.length < 1 || registryID in this || registryName in this)
+				throw new DomainError(`Invalid Registry Identifier detected`, {
+					cause: {name: registryName, normalized: registryID}
+				});
+
+			for (const [validatorName, validator] of Object.entries(validatorRegistry.validators)) {
+				const validatorID = validatorName.toLowerCase();
+				const compositeID = `${registryID}.${validatorID}`;
+
+				if (validatorID.length < 1)
+					throw new DomainError(`Invalid Validator Identifier detected`, {
+						cause: {original: validatorName, normalized: validatorID}
+					});
+
+				if (this._registry.has(compositeID))
+					throw new DomainError(`Duplicate Composite Identifier detected`, {
+						cause: {registry: registryName, validator: validatorName, composite: compositeID}
+					});
+
+				this._registry.set(`${registryID}.${validatorID}`, validator);
+			}
+
+			Object.defineProperty(this, registryName, {
 				enumerable: true,
 				configurable: false,
 				get() {
-					return domain;
+					return validatorRegistry
 				}
 			});
 		}
 
-		for (const [name, validator] of Object.entries(validators)) {
-			this._registerIdentifier(name);
-
-			Object.defineProperty(this, name, {
-				enumerable: true,
-				configurable: false,
-				get() {
-					return new validator();
-				}
-			});
-		}
+		this._operations = Operations.merge(operations);
 	}
 
-	private _registerIdentifier(id: string): string {
-		const normalizedID = id.toLowerCase();
-
-		if (id.length < 1 || this._identifiers.has(normalizedID) || id in this)
-			throw new DomainError(`Duplicate or Invalid Identifier detected`, {cause: {id, normalizedID}});
-
-		this._identifiers.set(normalizedID, id);
-
-		return normalizedID;
+	public get Never(): NeverValidator {
+		return new NeverValidator();
 	}
 
-	public extend<
-		ED extends Record<string, Domain>,
-		EV extends Record<string, ValidatorClass>
-	>(domains: ED, validators: EV): this & ED & { readonly [K in keyof EV]: InferValidatorInstanceType<EV[K]> } {
-		return Domain.create(
-			{...this.domains, ...domains},
-			{...this.validators, ...validators}
-		) as this & ED & { readonly [K in keyof EV]: InferValidatorInstanceType<EV[K]> };
+	public get Unknown(): UnknownValidator {
+		return new UnknownValidator();
 	}
 
-	protected _fromJSON(typeList: [string, ...string[]], definition: UnknownDefinition, path: string, rootDomain: Domain): Validator {
-		const name = this._identifiers.get(typeList[0]);
+	public get Union(): UnionValidator {
+		return new UnionValidator();
+	}
 
-		if (name === undefined)
-			throw new DefinitionError(`Identifier not found for ${typeList[0]}`, path, {cause: definition.type});
+	public get Intersect(): IntersectValidator {
+		return new IntersectValidator();
+	}
 
-		if (typeList.length > 1) {
-			const domain = this.domains[name];
-
-			if (!domain)
-				throw new DefinitionError(`Domain not found for ${typeList[0]}`, path, {cause: definition.type});
-
-			return domain._fromJSON(typeList.slice(1) as [string, ...string[]], definition, path, rootDomain);
-		}
-		else {
-			const validator = this.validators[name];
-
-			if (!validator)
-				throw new DefinitionError(`Validator not found for ${typeList[0]}`, path, {cause: definition.type});
-
-			return validator.fromJSON(definition, path, rootDomain);
-		}
+	public normalize(validator: Validator): Validator {
+		return this._operations.normalize(validator);
+	}
+	public merge(a: Validator, b: Validator): Validator {
+		return this._operations.merge(a, b);
+	}
+	public isEqual(a: Validator, b: Validator): boolean {
+		return this._operations.isEqual(a, b);
+	}
+	public isSubset(a: Validator, b: Validator): boolean {
+		return this._operations.isSubset(a, b);
 	}
 
 	public fromJSON(definition: unknown, path: string = 'definition'): Validator {
@@ -99,11 +99,22 @@ export class Domain {
 		if (!JSON.isString(definition['type']))
 			throw new DefinitionError(`Expected a String`, `${path}.type`);
 
-		const typeList = definition['type'].toLowerCase().split('.').filter(Boolean);
+		switch(definition['type']) {
+			case 'never':
+				return NeverValidator.fromJSON(definition as UnknownDefinition, path, this);
+			case 'unknown':
+				return UnknownValidator.fromJSON(definition as UnknownDefinition, path, this);
+			case 'union':
+				return UnionValidator.fromJSON(definition as UnknownDefinition, path, this);
+			case 'intersect':
+				return IntersectValidator.fromJSON(definition as UnknownDefinition, path, this);
+			default:
+				const validator = this._registry.get(definition['type']);
 
-		if (typeList.length < 1)
-			throw new DefinitionError(`Expected a valid Validator Identifier`, `${path}.type`);
+				if(!validator)
+					throw new DefinitionError(`Validator not found`, path, {cause: {type: definition['type']}});
 
-		return this._fromJSON(typeList as [string, ...string[]], definition as UnknownDefinition, path, this);
+				return validator.fromJSON(definition as UnknownDefinition, path, this);
+		}
 	}
 }
