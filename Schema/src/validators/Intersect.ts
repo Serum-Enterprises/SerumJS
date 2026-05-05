@@ -24,7 +24,7 @@ export class IntersectValidator<
 			throw new DefinitionError(`Expected an Array`, `${path}.variants`);
 
 		return new IntersectValidator({
-			variants: definition['variants'].map((variant, index) => {
+			variants: definition['variants'].map((variant: unknown, index: number) => {
 				return domain.fromJSON(variant, `${path}.variants[${index}]`)
 			})
 		});

@@ -24,7 +24,7 @@ export class UnionValidator<
 			throw new DefinitionError(`Expected an Array`, `${path}.variants`);
 
 		return new UnionValidator({
-			variants: definition['variants'].map((variant, index) => {
+			variants: definition['variants'].map((variant: unknown, index: number) => {
 				return schemaDomain.fromJSON(variant, `${path}.variants[${index}]`)
 			})
 		});
