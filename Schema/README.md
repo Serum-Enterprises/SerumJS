@@ -1,22 +1,38 @@
-# Schema
+# Schema Framework
 
-Modern Schema Validation Library inspired by Joi.dev
+A flexible Schema Framework for building validation libraries. 
+
+This library provides the core infrastructure for schema validation, including base classes, error handling, and logical operations (Union, Intersect, etc.). To use it for actual data validation (like JSON, Strings, Numbers), you should use a plugin library like `@serum-enterprises/schema-json`.
 
 ## Installation
 
 ```bash
-npm install --save @serum-enterprises/schema@3.0.0-beta.1
+npm install @serum-enterprises/schema
 ```
 
-## Usage
+You will likely also want a plugin:
+
+```bash
+npm install @serum-enterprises/schema-json
+```
+
+## Example (with Schema-JSON)
 
 ```typescript
-import {Schema} from '@serum-enterprises/schema';
+import {Domain} from '@serum-enterprises/schema';
+import * as JSONSchema from '@serum-enterprises/schema-json';
 
-const schema = Schema.Object.nullable().shape({
-	name: Schema.String,
-	age: Schema.Number.integer().min(18).max(99),
-	friends: Schema.Array.every(Schema.String)
+// Create a Domain with the JSON Plugin
+const Schema = Domain.create({
+    JSON: JSONSchema.Registry
+}, [
+    JSONSchema.Operations
+]);
+
+const schema = Schema.JSON.Object.shape({
+	name: Schema.JSON.String,
+	age: Schema.JSON.Number.integer().min(18).max(99),
+	friends: Schema.JSON.Array.every(Schema.JSON.String)
 }).exact();
 
 const person = schema.validate({name: 'John', age: 20, friends: ["Jane", "Mary"]});
@@ -26,9 +42,15 @@ console.log(person.age);
 console.log(person.friends.join(', '));
 ```
 
-## API
+## Features
 
-Please check [index.d.ts](./types/index.d.ts) for the full API.
+- **Extensible**: Register custom validators and operations through the Domain system.
+- **Composable**: Build complex schemas using logical operations like `Union` and `Intersect`.
+- **Plugin-based**: Keep your bundle small by only including the validators you need.
+
+## Plugin Libraries
+
+- [`@serum-enterprises/schema-json`](../Schema-JSON): Validators for standard JSON types (String, Number, Object, Array, etc.).
 
 ## LICENSE
 
