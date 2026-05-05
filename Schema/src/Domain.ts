@@ -48,7 +48,7 @@ export class Domain {
 						cause: {registry: registryName, validator: validatorName, composite: compositeID}
 					});
 
-				this._registry.set(`${registryID}.${validatorID}`, validator);
+				this._registry.set(compositeID, validator);
 			}
 
 			Object.defineProperty(this, registryName, {
