@@ -1,0 +1,35 @@
+{
+	"name": "@serum-enterprises/binary-engine",
+	"version": "0.1.0-beta.0",
+	"description": "A Binary Storage Engine working with JSON Data",
+	"main": "./build/index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "tsc"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Serum-Enterprises/SerumJS.git"
+	},
+	"author": "Serum Enterprises <office@serum.enterprises>",
+	"contributors": [
+		{
+			"name": "Philipp Steckenbauer",
+			"email": "philipp@serum.enterprises"
+		}
+	],
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/Serum-Enterprises/SerumJS/issues"
+	},
+	"homepage": "https://github.com/Serum-Enterprises/SerumJS#readme",
+	"dependencies": {
+		"@serum-enterprises/json": "^2.0.1",
+		"@serum-enterprises/result": "^2.0.3",
+		"@serum-enterprises/vlq": "^1.1.0-beta.0"
+	},
+	"devDependencies": {
+		"@types/node": "^22.15.17",
+		"typescript": "^5.8.3"
+	}
+}
