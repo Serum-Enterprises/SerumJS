@@ -1,6 +1,6 @@
 {
 	"name": "@serum-enterprises/schema",
-	"version": "4.0.0-beta.0",
+	"version": "4.0.0-alpha.0",
 	"engines": {
 		"node": ">=16.0.0"
 	},
@@ -17,10 +17,10 @@
 	},
 	"scripts": {
 		"build:types": "tsc -p tsconfig.build.json",
-		"build:cjs": "esbuild src/core/index.ts --platform=node --format=cjs --outfile=./dist/index.cjs",
-		"build:esm": "esbuild src/core/index.ts --platform=neutral --format=esm --outfile=./dist/index.mjs",
+		"build:cjs": "esbuild src/index.ts --platform=node --format=cjs --outfile=./dist/index.cjs",
+		"build:esm": "esbuild src/index.ts --platform=neutral --format=esm --outfile=./dist/index.mjs",
 		"build": "npm run build:types && npm run build:cjs && npm run build:esm",
-		"pretest": "esbuild './src/**/*.ts' './tests/**/*.test.ts' --sourcemap --platform=node --format=cjs --outdir=./build",
+		"pretest": "esbuild './src/index.ts' './tests/**/*.test.ts' --sourcemap --platform=node --format=cjs --outdir=./build",
 		"test": "jest --testMatch '**/*.test.js' --roots build/tests"
 	},
 	"repository": {
