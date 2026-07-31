@@ -1,4 +1,4 @@
-import type {Validator, ValidatorClass} from '../Validator';
+import type {Validator, ValidatorClass} from "./Validator";
 
 export interface Definition {
 	type: string;
