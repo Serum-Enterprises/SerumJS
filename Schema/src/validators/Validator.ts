@@ -1,5 +1,5 @@
 import type {Domain} from "../Domain";
-import type {Definition, UnknownDefinition} from "./types";
+import type {Definition, UnknownDefinition} from "../lib/types";
 
 export interface ValidatorClass<
 	V extends Validator = Validator
