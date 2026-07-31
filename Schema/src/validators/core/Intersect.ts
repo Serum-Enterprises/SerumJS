@@ -1,13 +1,13 @@
-import {JSON} from '@serum-enterprises/json';
-import {Validator} from '../Validator';
-import {AssertError, DefinitionError} from '../lib/errors';
-import type {Domain} from '../Domain';
-import {Definition, InferListDefinitionType, InferValidatorReturnType, UnknownDefinition} from '../lib/types';
+import {JSON} from "@serum-enterprises/json";
+import {Validator} from "../Validator";
+import {AssertError, DefinitionError} from "../../lib/errors";
+import type {Domain} from "../../Domain";
+import {Definition, InferListDefinitionType, InferValidatorReturnType, UnknownDefinition} from "../../lib/types";
 
 export interface IntersectValidatorDefinition<
 	VARIANTS extends readonly Definition[] = readonly Definition[]
 > extends Definition {
-	type: 'intersect';
+	type: "intersect";
 	variants: VARIANTS;
 }
 
@@ -17,14 +17,14 @@ export class IntersectValidator<
 > extends Validator<VARIANTS> {
 	public static fromJSON(
 		definition: UnknownDefinition,
-		path: string = 'definition',
+		path: string = "definition",
 		domain: Domain
 	): IntersectValidator {
-		if (!JSON.isArray(definition['variants']))
-			throw new DefinitionError(`Expected an Array`, `${path}.variants`);
+		if (!JSON.isArray(definition["variants"]))
+			throw new DefinitionError("Expected an Array", `${path}.variants`);
 
 		return new IntersectValidator({
-			variants: definition['variants'].map((variant: unknown, index: number) => {
+			variants: definition["variants"].map((variant: unknown, index: number) => {
 				return domain.fromJSON(variant, `${path}.variants[${index}]`)
 			})
 		});
@@ -32,7 +32,9 @@ export class IntersectValidator<
 
 	public constructor(
 		public readonly rules: { readonly variants: readonly Validator[] } = {variants: []}
-	) {super();}
+	) {
+		super();
+	}
 
 	public variants<const V extends Validator[]>(
 		variants: V
@@ -40,9 +42,9 @@ export class IntersectValidator<
 		return new IntersectValidator({variants});
 	}
 
-	public assert(data: unknown, path: string = 'data'): asserts data is VARIANTS {
+	public assert(data: unknown, path: string = "data"): asserts data is VARIANTS {
 		if (this.rules.variants.length === 0)
-			throw new AssertError(`Expected at least one Variant`, `${path}.variants`);
+			throw new AssertError("Expected at least one Variant", `${path}.variants`);
 
 		const errors: Error[] = [];
 
@@ -55,7 +57,7 @@ export class IntersectValidator<
 		}
 
 		if (errors.length > 0)
-			throw new AssertError(`Expected to match all Intersect Variants`, path, {cause: errors});
+			throw new AssertError("Expected to match all Intersect Variants", path, {cause: errors});
 	}
 
 	public clone(): this {
@@ -66,7 +68,7 @@ export class IntersectValidator<
 
 	public toJSON(): IntersectValidatorDefinition<VARIANTSDEFINITION> {
 		const definition: IntersectValidatorDefinition = {
-			type: 'intersect',
+			type: "intersect",
 			variants: this.rules.variants.map(variant => variant.toJSON())
 		};
 

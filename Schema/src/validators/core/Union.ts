@@ -1,13 +1,13 @@
-import {JSON} from '@serum-enterprises/json';
-import {Validator} from '../Validator';
-import {AssertError, DefinitionError} from '../lib/errors';
-import type {Domain} from '../Domain';
-import {Definition, InferListDefinitionType, InferValidatorReturnType, UnknownDefinition} from '../lib/types';
+import {JSON} from "@serum-enterprises/json";
+import {Validator} from "../Validator";
+import {AssertError, DefinitionError} from "../../lib/errors";
+import type {Domain} from "../../Domain";
+import {Definition, InferListDefinitionType, InferValidatorReturnType, UnknownDefinition} from "../../lib/types";
 
 export interface UnionValidatorDefinition<
 	VARIANTS extends readonly Definition[] = readonly Definition[]
 > extends Definition {
-	type: 'union';
+	type: "union";
 	variants: VARIANTS;
 }
 
@@ -17,14 +17,14 @@ export class UnionValidator<
 > extends Validator<VARIANTS> {
 	public static fromJSON(
 		definition: UnknownDefinition,
-		path: string = 'definition',
+		path: string = "definition",
 		schemaDomain: Domain
 	): UnionValidator {
-		if (!JSON.isArray(definition['variants']))
-			throw new DefinitionError(`Expected an Array`, `${path}.variants`);
+		if (!JSON.isArray(definition["variants"]))
+			throw new DefinitionError("Expected an Array", `${path}.variants`);
 
 		return new UnionValidator({
-			variants: definition['variants'].map((variant: unknown, index: number) => {
+			variants: definition["variants"].map((variant: unknown, index: number) => {
 				return schemaDomain.fromJSON(variant, `${path}.variants[${index}]`)
 			})
 		});
@@ -42,9 +42,9 @@ export class UnionValidator<
 		return new UnionValidator({variants});
 	}
 
-	public assert(data: unknown, path: string = 'data'): asserts data is VARIANTS {
+	public assert(data: unknown, path: string = "data"): asserts data is VARIANTS {
 		if (this.rules.variants.length === 0)
-			throw new AssertError(`Expected at least one Variant`, `${path}.variants`);
+			throw new AssertError("Expected at least one Variant", `${path}.variants`);
 
 		const errors: Error[] = [];
 
@@ -58,7 +58,7 @@ export class UnionValidator<
 			}
 		}
 
-		throw new AssertError(`Expected to match at least one Union Variant`, path, {cause: errors});
+		throw new AssertError("Expected to match at least one Union Variant", path, {cause: errors});
 	}
 
 	public clone(): this {
@@ -69,7 +69,7 @@ export class UnionValidator<
 
 	public toJSON(): UnionValidatorDefinition<VARIANTSDEFINITION> {
 		const definition: UnionValidatorDefinition = {
-			type: 'union',
+			type: "union",
 			variants: this.rules.variants.map(variant => variant.toJSON())
 		};
 
