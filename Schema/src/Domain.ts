@@ -1,66 +1,51 @@
 import {JSON} from '@serum-enterprises/json';
-import {Validator, ValidatorClass} from "./Validator";
+import {Validator, ValidatorClass} from "./validators/Validator";
 import {UnknownDefinition} from "./lib/types";
 import {DefinitionError, DomainError} from "./lib/errors";
-import {Operations} from "./lib/Operations";
 import {IntersectValidator, NeverValidator, UnionValidator, UnknownValidator} from "./validators";
 
-export type ReadonlyValidatorRegistry = {
-	readonly validators: Readonly<Record<string, ValidatorClass>>;
-};
+export type Registry = Record<string, ValidatorClass>;
 
-type DynamicDomain<R extends Readonly<Record<string, ReadonlyValidatorRegistry>>> = Domain & R;
+type DynamicDomain<R extends Registry> = Domain & R;
 
 export class Domain {
-	public static create<const R extends Readonly<Record<string, ReadonlyValidatorRegistry>>>(
-		registries: R,
-		operations: readonly Operations[],
+	public static create<const R extends Registry>(
+		registry: R,
 	): DynamicDomain<R> {
-		return new Domain(registries, operations) as DynamicDomain<R>;
+		return new Domain(registry) as DynamicDomain<R>;
 	}
 
-	private readonly _registry: Map<string, ValidatorClass> = new Map();
-	private readonly _operations: Operations;
+	private readonly _registry: Registry;
 
 	public constructor(
-		validatorRegistries: Readonly<Record<string, ReadonlyValidatorRegistry>>,
-		operations: readonly Operations[]
+		registry: Registry,
 	) {
-		for (const [registryName, validatorRegistry] of Object.entries(validatorRegistries)) {
-			const registryID = registryName.toLowerCase();
-
-			if (registryID.length < 1 || registryID in this || registryName in this)
-				throw new DomainError(`Invalid Registry Identifier detected`, {
-					cause: {name: registryName, normalized: registryID}
+		this._registry = Object.entries(registry).reduce((registry: Registry, [name, validator]) => {
+			if (name.length < 1 || !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(name))
+				throw new DomainError("Expected all Validators to be valid JavaScript Identifiers", {
+					cause: {name: name}
 				});
 
-			for (const [validatorName, validator] of Object.entries(validatorRegistry.validators)) {
-				const validatorID = validatorName.toLowerCase();
-				const compositeID = `${registryID}.${validatorID}`;
+			if(["Never", "Unknown", "Union", "Intersect", "fromJSON"].includes(name))
+				throw new DomainError("Validator is a well-known Validator or existing Method", {
+					cause: {name: name}
+				});
 
-				if (validatorID.length < 1)
-					throw new DomainError(`Invalid Validator Identifier detected`, {
-						cause: {original: validatorName, normalized: validatorID}
-					});
+			if(name.toLowerCase() in registry)
+				throw new DomainError("Duplicate lowercase Validator detected", {
+					cause: {name: name.toLowerCase()}
+				});
 
-				if (this._registry.has(compositeID))
-					throw new DomainError(`Duplicate Composite Identifier detected`, {
-						cause: {registry: registryName, validator: validatorName, composite: compositeID}
-					});
-
-				this._registry.set(compositeID, validator);
-			}
-
-			Object.defineProperty(this, registryName, {
+			Object.defineProperty(this, name, {
 				enumerable: true,
 				configurable: false,
 				get() {
-					return validatorRegistry
+					return new validator()
 				}
 			});
-		}
 
-		this._operations = Operations.merge(operations);
+			return {...registry, [name.toLowerCase()]: validator};
+		}, {});
 	}
 
 	public get Never(): NeverValidator {
@@ -77,19 +62,6 @@ export class Domain {
 
 	public get Intersect(): IntersectValidator {
 		return new IntersectValidator();
-	}
-
-	public normalize(validator: Validator): Validator {
-		return this._operations.normalize(validator);
-	}
-	public merge(a: Validator, b: Validator): Validator {
-		return this._operations.merge(a, b);
-	}
-	public isEqual(a: Validator, b: Validator): boolean {
-		return this._operations.isEqual(a, b);
-	}
-	public isSubset(a: Validator, b: Validator): boolean {
-		return this._operations.isSubset(a, b);
 	}
 
 	public fromJSON(definition: unknown, path: string = 'definition'): Validator {
@@ -109,7 +81,7 @@ export class Domain {
 			case 'intersect':
 				return IntersectValidator.fromJSON(definition as UnknownDefinition, path, this);
 			default:
-				const validator = this._registry.get(definition['type']);
+				const validator = this._registry[definition['type']];
 
 				if(!validator)
 					throw new DefinitionError(`Validator not found`, path, {cause: {type: definition['type']}});
