@@ -1,4 +1,4 @@
-import {JSON} from '@serum-enterprises/json';
+import {JSON} from "@serum-enterprises/json";
 import {Validator, ValidatorClass} from "./validators/Validator";
 import {UnknownDefinition} from "./lib/types";
 import {DefinitionError, DomainError} from "./lib/errors";
