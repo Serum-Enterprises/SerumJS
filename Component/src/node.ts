@@ -1,0 +1,1 @@
+throw new Error("@serum-enterprises/component is browser-only and cannot be used in Node.js.");

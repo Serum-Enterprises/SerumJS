@@ -1,0 +1,53 @@
+{
+	"name": "@serum-enterprises/component",
+	"version": "1.0.0",
+	"description": "A simple Component Wrapper for the Web",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"node": "./dist/node.js",
+			"browser": "./dist/index.js",
+			"default": "./dist/index.js"
+		}
+	},
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {
+		"clean": "rm -rf dist",
+		"typecheck": "tsc --noEmit",
+		"build:types": "tsc",
+		"build:browser": "esbuild src/index.ts --bundle --format=esm --platform=browser --target=es2022 --outfile=dist/index.js --sourcemap",
+		"build:node": "esbuild src/node.ts --format=esm --platform=node --target=es2022 --outfile=dist/node.js",
+		"build": "npm run clean && npm run build:types && npm run build:browser && npm run build:node",
+		"prepack": "npm run build"
+	},
+	"homepage": "https://github.com/Serum-Enterprises/SerumJS#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Serum-Enterprises/SerumJS.git"
+	},
+	"bugs": {
+		"url": "https://github.com/Serum-Enterprises/SerumJS/issues"
+	},
+	"license": "MIT",
+	"author": {
+		"name": "Serum Enterprises L.L.C-FZ",
+		"email": "office@serum.enterprises"
+	},
+	"contributors": [
+		{
+			"name": "Philipp Steckenbauer"
+		}
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"devDependencies": {
+		"esbuild": "^0.25.0",
+		"typescript": "^7.0.2"
+	}
+}
