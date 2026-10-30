@@ -1,5 +1,14 @@
-import {Validator, type InferValidatorResult} from "../Validator";
+import {Validator, type InferValidatorResult, ValidatorDefinition} from "../Validator";
 import {AssertError} from "../../lib/errors";
+
+export interface ObjectValidatorDefinition extends ValidatorDefinition {
+	type: "object"
+	min?: number;
+	max?: number;
+	every?: ValidatorDefinition;
+	shape?: Record<string, ValidatorDefinition>;
+	exact?: boolean;
+}
 
 interface ObjectValidatorConstraints {
 	readonly min?: number;
@@ -131,5 +140,30 @@ export class ObjectValidator<
 				errors,
 				`Expected all properties of ${path} to satisfy their constraints`
 			);
+	}
+
+	public toJSON(): ObjectValidatorDefinition {
+		const result: ObjectValidatorDefinition = {
+			type: "object"
+		};
+
+		if (this.constraints.min !== undefined)
+			result["min"] = this.constraints.min;
+
+		if (this.constraints.max !== undefined)
+			result["max"] = this.constraints.max;
+
+		if (this.constraints.every !== undefined)
+			result["every"] = this.constraints.every.toJSON();
+
+		if(this.constraints.shape !== undefined)
+			result["shape"] = Object.fromEntries(Object.entries(this.constraints.shape).map(([key, value]) => {
+				return [key, value.toJSON()];
+			}))
+
+		if (this.constraints.exact)
+			result["exact"] = this.constraints.exact;
+
+		return result;
 	}
 }

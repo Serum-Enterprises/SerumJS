@@ -3,6 +3,10 @@ export type InferValidatorResult<V extends Validator> =
 		? RESULT
 		: never;
 
+export interface ValidatorDefinition {
+	type: string;
+}
+
 export abstract class Validator<T = unknown> {
 	public abstract assert(value: unknown, path?: string): asserts value is T;
 
@@ -21,4 +25,6 @@ export abstract class Validator<T = unknown> {
 			return false;
 		}
 	}
+
+	public abstract toJSON(): ValidatorDefinition;
 }

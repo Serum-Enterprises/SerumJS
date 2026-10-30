@@ -1,5 +1,13 @@
-import {Validator, type InferValidatorResult} from "../Validator";
+import {Validator, type InferValidatorResult, ValidatorDefinition} from "../Validator";
 import {AssertError} from "../../lib/errors";
+
+export interface ArrayValidatorDefinition extends ValidatorDefinition {
+	type: "array"
+	min?: number;
+	max?: number;
+	every?: ValidatorDefinition;
+	tuple?: ValidatorDefinition[];
+}
 
 interface ArrayValidatorConstraints {
 	readonly min?: number;
@@ -86,5 +94,25 @@ export class ArrayValidator<
 				errors,
 				`Expected all elements of ${path} to satisfy their constraints`
 			);
+	}
+
+	public toJSON(): ArrayValidatorDefinition {
+		const result: ArrayValidatorDefinition = {
+			type: "array"
+		};
+
+		if (this.constraints.min !== undefined)
+			result["min"] = this.constraints.min;
+
+		if (this.constraints.max !== undefined)
+			result["max"] = this.constraints.max;
+
+		if (this.constraints.every !== undefined)
+			result["every"] = this.constraints.every.toJSON();
+
+		if(this.constraints.tuple !== undefined)
+			result["tuple"] = this.constraints.tuple.map(element => element.toJSON());
+
+		return result;
 	}
 }
