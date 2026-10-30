@@ -1,10 +1,5 @@
-import {Validator, type InferValidatorResult, ValidatorDefinition} from "../Validator";
+import {Validator, type InferValidatorResult} from "../Validator";
 import {AssertError} from "../../lib/errors";
-
-export interface UnionValidatorDefinition extends ValidatorDefinition {
-	type: "union";
-	variants: [ValidatorDefinition, ...ValidatorDefinition[]];
-}
 
 interface UnionValidatorConstraints {
 	readonly variants: readonly [Validator, ...Validator[]];
@@ -47,12 +42,5 @@ export class UnionValidator<
 			errors,
 			`Expected ${path} to satisfy at least one union variant`
 		);
-	}
-
-	public override toJSON(): UnionValidatorDefinition {
-		return {
-			type: "union",
-			variants: this.constraints.variants.map(element => element.toJSON()) as [ValidatorDefinition, ...ValidatorDefinition[]]
-		}
 	}
 }

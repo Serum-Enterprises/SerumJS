@@ -1,10 +1,5 @@
-import {Validator, ValidatorDefinition} from "../Validator";
+import {Validator} from "../Validator";
 import {AssertError} from "../../lib/errors";
-
-export interface BooleanValidatorDefinition extends ValidatorDefinition {
-	type: "boolean";
-	equals?: boolean;
-}
 
 interface BooleanValidatorConstraints {
 	readonly equals?: boolean;
@@ -29,16 +24,5 @@ export class BooleanValidator<
 
 		if (this.constraints.equals !== undefined && this.constraints.equals !== value)
 			throw new AssertError(`Expected ${path} to be ${this.constraints.equals}`, path);
-	}
-
-	public override toJSON(): BooleanValidatorDefinition {
-		const definition: BooleanValidatorDefinition = {
-			type: "boolean"
-		};
-
-		if(this.constraints.equals !== undefined)
-			definition["equals"] = this.constraints.equals;
-
-		return definition;
 	}
 }

@@ -1,12 +1,5 @@
-import {Validator, ValidatorDefinition} from "../Validator";
+import {Validator} from "../Validator";
 import {AssertError} from "../../lib/errors";
-
-export interface StringValidatorDefinition extends ValidatorDefinition {
-	type: "string";
-	min?: number;
-	max?: number;
-	equals?: string;
-}
 
 interface StringValidatorConstraints {
 	readonly min?: number;
@@ -39,22 +32,5 @@ export class StringValidator<
 
 		if (this.constraints.equals !== undefined && this.constraints.equals !== value)
 			throw new AssertError(`Expected ${path} to be "${this.constraints.equals}"`, path);
-	}
-
-	public toJSON(): StringValidatorDefinition {
-		const result: StringValidatorDefinition = {
-			type: "string"
-		};
-
-		if (this.constraints.min !== undefined)
-			result["min"] = this.constraints.min;
-
-		if (this.constraints.max !== undefined)
-			result["max"] = this.constraints.max;
-
-		if (this.constraints.equals !== undefined)
-			result["equals"] = this.constraints.equals;
-
-		return result;
 	}
 }

@@ -1,10 +1,5 @@
-import {Validator, type InferValidatorResult, ValidatorDefinition} from "../Validator";
+import {Validator, type InferValidatorResult} from "../Validator";
 import {AssertError} from "../../lib/errors";
-
-export interface IntersectValidatorDefinition extends ValidatorDefinition {
-	type: "intersect";
-	variants: [ValidatorDefinition, ...ValidatorDefinition[]];
-}
 
 interface IntersectValidatorConstraints {
 	readonly variants: readonly [Validator, ...Validator[]];
@@ -56,12 +51,5 @@ export class IntersectValidator<
 				errors,
 				`Expected ${path} to satisfy every intersection variant`
 			);
-	}
-
-	public override toJSON(): IntersectValidatorDefinition {
-		return {
-			type: "intersect",
-			variants: this.constraints.variants.map(element => element.toJSON()) as [ValidatorDefinition, ...ValidatorDefinition[]]
-		}
 	}
 }
