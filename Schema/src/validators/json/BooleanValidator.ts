@@ -1,7 +1,7 @@
 import {Validator} from "../Validator";
 import {AssertError} from "../../lib/errors";
 
-interface BooleanValidatorConstraints {
+export interface BooleanValidatorConstraints {
 	readonly equals?: boolean;
 }
 

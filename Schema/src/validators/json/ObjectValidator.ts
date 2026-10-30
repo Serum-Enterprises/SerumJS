@@ -1,7 +1,7 @@
 import {Validator, type InferValidatorResult} from "../Validator";
 import {AssertError} from "../../lib/errors";
 
-interface ObjectValidatorConstraints {
+export interface ObjectValidatorConstraints {
 	readonly min?: number;
 	readonly max?: number;
 	readonly every?: Validator;

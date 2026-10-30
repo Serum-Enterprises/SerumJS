@@ -1,7 +1,7 @@
 import {Validator, type InferValidatorResult} from "../Validator";
 import {AssertError} from "../../lib/errors";
 
-interface UnionValidatorConstraints {
+export interface UnionValidatorConstraints {
 	readonly variants: readonly [Validator, ...Validator[]];
 }
 

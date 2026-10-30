@@ -1,7 +1,7 @@
 import {Validator} from "../Validator";
 import {AssertError} from "../../lib/errors";
 
-interface StringValidatorConstraints {
+export interface StringValidatorConstraints {
 	readonly min?: number;
 	readonly max?: number;
 	readonly equals?: string;

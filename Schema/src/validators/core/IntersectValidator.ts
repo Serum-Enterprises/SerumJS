@@ -1,7 +1,7 @@
 import {Validator, type InferValidatorResult} from "../Validator";
 import {AssertError} from "../../lib/errors";
 
-interface IntersectValidatorConstraints {
+export interface IntersectValidatorConstraints {
 	readonly variants: readonly [Validator, ...Validator[]];
 }
 
