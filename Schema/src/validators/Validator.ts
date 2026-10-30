@@ -1,33 +1,24 @@
-import type {Domain} from "../Domain";
-import type {Definition, UnknownDefinition} from "../lib/types";
-
-export interface ValidatorClass<
-	V extends Validator = Validator
-> {
-	fromJSON(data: UnknownDefinition, path: string, domain: Domain): V;
-
-	new(): V;
-}
+export type InferValidatorResult<V extends Validator> =
+	V extends Validator<infer RESULT>
+		? RESULT
+		: never;
 
 export abstract class Validator<T = unknown> {
-	public abstract assert(data: unknown, path?: string): asserts data is T;
+	public abstract assert(value: unknown, path?: string): asserts value is T;
 
-	public validate(data: unknown, path: string = "data"): T {
-		this.assert(data, path);
+	public validate(value: unknown, path: string = "value"): T {
+		this.assert(value, path);
 
-		return data;
+		return value;
 	}
 
-	public test(data: unknown, path: string = "data"): data is T {
+	public test(value: unknown, path: string = "value"): value is T {
 		try {
-			this.assert(data, path);
+			this.assert(value, path);
+
 			return true;
 		} catch (e) {
 			return false;
 		}
 	}
-
-	public abstract clone(): this;
-
-	public abstract toJSON(): Definition;
 }
