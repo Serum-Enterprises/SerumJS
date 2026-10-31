@@ -30,6 +30,12 @@ export class IntersectValidator<
 		super();
 	}
 
+	public variants<const V extends readonly [Validator, ...Validator[]]>(variants: V): IntersectValidator<{
+		readonly variants: readonly [...V]
+	}> {
+		return new IntersectValidator<{ readonly variants: readonly [...V] }>({variants: [...variants]});
+	}
+
 	public assert(value: unknown, path: string = "value"): asserts value is IntersectValidatorResult<C> {
 		const errors: Error[] = [];
 

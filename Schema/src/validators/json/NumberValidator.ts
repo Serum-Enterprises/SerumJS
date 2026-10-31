@@ -21,6 +21,56 @@ export class NumberValidator<
 		super();
 	}
 
+	public integer(): NumberValidator<
+		NumberValidatorConstraints & Omit<C, "integer"> & {readonly integer: true}
+	>;
+	public integer<const I extends boolean>(integer: I): NumberValidator<
+		NumberValidatorConstraints & Omit<C, "integer"> & {readonly integer: I}
+	>;
+	public integer(integer: boolean = true): NumberValidator<
+		NumberValidatorConstraints & Omit<C, "integer"> & {readonly integer: boolean}
+	> {
+		return new NumberValidator<
+			NumberValidatorConstraints & Omit<C, "integer"> & {readonly integer: boolean}
+		>({
+			...this.constraints,
+			integer
+		});
+	}
+
+	public min<const M extends number>(min: M): NumberValidator<
+		NumberValidatorConstraints & Omit<C, "min"> & {readonly min: M}
+	> {
+		return new NumberValidator<
+			NumberValidatorConstraints & Omit<C, "min"> & {readonly min: M}
+		>({
+			...this.constraints,
+			min
+		});
+	}
+
+	public max<const M extends number>(max: M): NumberValidator<
+		NumberValidatorConstraints & Omit<C, "max"> & {readonly max: M}
+	> {
+		return new NumberValidator<
+			NumberValidatorConstraints & Omit<C, "max"> & {readonly max: M}
+		>({
+			...this.constraints,
+			max
+		});
+	}
+
+	public equals<const E extends number>(equals: E): NumberValidator<
+		NumberValidatorConstraints & Omit<C, "equals"> & {readonly equals: E}
+	> {
+		return new NumberValidator<
+			NumberValidatorConstraints & Omit<C, "equals"> & {readonly equals: E}
+		>({
+			...this.constraints,
+			equals
+		});
+	}
+
 	public assert(value: unknown, path: string = "value"): asserts value is NumberValidatorResult<C> {
 		if (typeof value !== "number")
 			throw new AssertError(`Expected ${path} to be a Number`, path);

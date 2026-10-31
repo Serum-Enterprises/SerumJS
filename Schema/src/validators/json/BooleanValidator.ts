@@ -18,6 +18,12 @@ export class BooleanValidator<
 		super();
 	}
 
+	public equals<const E extends boolean>(equals: E): BooleanValidator<{
+		readonly equals: E
+	}> {
+		return new BooleanValidator<{ readonly equals: E }>({equals});
+	}
+
 	public assert(value: unknown, path: string = "value"): asserts value is BooleanValidatorResult<C> {
 		if (typeof value !== "boolean")
 			throw new AssertError(`Expected ${path} to be a Boolean`, path);

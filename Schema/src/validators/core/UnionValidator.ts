@@ -21,6 +21,12 @@ export class UnionValidator<
 		super();
 	}
 
+	public variants<const V extends readonly [Validator, ...Validator[]]>(variants: V): UnionValidator<{
+		readonly variants: readonly [...V]
+	}> {
+		return new UnionValidator<{ readonly variants: readonly [...V] }>({variants: [...variants]});
+	}
+
 	public assert(value: unknown, path: string = "value"): asserts value is UnionValidatorResult<C> {
 		const errors: Error[] = [];
 

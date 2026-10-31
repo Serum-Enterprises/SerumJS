@@ -33,6 +33,50 @@ export class ArrayValidator<
 		super();
 	}
 
+	public min<const M extends number>(min: M): ArrayValidator<
+		ArrayValidatorConstraints & Omit<C, "min"> & {readonly min: M}
+	> {
+		return new ArrayValidator<
+			ArrayValidatorConstraints & Omit<C, "min"> & {readonly min: M}
+		>({
+			...this.constraints,
+			min
+		});
+	}
+
+	public max<const M extends number>(max: M): ArrayValidator<
+		ArrayValidatorConstraints & Omit<C, "max"> & {readonly max: M}
+	> {
+		return new ArrayValidator<
+			ArrayValidatorConstraints & Omit<C, "max"> & {readonly max: M}
+		>({
+			...this.constraints,
+			max
+		});
+	}
+
+	public every<const E extends Validator>(every: E): ArrayValidator<
+		ArrayValidatorConstraints & Omit<C, "every"> & {readonly every: E}
+	> {
+		return new ArrayValidator<
+			ArrayValidatorConstraints & Omit<C, "every"> & {readonly every: E}
+		>({
+			...this.constraints,
+			every
+		});
+	}
+
+	public tuple<const T extends readonly Validator[]>(tuple: T): ArrayValidator<
+		ArrayValidatorConstraints & Omit<C, "tuple"> & {readonly tuple: readonly [...T]}
+	> {
+		return new ArrayValidator<
+			ArrayValidatorConstraints & Omit<C, "tuple"> & {readonly tuple: readonly [...T]}
+		>({
+			...this.constraints,
+			tuple: [...tuple]
+		});
+	}
+
 	public assert(value: unknown, path: string = "value"): asserts value is ArrayValidatorResult<C> {
 		if (!Array.isArray(value))
 			throw new AssertError(`Expected ${path} to be an Array`, path);

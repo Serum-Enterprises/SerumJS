@@ -45,6 +45,67 @@ export class ObjectValidator<
 		super();
 	}
 
+	public min<const M extends number>(min: M): ObjectValidator<
+		ObjectValidatorConstraints & Omit<C, "min"> & {readonly min: M}
+	> {
+		return new ObjectValidator<
+			ObjectValidatorConstraints & Omit<C, "min"> & {readonly min: M}
+		>({
+			...this.constraints,
+			min
+		});
+	}
+
+	public max<const M extends number>(max: M): ObjectValidator<
+		ObjectValidatorConstraints & Omit<C, "max"> & {readonly max: M}
+	> {
+		return new ObjectValidator<
+			ObjectValidatorConstraints & Omit<C, "max"> & {readonly max: M}
+		>({
+			...this.constraints,
+			max
+		});
+	}
+
+	public every<const E extends Validator>(every: E): ObjectValidator<
+		ObjectValidatorConstraints & Omit<C, "every"> & {readonly every: E}
+	> {
+		return new ObjectValidator<
+			ObjectValidatorConstraints & Omit<C, "every"> & {readonly every: E}
+		>({
+			...this.constraints,
+			every
+		});
+	}
+
+	public shape<const S extends Readonly<Record<string, Validator>>>(shape: S): ObjectValidator<
+		ObjectValidatorConstraints & Omit<C, "shape"> & {readonly shape: Readonly<S>}
+	> {
+		return new ObjectValidator<
+			ObjectValidatorConstraints & Omit<C, "shape"> & {readonly shape: Readonly<S>}
+		>({
+			...this.constraints,
+			shape: {...shape}
+		});
+	}
+
+	public exact(): ObjectValidator<
+		ObjectValidatorConstraints & Omit<C, "exact"> & {readonly exact: true}
+	>;
+	public exact<const E extends boolean>(exact: E): ObjectValidator<
+		ObjectValidatorConstraints & Omit<C, "exact"> & {readonly exact: E}
+	>;
+	public exact(exact: boolean = true): ObjectValidator<
+		ObjectValidatorConstraints & Omit<C, "exact"> & {readonly exact: boolean}
+	> {
+		return new ObjectValidator<
+			ObjectValidatorConstraints & Omit<C, "exact"> & {readonly exact: boolean}
+		>({
+			...this.constraints,
+			exact
+		});
+	}
+
 	public assert(value: unknown, path: string = "value"): asserts value is ObjectValidatorResult<C> {
 		if (!((value: unknown): value is Record<string, unknown> => {
 			if (typeof value !== "object" || value === null)
