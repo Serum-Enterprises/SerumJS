@@ -1,4 +1,4 @@
-import {type ValidatorDefinition} from "../ValidatorCodec";
+import type {ValidatorDefinition} from "../ValidatorCodec";
 import type {Domain} from "../../Domain";
 import {NeverValidator} from "../../validators/core/NeverValidator";
 import {DefinitionError} from "../../lib/errors";

@@ -1,4 +1,4 @@
-import {type ValidatorDefinition} from "../ValidatorCodec";
+import type {ValidatorDefinition} from "../ValidatorCodec";
 import type {Domain} from "../../Domain";
 import {UnknownValidator} from "../../validators/core/UnknownValidator";
 import {DefinitionError} from "../../lib/errors";
