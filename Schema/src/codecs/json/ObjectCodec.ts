@@ -1,4 +1,4 @@
-import type {ValidatorCodec, ValidatorDefinition} from "../ValidatorCodec";
+import type {ValidatorDefinition} from "../ValidatorCodec";
 import type {Domain} from "../../Domain";
 import {DefinitionError} from "../../lib/errors";
 import type {Validator} from "../../validators/Validator";
@@ -17,6 +17,9 @@ export interface ObjectValidatorDefinition extends ValidatorDefinition {
 }
 
 export const ObjectCodec = {
+	type: "object",
+	validator: ObjectValidator,
+
 	fromJSON(
 		definition: {type: "object"} & Record<string, unknown>,
 		path: string,
@@ -133,6 +136,7 @@ export const ObjectCodec = {
 
 		return new ObjectValidator(constraints);
 	},
+
 	toJSON(
 		validator: ObjectValidator<ObjectValidatorConstraints>,
 		domain: Domain
@@ -162,7 +166,4 @@ export const ObjectCodec = {
 				: {})
 		};
 	}
-} satisfies ValidatorCodec<
-	ObjectValidatorDefinition,
-	ObjectValidator<ObjectValidatorConstraints>
->;
+};

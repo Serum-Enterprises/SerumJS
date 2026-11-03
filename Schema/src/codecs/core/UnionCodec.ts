@@ -1,4 +1,4 @@
-import type {ValidatorCodec, ValidatorDefinition} from "../ValidatorCodec";
+import type {ValidatorDefinition} from "../ValidatorCodec";
 import type {Domain} from "../../Domain";
 import {DefinitionError} from "../../lib/errors";
 import type {Validator} from "../../validators/Validator";
@@ -13,6 +13,9 @@ export interface UnionValidatorDefinition extends ValidatorDefinition {
 }
 
 export const UnionCodec = {
+	type: "union",
+	validator: UnionValidator,
+
 	fromJSON(
 		definition: { type: "union" } & Record<string, unknown>,
 		path: string,
@@ -64,6 +67,7 @@ export const UnionCodec = {
 
 		return new UnionValidator({variants: variants as [Validator, ...Validator[]]});
 	},
+
 	toJSON(
 		validator: UnionValidator<UnionValidatorConstraints>,
 		domain: Domain
@@ -78,7 +82,4 @@ export const UnionCodec = {
 			]
 		};
 	}
-} satisfies ValidatorCodec<
-	UnionValidatorDefinition,
-	UnionValidator<UnionValidatorConstraints>
->;
+};

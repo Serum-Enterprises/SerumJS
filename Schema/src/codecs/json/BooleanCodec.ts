@@ -1,4 +1,4 @@
-import type {ValidatorCodec, ValidatorDefinition} from "../ValidatorCodec";
+import type {ValidatorDefinition} from "../ValidatorCodec";
 import type {Domain} from "../../Domain";
 import {DefinitionError} from "../../lib/errors";
 import {
@@ -12,6 +12,9 @@ export interface BooleanValidatorDefinition extends ValidatorDefinition {
 }
 
 export const BooleanCodec = {
+	type: "boolean",
+	validator: BooleanValidator,
+
 	fromJSON(
 		definition: {type: "boolean"} & Record<string, unknown>,
 		path: string,
@@ -48,6 +51,7 @@ export const BooleanCodec = {
 
 		return new BooleanValidator(constraints);
 	},
+
 	toJSON(
 		validator: BooleanValidator<BooleanValidatorConstraints>,
 		_domain: Domain
@@ -59,7 +63,4 @@ export const BooleanCodec = {
 				: {})
 		};
 	}
-} satisfies ValidatorCodec<
-	BooleanValidatorDefinition,
-	BooleanValidator<BooleanValidatorConstraints>
->;
+};

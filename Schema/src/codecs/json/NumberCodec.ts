@@ -1,4 +1,4 @@
-import type {ValidatorCodec, ValidatorDefinition} from "../ValidatorCodec";
+import type {ValidatorDefinition} from "../ValidatorCodec";
 import type {Domain} from "../../Domain";
 import {DefinitionError} from "../../lib/errors";
 import {
@@ -15,6 +15,9 @@ export interface NumberValidatorDefinition extends ValidatorDefinition {
 }
 
 export const NumberCodec = {
+	type: "number",
+	validator: NumberValidator,
+
 	fromJSON(
 		definition: {type: "number"} & Record<string, unknown>,
 		path: string,
@@ -92,6 +95,7 @@ export const NumberCodec = {
 
 		return new NumberValidator(constraints);
 	},
+
 	toJSON(
 		validator: NumberValidator<NumberValidatorConstraints>,
 		_domain: Domain
@@ -112,7 +116,4 @@ export const NumberCodec = {
 				: {})
 		};
 	}
-} satisfies ValidatorCodec<
-	NumberValidatorDefinition,
-	NumberValidator<NumberValidatorConstraints>
->;
+};

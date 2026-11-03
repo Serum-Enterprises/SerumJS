@@ -1,4 +1,4 @@
-import type {ValidatorCodec, ValidatorDefinition} from "../ValidatorCodec";
+import type {ValidatorDefinition} from "../ValidatorCodec";
 import type {Domain} from "../../Domain";
 import {DefinitionError} from "../../lib/errors";
 import type {Validator} from "../../validators/Validator";
@@ -13,6 +13,9 @@ export interface IntersectValidatorDefinition extends ValidatorDefinition {
 }
 
 export const IntersectCodec = {
+	type: "intersect",
+	validator: IntersectValidator,
+
 	fromJSON(
 		definition: { type: "intersect" } & Record<string, unknown>,
 		path: string,
@@ -64,6 +67,7 @@ export const IntersectCodec = {
 
 		return new IntersectValidator({variants: variants as [Validator, ...Validator[]]});
 	},
+
 	toJSON(
 		validator: IntersectValidator<IntersectValidatorConstraints>,
 		domain: Domain
@@ -78,7 +82,4 @@ export const IntersectCodec = {
 			]
 		};
 	}
-} satisfies ValidatorCodec<
-	IntersectValidatorDefinition,
-	IntersectValidator<IntersectValidatorConstraints>
->;
+};

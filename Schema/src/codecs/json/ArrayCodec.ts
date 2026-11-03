@@ -1,4 +1,4 @@
-import type {ValidatorCodec, ValidatorDefinition} from "../ValidatorCodec";
+import type {ValidatorDefinition} from "../ValidatorCodec";
 import type {Domain} from "../../Domain";
 import {DefinitionError} from "../../lib/errors";
 import type {Validator} from "../../validators/Validator";
@@ -16,8 +16,11 @@ export interface ArrayValidatorDefinition extends ValidatorDefinition {
 }
 
 export const ArrayCodec = {
+	type: "array",
+	validator: ArrayValidator,
+
 	fromJSON(
-		definition: {type: "array"} & Record<string, unknown>,
+		definition: { type: "array" } & Record<string, unknown>,
 		path: string,
 		domain: Domain
 	): ArrayValidator<ArrayValidatorConstraints> {
@@ -109,6 +112,7 @@ export const ArrayCodec = {
 
 		return new ArrayValidator(constraints);
 	},
+
 	toJSON(
 		validator: ArrayValidator<ArrayValidatorConstraints>,
 		domain: Domain
@@ -133,7 +137,4 @@ export const ArrayCodec = {
 				: {})
 		};
 	}
-} satisfies ValidatorCodec<
-	ArrayValidatorDefinition,
-	ArrayValidator<ArrayValidatorConstraints>
->;
+};

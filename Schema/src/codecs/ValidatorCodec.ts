@@ -1,22 +1,24 @@
-import type {Domain} from "../Domain";
 import type {Validator} from "../validators/Validator";
+import type {Domain} from "../Domain";
 
 export interface ValidatorDefinition {
 	type: string;
 }
 
-export interface ValidatorCodec<
-	DEFINITION extends ValidatorDefinition,
-	VALIDATOR extends Validator
-> {
+export type ValidatorConstructor = abstract new (...args: any[]) => Validator;
+
+export interface Codec {
+	readonly type: string;
+	readonly validator: ValidatorConstructor;
+
 	fromJSON(
-		definition: {type: DEFINITION["type"]} & Record<string, unknown>,
+		definition: Record<string, unknown>,
 		path: string,
 		domain: Domain
-	): VALIDATOR;
+	): Validator;
 
 	toJSON(
-		validator: VALIDATOR,
+		validator: Validator,
 		domain: Domain
-	): DEFINITION;
+	): ValidatorDefinition;
 }

@@ -1,4 +1,4 @@
-import type {ValidatorCodec, ValidatorDefinition} from "../ValidatorCodec";
+import type {ValidatorDefinition} from "../ValidatorCodec";
 import type {Domain} from "../../Domain";
 import {UnknownValidator} from "../../validators/core/UnknownValidator";
 import {DefinitionError} from "../../lib/errors";
@@ -8,6 +8,9 @@ export interface UnknownValidatorDefinition extends ValidatorDefinition {
 }
 
 export const UnknownCodec = {
+	type: "unknown",
+	validator: UnknownValidator,
+
 	fromJSON(
 		definition: { type: "unknown" } & Record<string, unknown>,
 		path: string,
@@ -28,10 +31,11 @@ export const UnknownCodec = {
 
 		return new UnknownValidator();
 	},
+
 	toJSON(
 		_validator: UnknownValidator,
 		_domain: Domain
 	): UnknownValidatorDefinition {
 		return {type: "unknown"};
 	}
-} satisfies ValidatorCodec<UnknownValidatorDefinition, UnknownValidator>;
+};

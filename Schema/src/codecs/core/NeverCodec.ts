@@ -1,4 +1,4 @@
-import type {ValidatorCodec, ValidatorDefinition} from "../ValidatorCodec";
+import type {ValidatorDefinition} from "../ValidatorCodec";
 import type {Domain} from "../../Domain";
 import {NeverValidator} from "../../validators/core/NeverValidator";
 import {DefinitionError} from "../../lib/errors";
@@ -8,6 +8,9 @@ export interface NeverValidatorDefinition extends ValidatorDefinition {
 }
 
 export const NeverCodec = {
+	type: "never",
+	validator: NeverValidator,
+
 	fromJSON(
 		definition: { type: "never" } & Record<string, unknown>,
 		path: string,
@@ -28,10 +31,11 @@ export const NeverCodec = {
 
 		return new NeverValidator();
 	},
+
 	toJSON(
 		_validator: NeverValidator,
 		_domain: Domain
 	): NeverValidatorDefinition {
 		return {type: "never"};
 	}
-} satisfies ValidatorCodec<NeverValidatorDefinition, NeverValidator>;
+};

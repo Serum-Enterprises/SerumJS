@@ -1,4 +1,4 @@
-import type {ValidatorCodec, ValidatorDefinition} from "../ValidatorCodec";
+import type {ValidatorDefinition} from "../ValidatorCodec";
 import type {Domain} from "../../Domain";
 import {DefinitionError} from "../../lib/errors";
 import {NullValidator} from "../../validators/json/NullValidator";
@@ -8,6 +8,9 @@ export interface NullValidatorDefinition extends ValidatorDefinition {
 }
 
 export const NullCodec = {
+	type: "null",
+	validator: NullValidator,
+
 	fromJSON(
 		definition: {type: "null"} & Record<string, unknown>,
 		path: string,
@@ -31,13 +34,11 @@ export const NullCodec = {
 
 		return new NullValidator();
 	},
+
 	toJSON(
 		_validator: NullValidator,
 		_domain: Domain
 	): NullValidatorDefinition {
 		return {type: "null"};
 	}
-} satisfies ValidatorCodec<
-	NullValidatorDefinition,
-	NullValidator
->;
+};
