@@ -1,8 +1,6 @@
-# Schema Framework
+# Schema
 
-A flexible Schema Framework for building validation libraries. 
-
-This library provides the core infrastructure for schema validation, including base classes, error handling, and logical operations (Union, Intersect, etc.). To use it for actual data validation (like JSON, Strings, Numbers), you should use a plugin library like `@serum-enterprises/schema-json`.
+A flexible Schema System for validating Data.
 
 ## Installation
 
@@ -10,11 +8,22 @@ This library provides the core infrastructure for schema validation, including b
 npm install @serum-enterprises/schema
 ```
 
-You will likely also want a plugin:
+## Domain
 
-```bash
-npm install @serum-enterprises/schema-json
-```
+The Domain Class is the main registration point for Validators, Codecs and Operations.
+
+## Validators
+
+This package includes the four Core Validators (`Never`, `Unknown`, `Intersect`, `Union`) as well as six JSON Validators (`Null`,
+`Boolean`, `Number`, `String`, `Array`, `Object`).
+
+## Codecs
+
+For converting Validators from and to JSON, this packages offers Codecs for each of the above-mentioned Validators.
+
+## Operations
+
+The following Operations are available by default: `normalize`, `merge`, `isEquals` and `isSubset`.
 
 ## Example (with Schema-JSON)
 
@@ -24,9 +33,9 @@ import * as JSONSchema from '@serum-enterprises/schema-json';
 
 // Create a Domain with the JSON Plugin
 const Schema = Domain.create({
-    JSON: JSONSchema.Registry
+	JSON: JSONSchema.Registry
 }, [
-    JSONSchema.Operations
+	JSONSchema.Operations
 ]);
 
 const schema = Schema.JSON.Object.shape({
@@ -50,7 +59,8 @@ console.log(person.friends.join(', '));
 
 ## Plugin Libraries
 
-- [`@serum-enterprises/schema-json`](../Schema-JSON): Validators for standard JSON types (String, Number, Object, Array, etc.).
+- [`@serum-enterprises/schema-json`](../Schema-JSON): Validators for standard JSON types (String, Number, Object, Array,
+  etc.).
 
 ## LICENSE
 

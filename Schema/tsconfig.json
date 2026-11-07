@@ -1,17 +1,16 @@
 {
 	"extends": "../tsconfig.base.json",
 	"compilerOptions": {
-		"target": "esnext",
-		"module": "nodenext",
-		"moduleResolution": "nodenext",
-		"lib": ["esnext"],
-		"rootDir": ".",
-		"outDir": "./dist/types",
-		"declaration": true,
-		"emitDeclarationOnly": true,
-		"sourceMap": false,
-		"inlineSources": false,
-		"types": ["@types/jest"]
+		"target": "ES2022",
+		"lib": ["ES2022"],
+
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"verbatimModuleSyntax": true,
+		"isolatedModules": true,
+
+		"noEmit": true,
+		"types": []
 	},
-	"include": ["./src/**/*.ts", "./tests/**/*.test.ts"]
+	"include": ["src/**/*.ts"]
 }

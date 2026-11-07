@@ -4,7 +4,6 @@ node_modules/
 # Build Outputs
 dist/
 build/
-coverage/
 
 # env
 .env
