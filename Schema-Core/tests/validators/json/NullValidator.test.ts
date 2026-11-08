@@ -61,4 +61,8 @@ describe("Testing NullValidator", () => {
 			});
 		}
 	});
+
+	test("Testing NullValidator.toJSON", () => {
+		assert.deepStrictEqual(validator.toJSON(), {type: "null"});
+	});
 });

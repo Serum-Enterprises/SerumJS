@@ -42,4 +42,8 @@ describe("Testing UnknownValidator", () => {
 			});
 		}
 	});
+
+	test("Testing UnknownValidator.toJSON", () => {
+		assert.deepStrictEqual(validator.toJSON(), {type: "unknown"});
+	});
 });

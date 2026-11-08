@@ -41,7 +41,7 @@ describe("Testing NeverValidator", () => {
 		}
 	});
 
-	test("Testing UnknownValidator.assert with a custom Path", () => {
+	test("Testing NeverValidator.assert with a custom Path", () => {
 		for (const value of values) {
 			assert.throws(() => {
 				validator.assert(value, "data");
@@ -53,5 +53,9 @@ describe("Testing NeverValidator", () => {
 				return true;
 			});
 		}
+	});
+
+	test("Testing NeverValidator.toJSON", () => {
+		assert.deepStrictEqual(validator.toJSON(), {type: "never"});
 	});
 });

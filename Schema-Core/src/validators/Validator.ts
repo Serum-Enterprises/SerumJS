@@ -1,3 +1,5 @@
+import type {JSON} from "../lib/JSON";
+
 export abstract class Validator<T = unknown> {
 	public abstract assert(value: unknown, path?: string): asserts value is T;
 
@@ -16,4 +18,6 @@ export abstract class Validator<T = unknown> {
 			return false;
 		}
 	}
+
+	public abstract toJSON(): { type: string } & Record<string, JSON>;
 }

@@ -6,4 +6,8 @@ export class NullValidator extends Validator<null> {
 		if (value !== null)
 			throw new AssertError(`Expected ${path} to be Null`, path);
 	}
+
+	public toJSON(): { type: "null" } {
+		return {type: "null"};
+	}
 }
