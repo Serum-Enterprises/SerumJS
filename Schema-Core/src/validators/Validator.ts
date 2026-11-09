@@ -1,5 +1,10 @@
 import type {JSON} from "../lib/JSON";
 
+export type InferValidatorResult<V extends Validator> =
+	V extends Validator<infer RESULT>
+		? RESULT
+		: never;
+
 export abstract class Validator<T = unknown> {
 	public abstract assert(value: unknown, path?: string): asserts value is T;
 
