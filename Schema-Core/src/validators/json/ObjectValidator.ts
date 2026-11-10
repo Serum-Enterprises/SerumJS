@@ -1,4 +1,4 @@
-import {Validator, type InferValidatorResult} from "../Validator";
+import {Validator, type InferValidatorResult, type ValidatorDefinition} from "../Validator";
 import {AssertError} from "../../lib/errors";
 
 export interface ObjectValidatorConstraints {
@@ -214,16 +214,16 @@ export class ObjectValidator<
 		type: "object",
 		min?: number,
 		max?: number,
-		every?: ReturnType<Validator["toJSON"]>,
-		shape?: Record<string, ReturnType<Validator["toJSON"]>>,
+		every?: ValidatorDefinition,
+		shape?: Record<string, ValidatorDefinition>,
 		exact?: boolean
 	} {
 		const result: {
 			type: "object",
 			min?: number,
 			max?: number,
-			every?: ReturnType<Validator["toJSON"]>,
-			shape?: Record<string, ReturnType<Validator["toJSON"]>>,
+			every?: ValidatorDefinition,
+			shape?: Record<string, ValidatorDefinition>,
 			exact?: boolean
 		} = {
 			type: "object"

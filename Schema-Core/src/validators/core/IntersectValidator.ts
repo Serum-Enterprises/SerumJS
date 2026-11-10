@@ -1,4 +1,4 @@
-import {Validator, type InferValidatorResult} from "../Validator";
+import {Validator, type InferValidatorResult, type ValidatorDefinition} from "../Validator";
 import {AssertError} from "../../lib/errors";
 
 export interface IntersectValidatorConstraints {
@@ -62,8 +62,8 @@ export class IntersectValidator<
 	public toJSON(): {
 		type: "intersect",
 		variants: [
-			ReturnType<Validator["toJSON"]>,
-			...ReturnType<Validator["toJSON"]>[]
+			ValidatorDefinition,
+			...ValidatorDefinition[]
 		]
 	} {
 		const [first, ...remaining] = this.constraints.variants;

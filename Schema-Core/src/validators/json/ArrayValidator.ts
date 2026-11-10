@@ -1,4 +1,4 @@
-import {Validator, type InferValidatorResult} from "../Validator";
+import {Validator, type InferValidatorResult, type ValidatorDefinition} from "../Validator";
 import {AssertError} from "../../lib/errors";
 
 export interface ArrayValidatorConstraints {
@@ -152,15 +152,15 @@ export class ArrayValidator<
 		type: "array",
 		min?: number,
 		max?: number,
-		every?: ReturnType<Validator["toJSON"]>,
-		tuple?: ReturnType<Validator["toJSON"]>[]
+		every?: ValidatorDefinition,
+		tuple?: ValidatorDefinition[]
 	} {
 		const result: {
 			type: "array",
 			min?: number,
 			max?: number,
-			every?: ReturnType<Validator["toJSON"]>,
-			tuple?: ReturnType<Validator["toJSON"]>[]
+			every?: ValidatorDefinition,
+			tuple?: ValidatorDefinition[]
 		} = {
 			type: "array"
 		};

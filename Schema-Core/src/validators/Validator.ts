@@ -5,6 +5,8 @@ export type InferValidatorResult<V extends Validator> =
 		? RESULT
 		: never;
 
+export type ValidatorDefinition<T extends string = string> = { type: T } & Record<string, JSON>;
+
 export abstract class Validator<T = unknown> {
 	public abstract assert(value: unknown, path?: string): asserts value is T;
 
@@ -24,5 +26,5 @@ export abstract class Validator<T = unknown> {
 		}
 	}
 
-	public abstract toJSON(): { type: string } & Record<string, JSON>;
+	public abstract toJSON(): ValidatorDefinition;
 }
