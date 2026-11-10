@@ -1,5 +1,7 @@
+import type {Domain} from "../../Domain";
+import type {JSON} from "../../lib/JSON";
 import {Validator, type InferValidatorResult, type ValidatorDefinition} from "../Validator";
-import {AssertError} from "../../lib/errors";
+import {AssertError, DefinitionError} from "../../lib/errors";
 
 export interface ObjectValidatorConstraints {
 	readonly min?: number | undefined;
@@ -39,6 +41,119 @@ type ObjectValidatorResult<C extends ObjectValidatorConstraints> =
 export class ObjectValidator<
 	const C extends ObjectValidatorConstraints = {}
 > extends Validator<ObjectValidatorResult<C>> {
+	public static fromJSON(
+		definition: {type: "object"} & Record<string, JSON>,
+		path: string,
+		domain: Domain
+	): ObjectValidator<ObjectValidatorConstraints> {
+		const errors: (DefinitionError | AggregateError)[] = [];
+		const constraints: {
+			min?: number,
+			max?: number,
+			every?: Validator,
+			shape?: Readonly<Record<string, Validator>>,
+			exact?: boolean
+		} = {};
+
+		// Report invalid Constraints
+		for (const key of Object.keys(definition)) {
+			if (!["type", "min", "max", "every", "shape", "exact"].includes(key))
+				errors.push(new DefinitionError(
+					`Unknown Property ${path}.${key}`,
+					`${path}.${key}`
+				));
+		}
+
+		// Verify min and max Constraints
+		for (const key of ["min", "max"] as const) {
+			if (!Object.hasOwn(definition, key))
+				continue;
+
+			const value = definition[key];
+
+			if (typeof value !== "number" || !Number.isFinite(value))
+				errors.push(new DefinitionError(
+					`Expected ${path}.${key} to be a finite Number`,
+					`${path}.${key}`
+				));
+			else
+				constraints[key] = value;
+		}
+
+		if (Object.hasOwn(definition, "every")) {
+			try {
+				constraints.every = domain.fromJSON(
+					definition["every"]!,
+					`${path}.every`
+				);
+			} catch (error) {
+				if (error instanceof DefinitionError || error instanceof AggregateError)
+					errors.push(error);
+				else
+					throw error;
+			}
+		}
+
+		// Verify shape Constraint
+		if (Object.hasOwn(definition, "shape")) {
+			const shape = definition["shape"];
+
+			if (!((value: unknown): value is Record<string, JSON> => {
+				if (typeof value !== "object" || value === null)
+					return false;
+
+				const prototype = Object.getPrototypeOf(value);
+
+				return prototype === Object.prototype || prototype === null;
+			})(shape))
+				errors.push(new DefinitionError(
+					`Expected ${path}.shape to be an Object`,
+					`${path}.shape`
+				));
+			else {
+				const shapeValidators: [string, Validator][] = [];
+
+				for (const [key, validatorDefinition] of Object.entries(shape)) {
+					try {
+						shapeValidators.push([
+							key,
+							domain.fromJSON(validatorDefinition, `${path}.shape.${key}`)
+						]);
+					} catch (error) {
+						if (error instanceof DefinitionError || error instanceof AggregateError)
+							errors.push(error);
+						else
+							throw error;
+					}
+				}
+
+				constraints.shape = Object.fromEntries(shapeValidators);
+			}
+		}
+
+		// Verify exact Constraint
+		if (Object.hasOwn(definition, "exact")) {
+			const exact = definition["exact"];
+
+			if (typeof exact !== "boolean")
+				errors.push(new DefinitionError(
+					`Expected ${path}.exact to be a Boolean`,
+					`${path}.exact`
+				));
+			else
+				constraints.exact = exact;
+		}
+
+		// Throw if there are any Errors
+		if (errors.length > 0)
+			throw new AggregateError(
+				errors,
+				`Expected ${path} to be a valid ObjectValidatorDefinition`
+			);
+
+		return new ObjectValidator(constraints);
+	}
+
 	public constructor(
 		public readonly constraints: C
 	) {

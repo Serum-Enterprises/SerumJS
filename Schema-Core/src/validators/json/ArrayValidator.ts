@@ -1,5 +1,7 @@
+import type {Domain} from "../../Domain";
+import type {JSON} from "../../lib/JSON";
 import {Validator, type InferValidatorResult, type ValidatorDefinition} from "../Validator";
-import {AssertError} from "../../lib/errors";
+import {AssertError, DefinitionError} from "../../lib/errors";
 
 export interface ArrayValidatorConstraints {
 	readonly min?: number | undefined;
@@ -13,20 +15,112 @@ type TupleElements<TUPLE extends readonly Validator[], EVERY> = {
 };
 
 type ArrayValidatorResult<C extends ArrayValidatorConstraints> =
-	C extends {readonly every: infer EVERY extends Validator}
-		? C extends {readonly tuple: infer TUPLE extends readonly Validator[]}
+	C extends { readonly every: infer EVERY extends Validator }
+		? C extends { readonly tuple: infer TUPLE extends readonly Validator[] }
 			? [
 				...TupleElements<TUPLE, InferValidatorResult<EVERY>>,
 				...InferValidatorResult<EVERY>[]
 			]
 			: InferValidatorResult<EVERY>[]
-		: C extends {readonly tuple: infer TUPLE extends readonly Validator[]}
+		: C extends { readonly tuple: infer TUPLE extends readonly Validator[] }
 			? [...TupleElements<TUPLE, unknown>, ...unknown[]]
 			: unknown[];
 
 export class ArrayValidator<
 	const C extends ArrayValidatorConstraints = {}
 > extends Validator<ArrayValidatorResult<C>> {
+	public static fromJSON(
+		definition: { type: "array" } & Record<string, JSON>,
+		path: string,
+		domain: Domain
+	): ArrayValidator<ArrayValidatorConstraints> {
+		const errors: (DefinitionError | AggregateError)[] = [];
+		const constraints: {
+			min?: number,
+			max?: number,
+			every?: Validator,
+			tuple?: readonly Validator[]
+		} = {};
+
+		// Report invalid Constraints
+		for (const key of Object.keys(definition)) {
+			if (!["type", "min", "max", "every", "tuple"].includes(key))
+				errors.push(new DefinitionError(
+					`Unknown Property ${path}.${key}`,
+					`${path}.${key}`
+				));
+		}
+
+		// Verify min and max Constraints
+		for (const key of ["min", "max"] as const) {
+			if (!Object.hasOwn(definition, key))
+				continue;
+
+			const value = definition[key];
+
+			if (typeof value !== "number" || !Number.isFinite(value))
+				errors.push(new DefinitionError(
+					`Expected ${path}.${key} to be a finite Number`,
+					`${path}.${key}`
+				));
+			else
+				constraints[key] = value;
+		}
+
+		// Verify every Constraint
+		if (Object.hasOwn(definition, "every")) {
+			try {
+				constraints.every = domain.fromJSON(
+					definition["every"]!,
+					`${path}.every`
+				);
+			} catch (error) {
+				if (error instanceof DefinitionError || error instanceof AggregateError)
+					errors.push(error);
+				else
+					throw error;
+			}
+		}
+
+		// Verify tuple Constraint
+		if (Object.hasOwn(definition, "tuple")) {
+			const tuple = definition["tuple"];
+
+			if (!Array.isArray(tuple))
+				errors.push(new DefinitionError(
+					`Expected ${path}.tuple to be an Array`,
+					`${path}.tuple`
+				));
+			else {
+				const tupleValidators: Validator[] = [];
+
+				for (let index = 0; index < tuple.length; index++) {
+					try {
+						tupleValidators.push(
+							domain.fromJSON(tuple[index]!, `${path}.tuple[${index}]`)
+						);
+					} catch (error) {
+						if (error instanceof DefinitionError || error instanceof AggregateError)
+							errors.push(error);
+						else
+							throw error;
+					}
+				}
+
+				constraints.tuple = tupleValidators;
+			}
+		}
+
+		// Throw if there are any Errors
+		if (errors.length > 0)
+			throw new AggregateError(
+				errors,
+				`Expected ${path} to be a valid ArrayValidatorDefinition`
+			);
+
+		return new ArrayValidator(constraints);
+	}
+
 	public constructor(
 		public readonly constraints: C
 	) {
@@ -51,10 +145,10 @@ export class ArrayValidator<
 	}
 
 	public min<const M extends number>(min: M): ArrayValidator<
-		Omit<C, "min"> & {readonly min: M}
+		Omit<C, "min"> & { readonly min: M }
 	> {
 		return new ArrayValidator<
-			Omit<C, "min"> & {readonly min: M}
+			Omit<C, "min"> & { readonly min: M }
 		>({
 			...this.constraints,
 			min
@@ -62,10 +156,10 @@ export class ArrayValidator<
 	}
 
 	public max<const M extends number>(max: M): ArrayValidator<
-		Omit<C, "max"> & {readonly max: M}
+		Omit<C, "max"> & { readonly max: M }
 	> {
 		return new ArrayValidator<
-			Omit<C, "max"> & {readonly max: M}
+			Omit<C, "max"> & { readonly max: M }
 		>({
 			...this.constraints,
 			max
@@ -73,10 +167,10 @@ export class ArrayValidator<
 	}
 
 	public every<const E extends Validator>(every: E): ArrayValidator<
-		Omit<C, "every"> & {readonly every: E}
+		Omit<C, "every"> & { readonly every: E }
 	> {
 		return new ArrayValidator<
-			Omit<C, "every"> & {readonly every: E}
+			Omit<C, "every"> & { readonly every: E }
 		>({
 			...this.constraints,
 			every
@@ -84,10 +178,10 @@ export class ArrayValidator<
 	}
 
 	public tuple<const T extends readonly Validator[]>(tuple: T): ArrayValidator<
-		Omit<C, "tuple"> & {readonly tuple: readonly [...T]}
+		Omit<C, "tuple"> & { readonly tuple: readonly [...T] }
 	> {
 		return new ArrayValidator<
-			Omit<C, "tuple"> & {readonly tuple: readonly [...T]}
+			Omit<C, "tuple"> & { readonly tuple: readonly [...T] }
 		>({
 			...this.constraints,
 			tuple: [...tuple]
