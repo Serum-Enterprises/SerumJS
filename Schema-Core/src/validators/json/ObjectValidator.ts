@@ -44,12 +44,13 @@ export class ObjectValidator<
 	) {
 		super();
 
+		// Verify min and max Constraints
 		for (const key of ["min", "max"] as const) {
 			const value = constraints[key];
 
-			if (value !== undefined && (!Number.isSafeInteger(value) || value < 0))
+			if (value !== undefined && !Number.isFinite(value))
 				throw new TypeError(
-					`Expected ObjectValidator.constraints.${key} to be a non-negative safe Integer`
+					`Expected ObjectValidator.constraints.${key} to be a finite Number`
 				);
 		}
 
@@ -174,7 +175,7 @@ export class ObjectValidator<
 
 		if (this.constraints.exact) {
 			for (const key of keys) {
-				if (!this.constraints.shape || !Object.prototype.hasOwnProperty.call(this.constraints.shape, key))
+				if (!this.constraints.shape || !Object.hasOwn(this.constraints.shape, key))
 					errors.push(new AssertError(
 						`Expected ${path}.${key} not to be present`,
 						`${path}.${key}`
@@ -186,7 +187,7 @@ export class ObjectValidator<
 			for (const [key, entry] of Object.entries(value)) {
 				if (
 					this.constraints.exact &&
-					(!this.constraints.shape || !Object.prototype.hasOwnProperty.call(this.constraints.shape, key))
+					(!this.constraints.shape || !Object.hasOwn(this.constraints.shape, key))
 				)
 					continue;
 

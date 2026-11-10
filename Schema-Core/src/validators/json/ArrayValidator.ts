@@ -32,12 +32,13 @@ export class ArrayValidator<
 	) {
 		super();
 
+		// Verify min and max Constraints
 		for (const key of ["min", "max"] as const) {
 			const value = constraints[key];
 
-			if (value !== undefined && (!Number.isSafeInteger(value) || value < 0))
+			if (value !== undefined && !Number.isFinite(value))
 				throw new TypeError(
-					`Expected ArrayValidator.constraints.${key} to be a non-negative safe Integer`
+					`Expected ArrayValidator.constraints.${key} to be a finite Number`
 				);
 		}
 
