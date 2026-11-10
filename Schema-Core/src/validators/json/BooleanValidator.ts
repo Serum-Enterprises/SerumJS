@@ -1,5 +1,7 @@
+import type {Domain} from "../../Domain";
+import type {JSON} from "../../lib/JSON";
 import {Validator} from "../Validator";
-import {AssertError} from "../../lib/errors";
+import {AssertError, DefinitionError} from "../../lib/errors";
 
 export interface BooleanValidatorConstraints {
 	readonly equals?: boolean;
@@ -12,10 +14,51 @@ type BooleanValidatorResult<C extends BooleanValidatorConstraints> = C extends {
 export class BooleanValidator<
 	const C extends BooleanValidatorConstraints = {}
 > extends Validator<BooleanValidatorResult<C>> {
+	public static fromJSON(
+		definition: { type: "boolean" } & Record<string, JSON>,
+		path: string,
+		_domain: Domain
+	): BooleanValidator<BooleanValidatorConstraints> {
+		const errors: DefinitionError[] = [];
+		const constraints: { equals?: boolean } = {};
+
+		// Report invalid Constraints
+		for (const key of Object.keys(definition)) {
+			if (!["type", "equals"].includes(key))
+				errors.push(new DefinitionError(
+					`Unknown Constraint ${path}.${key}`,
+					`${path}.${key}`
+				));
+		}
+
+		// Verify equals Constraint
+		if (Object.hasOwn(definition, "equals")) {
+			const equals = definition["equals"];
+
+			if (typeof equals !== "boolean")
+				errors.push(new DefinitionError(
+					`Expected ${path}.equals to be a Boolean`,
+					`${path}.equals`
+				));
+			else
+				constraints.equals = equals;
+		}
+
+		// Throw if there are any Errors
+		if (errors.length > 0)
+			throw new AggregateError(
+				errors,
+				`Expected ${path} to be a valid BooleanValidatorDefinition`
+			);
+
+		return new BooleanValidator(constraints);
+	}
+
 	public constructor(
 		public readonly constraints: C
 	) {
 		super();
+
 		this.constraints = Object.freeze({...constraints});
 	}
 

@@ -1,5 +1,7 @@
+import type {Domain} from "../../Domain";
+import type {JSON} from "../../lib/JSON";
 import {Validator} from "../Validator";
-import {AssertError} from "../../lib/errors";
+import {AssertError, DefinitionError} from "../../lib/errors";
 
 export interface StringValidatorConstraints {
 	readonly min?: number | undefined;
@@ -14,17 +16,78 @@ type StringValidatorResult<C extends StringValidatorConstraints> = C extends {
 export class StringValidator<
 	const C extends StringValidatorConstraints = {}
 > extends Validator<StringValidatorResult<C>> {
+	public static fromJSON(
+		definition: {type: "string"} & Record<string, JSON>,
+		path: string,
+		_domain: Domain
+	): StringValidator<StringValidatorConstraints> {
+		const errors: DefinitionError[] = [];
+		const constraints: {
+			min?: number,
+			max?: number,
+			equals?: string
+		} = {};
+
+		// Report invalid Constraints
+		for (const key of Object.keys(definition)) {
+			if (!["type", "min", "max", "equals"].includes(key))
+				errors.push(new DefinitionError(
+					`Unknown Property ${path}.${key}`,
+					`${path}.${key}`
+				));
+		}
+
+		// Verify min and max Constraints
+		for (const key of ["min", "max"] as const) {
+			if (!Object.hasOwn(definition, key))
+				continue;
+
+			const value = definition[key];
+
+			if (typeof value !== "number" || !Number.isFinite(value))
+				errors.push(new DefinitionError(
+					`Expected ${path}.${key} to be a finite Number`,
+					`${path}.${key}`
+				));
+			else
+				constraints[key] = value;
+		}
+
+		// Verify equals Constraint
+		if (Object.hasOwn(definition, "equals")) {
+			const equals = definition["equals"];
+
+			if (typeof equals !== "string")
+				errors.push(new DefinitionError(
+					`Expected ${path}.equals to be a String`,
+					`${path}.equals`
+				));
+			else
+				constraints.equals = equals;
+		}
+
+		// Throw if there are any Errors
+		if (errors.length > 0)
+			throw new AggregateError(
+				errors,
+				`Expected ${path} to be a valid StringValidatorDefinition`
+			);
+
+		return new StringValidator(constraints);
+	}
+
 	public constructor(
 		public readonly constraints: C
 	) {
 		super();
 
+		// Verify min and max Constraints
 		for (const key of ["min", "max"] as const) {
 			const value = constraints[key];
 
-			if (value !== undefined && (!Number.isSafeInteger(value) || value < 0))
+			if (value !== undefined && !Number.isFinite(value))
 				throw new TypeError(
-					`Expected StringValidator.constraints.${key} to be a non-negative safe Integer`
+					`Expected StringValidator.constraints.${key} to be a finite Number`
 				);
 		}
 

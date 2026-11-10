@@ -1,5 +1,7 @@
+import type {Domain} from "../../Domain";
+import type {JSON} from "../../lib/JSON";
 import {Validator} from "../Validator";
-import {AssertError} from "../../lib/errors";
+import {AssertError, DefinitionError} from "../../lib/errors";
 
 export interface NumberValidatorConstraints {
 	readonly integer?: boolean | undefined;
@@ -15,11 +17,73 @@ type NumberValidatorResult<C extends NumberValidatorConstraints> = C extends {
 export class NumberValidator<
 	const C extends NumberValidatorConstraints = {}
 > extends Validator<NumberValidatorResult<C>> {
+	public static fromJSON(
+		definition: {type: "number"} & Record<string, JSON>,
+		path: string,
+		_domain: Domain
+	): NumberValidator<NumberValidatorConstraints> {
+		const errors: DefinitionError[] = [];
+		const constraints: {
+			integer?: boolean,
+			min?: number,
+			max?: number,
+			equals?: number
+		} = {};
+
+		// Report invalid Constraints
+		for (const key of Object.keys(definition)) {
+			if (!["type", "integer", "min", "max", "equals"].includes(key))
+				errors.push(new DefinitionError(
+					`Unknown Property ${path}.${key}`,
+					`${path}.${key}`
+				));
+		}
+
+		// Verify integer Constraint
+		if (Object.hasOwn(definition, "integer")) {
+			const integer = definition["integer"];
+
+			if (typeof integer !== "boolean")
+				errors.push(new DefinitionError(
+					`Expected ${path}.integer to be a Boolean`,
+					`${path}.integer`
+				));
+			else
+				constraints.integer = integer;
+		}
+
+		// Verify min, max and equals Constraints
+		for (const key of ["min", "max", "equals"] as const) {
+			if (!Object.hasOwn(definition, key))
+				continue;
+
+			const value = definition[key];
+
+			if (typeof value !== "number" || !Number.isFinite(value))
+				errors.push(new DefinitionError(
+					`Expected ${path}.${key} to be a finite Number`,
+					`${path}.${key}`
+				));
+			else
+				constraints[key] = value;
+		}
+
+		// Throw if there are any Errors
+		if (errors.length > 0)
+			throw new AggregateError(
+				errors,
+				`Expected ${path} to be a valid NumberValidatorDefinition`
+			);
+
+		return new NumberValidator(constraints);
+	}
+
 	public constructor(
 		public readonly constraints: C
 	) {
 		super();
 
+		// Verify min, max and equals Constraints
 		for (const key of ["min", "max", "equals"] as const) {
 			const value = constraints[key];
 
