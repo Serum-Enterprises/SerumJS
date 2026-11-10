@@ -19,6 +19,16 @@ export class NumberValidator<
 		public readonly constraints: C
 	) {
 		super();
+
+		for (const key of ["min", "max", "equals"] as const) {
+			const value = constraints[key];
+
+			if (value !== undefined && !Number.isFinite(value))
+				throw new TypeError(
+					`Expected NumberValidator.constraints.${key} to be a finite Number`
+				);
+		}
+
 		this.constraints = Object.freeze({...constraints});
 	}
 

@@ -18,6 +18,16 @@ export class StringValidator<
 		public readonly constraints: C
 	) {
 		super();
+
+		for (const key of ["min", "max"] as const) {
+			const value = constraints[key];
+
+			if (value !== undefined && (!Number.isSafeInteger(value) || value < 0))
+				throw new TypeError(
+					`Expected StringValidator.constraints.${key} to be a non-negative safe Integer`
+				);
+		}
+
 		this.constraints = Object.freeze({...constraints});
 	}
 
