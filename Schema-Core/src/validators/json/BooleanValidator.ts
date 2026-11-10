@@ -14,6 +14,8 @@ type BooleanValidatorResult<C extends BooleanValidatorConstraints> = C extends {
 export class BooleanValidator<
 	const C extends BooleanValidatorConstraints = {}
 > extends Validator<BooleanValidatorResult<C>> {
+	public static readonly type = "boolean";
+
 	public static fromJSON(
 		definition: { type: "boolean" } & Record<string, JSON>,
 		path: string,

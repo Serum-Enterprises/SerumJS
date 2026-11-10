@@ -4,6 +4,8 @@ import {Validator} from "../Validator";
 import {AssertError, DefinitionError} from "../../lib/errors";
 
 export class NullValidator extends Validator<null> {
+	public static readonly type = "null";
+
 	public static fromJSON(
 		definition: {type: "null"} & Record<string, JSON>,
 		path: string,

@@ -29,6 +29,8 @@ type ArrayValidatorResult<C extends ArrayValidatorConstraints> =
 export class ArrayValidator<
 	const C extends ArrayValidatorConstraints = {}
 > extends Validator<ArrayValidatorResult<C>> {
+	public static readonly type = "array";
+
 	public static fromJSON(
 		definition: { type: "array" } & Record<string, JSON>,
 		path: string,

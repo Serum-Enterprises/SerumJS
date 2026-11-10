@@ -41,6 +41,8 @@ type ObjectValidatorResult<C extends ObjectValidatorConstraints> =
 export class ObjectValidator<
 	const C extends ObjectValidatorConstraints = {}
 > extends Validator<ObjectValidatorResult<C>> {
+	public static readonly type = "object";
+
 	public static fromJSON(
 		definition: {type: "object"} & Record<string, JSON>,
 		path: string,

@@ -4,6 +4,8 @@ import {Validator} from "../Validator";
 import {DefinitionError} from "../../lib/errors";
 
 export class UnknownValidator extends Validator {
+	public static readonly type = "unknown";
+
 	public static fromJSON(
 		definition: {type: "unknown"} & Record<string, JSON>,
 		path: string,

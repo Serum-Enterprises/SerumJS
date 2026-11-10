@@ -4,6 +4,8 @@ import {Validator} from "../Validator";
 import {AssertError, DefinitionError} from "../../lib/errors";
 
 export class NeverValidator extends Validator<never> {
+	public static readonly type = "never";
+
 	public static fromJSON(
 		definition: {type: "never"} & Record<string, JSON>,
 		path: string,

@@ -22,6 +22,8 @@ type IntersectValidatorResult<C extends IntersectValidatorConstraints> =
 export class IntersectValidator<
 	const C extends IntersectValidatorConstraints
 > extends Validator<IntersectValidatorResult<C>> {
+	public static readonly type = "intersect";
+
 	public static fromJSON(
 		definition: { type: "intersect" } & Record<string, JSON>,
 		path: string,

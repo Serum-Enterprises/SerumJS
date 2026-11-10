@@ -16,6 +16,8 @@ type StringValidatorResult<C extends StringValidatorConstraints> = C extends {
 export class StringValidator<
 	const C extends StringValidatorConstraints = {}
 > extends Validator<StringValidatorResult<C>> {
+	public static readonly type = "string";
+
 	public static fromJSON(
 		definition: {type: "string"} & Record<string, JSON>,
 		path: string,

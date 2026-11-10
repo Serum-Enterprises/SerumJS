@@ -17,6 +17,8 @@ type UnionValidatorResult<C extends UnionValidatorConstraints> =
 export class UnionValidator<
 	const C extends UnionValidatorConstraints
 > extends Validator<UnionValidatorResult<C>> {
+	public static readonly type = "union";
+
 	public static fromJSON(
 		definition: { type: "union" } & Record<string, JSON>,
 		path: string,

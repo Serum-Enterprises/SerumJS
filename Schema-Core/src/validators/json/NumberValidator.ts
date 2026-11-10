@@ -17,6 +17,8 @@ type NumberValidatorResult<C extends NumberValidatorConstraints> = C extends {
 export class NumberValidator<
 	const C extends NumberValidatorConstraints = {}
 > extends Validator<NumberValidatorResult<C>> {
+	public static readonly type = "number";
+
 	public static fromJSON(
 		definition: {type: "number"} & Record<string, JSON>,
 		path: string,
