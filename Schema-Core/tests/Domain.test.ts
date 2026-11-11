@@ -59,7 +59,7 @@ describe("Testing Domain", () => {
 
 	test("Testing Domain.create with invalid Types", () => {
 		assert.throws(() => {
-			Domain.create({Never: NeverValidator});
+			Domain.create({never: NeverValidator});
 		}, (error) => {
 			assert.ok(error instanceof TypeError);
 			assert.equal(error.message, "Invalid Type never detected");
