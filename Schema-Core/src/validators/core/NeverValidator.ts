@@ -29,8 +29,15 @@ export class NeverValidator extends Validator<never> {
 				`Expected ${path} to be a valid NeverValidatorDefinition`
 			);
 
-		return new NeverValidator();
+		return new NeverValidator({});
 	}
+
+	public constructor(
+		_constraints: Readonly<Record<string, never>>
+	) {
+		super();
+	}
+
 
 	public assert(_value: unknown, path: string = "value"): asserts _value is never {
 		throw new AssertError(`Expected ${path} to not exist`, path);

@@ -29,8 +29,15 @@ export class UnknownValidator extends Validator {
 				`Expected ${path} to be a valid UnknownValidatorDefinition`
 			);
 
-		return new UnknownValidator();
+		return new UnknownValidator({});
 	}
+
+	public constructor(
+		_constraints: Readonly<Record<string, never>>
+	) {
+		super();
+	}
+
 
 	public override assert(_value: unknown, _path: string = "value"): asserts _value is unknown {}
 

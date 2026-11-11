@@ -7,7 +7,7 @@ export class NullValidator extends Validator<null> {
 	public static readonly type = "null";
 
 	public static fromJSON(
-		definition: {type: "null"} & Record<string, JSON>,
+		definition: { type: "null" } & Record<string, JSON>,
 		path: string,
 		_domain: Domain
 	): NullValidator {
@@ -29,7 +29,13 @@ export class NullValidator extends Validator<null> {
 				`Expected ${path} to be a valid NullValidatorDefinition`
 			);
 
-		return new NullValidator();
+		return new NullValidator({});
+	}
+
+	public constructor(
+		_constraints: Readonly<Record<string, never>>
+	) {
+		super();
 	}
 
 	public assert(value: unknown, path: string = "value"): asserts value is null {
