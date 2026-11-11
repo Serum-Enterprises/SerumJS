@@ -1,9 +1,16 @@
 import * as assert from "node:assert";
 import {describe, test} from "node:test";
-import {Validator, AssertError} from "../../../src";
-import {ArrayValidator} from "../../../src/validators/json/ArrayValidator";
-import {NumberValidator} from "../../../src/validators/json/NumberValidator";
-import {StringValidator} from "../../../src/validators/json/StringValidator";
+import {
+	Validator,
+	AssertError,
+	DefinitionError,
+	Domain,
+	NeverValidator,
+	UnknownValidator,
+	NumberValidator,
+	StringValidator,
+	ArrayValidator
+} from "../../../src";
 
 describe("Testing ArrayValidator", () => {
 	const values = [
@@ -26,6 +33,81 @@ describe("Testing ArrayValidator", () => {
 
 	test("Testing ArrayValidator being a Validator", () => {
 		assert.ok(validator instanceof Validator);
+	});
+
+	test("Testing ArrayValidator.fromJSON", () => {
+		const result = ArrayValidator.fromJSON({
+			type: "array",
+			min: 1,
+			max: 3,
+			every: {type: "unknown"},
+			tuple: [
+				{type: "never"},
+				{type: "unknown"}
+			]
+		}, "schema", Domain.create({}));
+
+		assert.ok(result instanceof ArrayValidator);
+		assert.equal(result.constraints.min, 1);
+		assert.equal(result.constraints.max, 3);
+		assert.ok(result.constraints.every instanceof UnknownValidator);
+		assert.equal(result.constraints.tuple?.length, 2);
+		assert.ok(result.constraints.tuple?.[0] instanceof NeverValidator);
+		assert.ok(result.constraints.tuple?.[1] instanceof UnknownValidator);
+	});
+
+	test("Testing ArrayValidator.fromJSON with invalid constraints", () => {
+		assert.throws(() => {
+			ArrayValidator.fromJSON({
+				type: "array",
+				min: "1",
+				max: null,
+				every: {type: "missing"},
+				tuple: "invalid",
+				unexpected: true
+			}, "schema", Domain.create({}));
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid ArrayValidatorDefinition");
+			assert.equal(error.errors.length, 5);
+			assert.deepStrictEqual(
+				error.errors.map((entry) => entry.path),
+				["schema.unexpected", "schema.min", "schema.max", "schema.every", "schema.tuple"]
+			);
+			assert.ok(error.errors.every((entry) => entry instanceof DefinitionError));
+			assert.equal(error.errors[0]!.message, "Unknown Property schema.unexpected");
+			assert.equal(error.errors[1]!.message, "Expected schema.min to be a finite Number");
+			assert.equal(error.errors[2]!.message, "Expected schema.max to be a finite Number");
+			assert.equal(error.errors[3]!.message, "Validator at schema.every not found");
+			assert.equal(error.errors[4]!.message, "Expected schema.tuple to be an Array");
+
+			return true;
+		});
+	});
+
+	test("Testing ArrayValidator.fromJSON with an invalid tuple definition", () => {
+		assert.throws(() => {
+			ArrayValidator.fromJSON({
+				type: "array",
+				tuple: [
+					{type: "unknown", unexpected: true}
+				]
+			}, "schema", Domain.create({}));
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid ArrayValidatorDefinition");
+			assert.equal(error.errors.length, 1);
+			assert.ok(error.errors[0] instanceof AggregateError);
+			assert.equal(error.errors[0].errors.length, 1);
+			assert.ok(error.errors[0].errors[0] instanceof DefinitionError);
+			assert.equal(
+				error.errors[0].errors[0].message,
+				"Unknown Property schema.tuple[0].unexpected"
+			);
+			assert.equal(error.errors[0].errors[0].path, "schema.tuple[0].unexpected");
+
+			return true;
+		});
 	});
 
 	test("Testing ArrayValidator.assert without a Path", () => {

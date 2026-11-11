@@ -1,6 +1,6 @@
 import * as assert from "node:assert";
 import {describe, test} from "node:test";
-import {Validator, NullValidator, AssertError} from "../../../src";
+import {Validator, NullValidator, AssertError, DefinitionError, Domain} from "../../../src";
 
 describe("Testing NullValidator", () => {
 	const values = [
@@ -20,10 +20,30 @@ describe("Testing NullValidator", () => {
 		new Date(),
 		() => {}
 	];
-	const validator: NullValidator = new NullValidator();
+	const validator: NullValidator = new NullValidator({});
 
 	test("Testing NullValidator being a Validator", () => {
 		assert.ok(validator instanceof Validator);
+	});
+
+	test("Testing NullValidator.fromJSON", () => {
+		const domain = Domain.create({});
+		const result = NullValidator.fromJSON({type: "null"}, "schema", domain);
+
+		assert.ok(result instanceof NullValidator);
+
+		assert.throws(() => {
+			NullValidator.fromJSON({type: "null", unexpected: true}, "schema", domain);
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid NullValidatorDefinition");
+			assert.equal(error.errors.length, 1);
+			assert.ok(error.errors[0] instanceof DefinitionError);
+			assert.equal(error.errors[0].message, "Unknown Constraint schema.unexpected");
+			assert.equal(error.errors[0].path, "schema.unexpected");
+
+			return true;
+		});
 	});
 
 	test("Testing NullValidator.assert without a Path", () => {

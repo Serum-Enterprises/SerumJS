@@ -1,7 +1,6 @@
 import * as assert from "node:assert";
 import {describe, test} from "node:test";
-import {Validator, AssertError} from "../../../src";
-import {BooleanValidator} from "../../../src/validators/json/BooleanValidator";
+import {Validator, AssertError, DefinitionError, Domain, BooleanValidator} from "../../../src";
 
 describe("Testing BooleanValidator", () => {
 	const values = [
@@ -23,6 +22,34 @@ describe("Testing BooleanValidator", () => {
 
 	test("Testing BooleanValidator being a Validator", () => {
 		assert.ok(validator instanceof Validator);
+	});
+
+	test("Testing BooleanValidator.fromJSON", () => {
+		const domain = Domain.create({});
+		const result = BooleanValidator.fromJSON({type: "boolean", equals: true}, "schema", domain);
+
+		assert.ok(result instanceof BooleanValidator);
+		assert.deepStrictEqual(result.constraints, {equals: true});
+
+		assert.throws(() => {
+			BooleanValidator.fromJSON({
+				type: "boolean",
+				equals: "true",
+				unexpected: true
+			}, "schema", domain);
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid BooleanValidatorDefinition");
+			assert.equal(error.errors.length, 2);
+			assert.ok(error.errors[0] instanceof DefinitionError);
+			assert.equal(error.errors[0].message, "Unknown Constraint schema.unexpected");
+			assert.equal(error.errors[0].path, "schema.unexpected");
+			assert.ok(error.errors[1] instanceof DefinitionError);
+			assert.equal(error.errors[1].message, "Expected schema.equals to be a Boolean");
+			assert.equal(error.errors[1].path, "schema.equals");
+
+			return true;
+		});
 	});
 
 	test("Testing BooleanValidator.assert without a Path", () => {

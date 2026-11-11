@@ -1,9 +1,16 @@
 import * as assert from "node:assert";
 import {describe, test} from "node:test";
-import {Validator, AssertError} from "../../../src";
-import {IntersectValidator} from "../../../src/validators/core/IntersectValidator";
-import {NumberValidator} from "../../../src/validators/json/NumberValidator";
-import {StringValidator} from "../../../src/validators/json/StringValidator";
+import {
+	Validator,
+	AssertError,
+	DefinitionError,
+	Domain,
+	IntersectValidator,
+	NeverValidator,
+	NumberValidator,
+	StringValidator,
+	UnknownValidator
+} from "../../../src";
 
 describe("Testing IntersectValidator", () => {
 	const minimumValidator: NumberValidator = new NumberValidator({}).min(0);
@@ -17,6 +24,90 @@ describe("Testing IntersectValidator", () => {
 
 	test("Testing IntersectValidator being a Validator", () => {
 		assert.ok(validator instanceof Validator);
+	});
+
+	test("Testing IntersectValidator.fromJSON", () => {
+		const result = IntersectValidator.fromJSON({
+			type: "intersect",
+			variants: [
+				{type: "unknown"},
+				{type: "never"}
+			]
+		}, "schema", Domain.create({}));
+
+		assert.ok(result instanceof IntersectValidator);
+		assert.equal(result.constraints.variants.length, 2);
+		assert.ok(result.constraints.variants[0] instanceof UnknownValidator);
+		assert.ok(result.constraints.variants[1] instanceof NeverValidator);
+	});
+
+	test("Testing IntersectValidator.fromJSON with invalid variants", () => {
+		const domain = Domain.create({});
+
+		assert.throws(() => {
+			IntersectValidator.fromJSON({type: "intersect"}, "schema", domain);
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid IntersectValidatorDefinition");
+			assert.equal(error.errors.length, 1);
+			assert.ok(error.errors[0] instanceof DefinitionError);
+			assert.equal(error.errors[0].message, "Expected schema.variants to be an Array");
+			assert.equal(error.errors[0].path, "schema.variants");
+
+			return true;
+		});
+
+		assert.throws(() => {
+			IntersectValidator.fromJSON({type: "intersect", variants: []}, "schema", domain);
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid IntersectValidatorDefinition");
+			assert.equal(error.errors.length, 1);
+			assert.ok(error.errors[0] instanceof DefinitionError);
+			assert.equal(
+				error.errors[0].message,
+				"Expected schema.variants to contain at least one ValidatorDefinition"
+			);
+			assert.equal(error.errors[0].path, "schema.variants");
+
+			return true;
+		});
+	});
+
+	test("Testing IntersectValidator.fromJSON with invalid nested definitions", () => {
+		assert.throws(() => {
+			IntersectValidator.fromJSON({
+				type: "intersect",
+				unexpected: true,
+				variants: [
+					{type: "missing"},
+					{type: "unknown", unexpected: true}
+				]
+			}, "schema", Domain.create({}));
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid IntersectValidatorDefinition");
+			assert.equal(error.errors.length, 3);
+
+			assert.ok(error.errors[0] instanceof DefinitionError);
+			assert.equal(error.errors[0].message, "Unknown Property schema.unexpected");
+			assert.equal(error.errors[0].path, "schema.unexpected");
+
+			assert.ok(error.errors[1] instanceof DefinitionError);
+			assert.equal(error.errors[1].message, "Validator at schema.variants[0] not found");
+			assert.equal(error.errors[1].path, "schema.variants[0]");
+
+			assert.ok(error.errors[2] instanceof AggregateError);
+			assert.equal(error.errors[2].errors.length, 1);
+			assert.ok(error.errors[2].errors[0] instanceof DefinitionError);
+			assert.equal(
+				error.errors[2].errors[0].message,
+				"Unknown Property schema.variants[1].unexpected"
+			);
+			assert.equal(error.errors[2].errors[0].path, "schema.variants[1].unexpected");
+
+			return true;
+		});
 	});
 
 	test("Testing IntersectValidator.assert without a Path", () => {

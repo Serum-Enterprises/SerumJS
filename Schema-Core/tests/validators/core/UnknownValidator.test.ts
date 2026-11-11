@@ -1,6 +1,6 @@
 import * as assert from "node:assert";
 import {describe, test} from "node:test";
-import {Validator, UnknownValidator} from "../../../src";
+import {Validator, UnknownValidator, DefinitionError, Domain} from "../../../src";
 
 describe("Testing UnknownValidator", () => {
 	const values = [
@@ -21,10 +21,30 @@ describe("Testing UnknownValidator", () => {
 		new Date(),
 		() => {}
 	];
-	const validator: UnknownValidator = new UnknownValidator();
+	const validator: UnknownValidator = new UnknownValidator({});
 
 	test("Testing UnknownValidator being a Validator", () => {
 		assert.ok(validator instanceof Validator);
+	});
+
+	test("Testing UnknownValidator.fromJSON", () => {
+		const domain = Domain.create({});
+		const result = UnknownValidator.fromJSON({type: "unknown"}, "schema", domain);
+
+		assert.ok(result instanceof UnknownValidator);
+
+		assert.throws(() => {
+			UnknownValidator.fromJSON({type: "unknown", unexpected: true}, "schema", domain);
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid UnknownValidatorDefinition");
+			assert.equal(error.errors.length, 1);
+			assert.ok(error.errors[0] instanceof DefinitionError);
+			assert.equal(error.errors[0].message, "Unknown Property schema.unexpected");
+			assert.equal(error.errors[0].path, "schema.unexpected");
+
+			return true;
+		});
 	});
 
 	test("Testing UnknownValidator.assert without a Path", () => {

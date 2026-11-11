@@ -1,9 +1,16 @@
 import * as assert from "node:assert";
 import {describe, test} from "node:test";
-import {Validator, AssertError} from "../../../src";
-import {NumberValidator} from "../../../src/validators/json/NumberValidator";
-import {ObjectValidator} from "../../../src/validators/json/ObjectValidator";
-import {StringValidator} from "../../../src/validators/json/StringValidator";
+import {
+	Validator,
+	AssertError,
+	DefinitionError,
+	Domain,
+	NeverValidator,
+	UnknownValidator,
+	NumberValidator,
+	StringValidator,
+	ObjectValidator
+} from "../../../src";
 
 describe("Testing ObjectValidator", () => {
 	const values = [
@@ -27,6 +34,95 @@ describe("Testing ObjectValidator", () => {
 
 	test("Testing ObjectValidator being a Validator", () => {
 		assert.ok(validator instanceof Validator);
+	});
+
+	test("Testing ObjectValidator.fromJSON", () => {
+		const result = ObjectValidator.fromJSON({
+			type: "object",
+			min: 1,
+			max: 3,
+			every: {type: "unknown"},
+			shape: {
+				first: {type: "never"},
+				second: {type: "unknown"}
+			},
+			exact: true
+		}, "schema", Domain.create({}));
+
+		assert.ok(result instanceof ObjectValidator);
+		assert.equal(result.constraints.min, 1);
+		assert.equal(result.constraints.max, 3);
+		assert.ok(result.constraints.every instanceof UnknownValidator);
+		assert.ok(result.constraints.shape?.["first"] instanceof NeverValidator);
+		assert.ok(result.constraints.shape?.["second"] instanceof UnknownValidator);
+		assert.equal(result.constraints.exact, true);
+	});
+
+	test("Testing ObjectValidator.fromJSON with invalid constraints", () => {
+		assert.throws(() => {
+			ObjectValidator.fromJSON({
+				type: "object",
+				min: "1",
+				max: null,
+				every: {type: "missing"},
+				shape: [],
+				exact: "true",
+				unexpected: true
+			}, "schema", Domain.create({}));
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid ObjectValidatorDefinition");
+			assert.equal(error.errors.length, 6);
+			assert.deepStrictEqual(
+				error.errors.map((entry) => entry.path),
+				[
+					"schema.unexpected",
+					"schema.min",
+					"schema.max",
+					"schema.every",
+					"schema.shape",
+					"schema.exact"
+				]
+			);
+			assert.ok(error.errors.every((entry) => entry instanceof DefinitionError));
+			assert.equal(error.errors[0]!.message, "Unknown Property schema.unexpected");
+			assert.equal(error.errors[1]!.message, "Expected schema.min to be a finite Number");
+			assert.equal(error.errors[2]!.message, "Expected schema.max to be a finite Number");
+			assert.equal(error.errors[3]!.message, "Validator at schema.every not found");
+			assert.equal(error.errors[4]!.message, "Expected schema.shape to be an Object");
+			assert.equal(error.errors[5]!.message, "Expected schema.exact to be a Boolean");
+
+			return true;
+		});
+	});
+
+	test("Testing ObjectValidator.fromJSON with invalid shape definitions", () => {
+		assert.throws(() => {
+			ObjectValidator.fromJSON({
+				type: "object",
+				shape: {
+					first: {type: "missing"},
+					second: {type: "unknown", unexpected: true}
+				}
+			}, "schema", Domain.create({}));
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid ObjectValidatorDefinition");
+			assert.equal(error.errors.length, 2);
+			assert.ok(error.errors[0] instanceof DefinitionError);
+			assert.equal(error.errors[0].message, "Validator at schema.shape.first not found");
+			assert.equal(error.errors[0].path, "schema.shape.first");
+			assert.ok(error.errors[1] instanceof AggregateError);
+			assert.equal(error.errors[1].errors.length, 1);
+			assert.ok(error.errors[1].errors[0] instanceof DefinitionError);
+			assert.equal(
+				error.errors[1].errors[0].message,
+				"Unknown Property schema.shape.second.unexpected"
+			);
+			assert.equal(error.errors[1].errors[0].path, "schema.shape.second.unexpected");
+
+			return true;
+		});
 	});
 
 	test("Testing ObjectValidator.assert without a Path", () => {

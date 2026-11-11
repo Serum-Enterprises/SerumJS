@@ -1,7 +1,6 @@
 import * as assert from "node:assert";
 import {describe, test} from "node:test";
-import {Validator, AssertError} from "../../../src";
-import {StringValidator} from "../../../src/validators/json/StringValidator";
+import {Validator, AssertError, DefinitionError, Domain, StringValidator} from "../../../src";
 
 describe("Testing StringValidator", () => {
 	const values = [
@@ -23,6 +22,48 @@ describe("Testing StringValidator", () => {
 
 	test("Testing StringValidator being a Validator", () => {
 		assert.ok(validator instanceof Validator);
+	});
+
+	test("Testing StringValidator.fromJSON", () => {
+		const domain = Domain.create({});
+		const result = StringValidator.fromJSON({
+			type: "string",
+			min: 1,
+			max: 10,
+			equals: "Hello"
+		}, "schema", domain);
+
+		assert.ok(result instanceof StringValidator);
+		assert.deepStrictEqual(result.constraints, {
+			min: 1,
+			max: 10,
+			equals: "Hello"
+		});
+
+		assert.throws(() => {
+			StringValidator.fromJSON({
+				type: "string",
+				min: "1",
+				max: null,
+				equals: false,
+				unexpected: true
+			}, "schema", domain);
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid StringValidatorDefinition");
+			assert.equal(error.errors.length, 4);
+			assert.deepStrictEqual(
+				error.errors.map((entry) => entry.path),
+				["schema.unexpected", "schema.min", "schema.max", "schema.equals"]
+			);
+			assert.ok(error.errors.every((entry) => entry instanceof DefinitionError));
+			assert.equal(error.errors[0]!.message, "Unknown Property schema.unexpected");
+			assert.equal(error.errors[1]!.message, "Expected schema.min to be a finite Number");
+			assert.equal(error.errors[2]!.message, "Expected schema.max to be a finite Number");
+			assert.equal(error.errors[3]!.message, "Expected schema.equals to be a String");
+
+			return true;
+		});
 	});
 
 	test("Testing StringValidator.assert without a Path", () => {

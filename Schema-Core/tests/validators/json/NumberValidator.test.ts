@@ -1,7 +1,6 @@
 import * as assert from "node:assert";
 import {describe, test} from "node:test";
-import {Validator, AssertError} from "../../../src";
-import {NumberValidator} from "../../../src/validators/json/NumberValidator";
+import {Validator, AssertError, DefinitionError, Domain, NumberValidator} from "../../../src";
 
 describe("Testing NumberValidator", () => {
 	const values = [
@@ -21,6 +20,52 @@ describe("Testing NumberValidator", () => {
 
 	test("Testing NumberValidator being a Validator", () => {
 		assert.ok(validator instanceof Validator);
+	});
+
+	test("Testing NumberValidator.fromJSON", () => {
+		const domain = Domain.create({});
+		const result = NumberValidator.fromJSON({
+			type: "number",
+			integer: true,
+			min: 1,
+			max: 10,
+			equals: 5
+		}, "schema", domain);
+
+		assert.ok(result instanceof NumberValidator);
+		assert.deepStrictEqual(result.constraints, {
+			integer: true,
+			min: 1,
+			max: 10,
+			equals: 5
+		});
+
+		assert.throws(() => {
+			NumberValidator.fromJSON({
+				type: "number",
+				integer: "true",
+				min: "1",
+				max: null,
+				equals: false,
+				unexpected: true
+			}, "schema", domain);
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid NumberValidatorDefinition");
+			assert.equal(error.errors.length, 5);
+			assert.deepStrictEqual(
+				error.errors.map((entry) => entry.path),
+				["schema.unexpected", "schema.integer", "schema.min", "schema.max", "schema.equals"]
+			);
+			assert.ok(error.errors.every((entry) => entry instanceof DefinitionError));
+			assert.equal(error.errors[0]!.message, "Unknown Property schema.unexpected");
+			assert.equal(error.errors[1]!.message, "Expected schema.integer to be a Boolean");
+			assert.equal(error.errors[2]!.message, "Expected schema.min to be a finite Number");
+			assert.equal(error.errors[3]!.message, "Expected schema.max to be a finite Number");
+			assert.equal(error.errors[4]!.message, "Expected schema.equals to be a finite Number");
+
+			return true;
+		});
 	});
 
 	test("Testing NumberValidator.assert without a Path", () => {

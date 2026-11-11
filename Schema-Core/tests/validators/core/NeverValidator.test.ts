@@ -1,6 +1,6 @@
 import * as assert from "node:assert";
 import {describe, test} from "node:test";
-import {Validator, NeverValidator, AssertError} from "../../../src";
+import {Validator, NeverValidator, AssertError, DefinitionError, Domain} from "../../../src";
 
 describe("Testing NeverValidator", () => {
 	const values = [
@@ -21,10 +21,30 @@ describe("Testing NeverValidator", () => {
 		new Date(),
 		() => {}
 	];
-	const validator: NeverValidator = new NeverValidator();
+	const validator: NeverValidator = new NeverValidator({});
 
 	test("Testing NeverValidator being a Validator", () => {
 		assert.ok(validator instanceof Validator);
+	});
+
+	test("Testing NeverValidator.fromJSON", () => {
+		const domain = Domain.create({});
+		const result = NeverValidator.fromJSON({type: "never"}, "schema", domain);
+
+		assert.ok(result instanceof NeverValidator);
+
+		assert.throws(() => {
+			NeverValidator.fromJSON({type: "never", unexpected: true}, "schema", domain);
+		}, (error) => {
+			assert.ok(error instanceof AggregateError);
+			assert.equal(error.message, "Expected schema to be a valid NeverValidatorDefinition");
+			assert.equal(error.errors.length, 1);
+			assert.ok(error.errors[0] instanceof DefinitionError);
+			assert.equal(error.errors[0].message, "Unknown Property schema.unexpected");
+			assert.equal(error.errors[0].path, "schema.unexpected");
+
+			return true;
+		});
 	});
 
 	test("Testing NeverValidator.assert without a Path", () => {
