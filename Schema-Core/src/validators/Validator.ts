@@ -1,4 +1,4 @@
-import type {JSON} from "../lib/JSON";
+import type {JSON} from "@serum-enterprises/json";
 
 export type InferValidatorResult<V extends Validator> =
 	V extends Validator<infer RESULT>

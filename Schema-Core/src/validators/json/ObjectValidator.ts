@@ -1,5 +1,5 @@
+import type {JSON} from "@serum-enterprises/json";
 import type {Domain} from "../../Domain";
-import type {JSON} from "../../lib/JSON";
 import {Validator, type InferValidatorResult, type ValidatorDefinition} from "../Validator";
 import {AssertError, DefinitionError} from "../../lib/errors";
 
