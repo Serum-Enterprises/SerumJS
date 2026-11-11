@@ -1,6 +1,6 @@
 export {Validator} from "./validators/Validator";
 
-export {AssertError} from "./lib/errors";
+export {AssertError, DefinitionError} from "./lib/errors";
 
 export {UnknownValidator} from "./validators/core/UnknownValidator";
 export {NeverValidator} from "./validators/core/NeverValidator";
@@ -13,3 +13,5 @@ export {NumberValidator} from "./validators/json/NumberValidator";
 export {StringValidator} from "./validators/json/StringValidator";
 export {ArrayValidator} from "./validators/json/ArrayValidator";
 export {ObjectValidator} from "./validators/json/ObjectValidator";
+
+export {Domain, type ValidatorClass} from "./Domain";
