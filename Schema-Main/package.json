@@ -1,0 +1,69 @@
+{
+	"name": "@serum-enterprises/schema",
+	"version": "4.0.0-alpha.0",
+	"description": "A powerful Schema Validation Library",
+	"keywords": [
+		"schema",
+		"validation",
+		"serum",
+		"enterprises",
+		"assertion",
+		"operations",
+		"merge",
+		"normalize",
+		"isEqual",
+		"isSubset",
+		"subset"
+	],
+	"homepage": "https://github.com/Serum-Enterprises/SerumJS#readme",
+	"bugs": {
+		"url": "https://github.com/Serum-Enterprises/SerumJS/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Serum-Enterprises/SerumJS.git"
+	},
+	"license": "MIT",
+	"author": "Serum Enterprises L.L.C-FZ",
+	"contributors": [
+		{
+			"name": "Philipp Steckenbauer"
+		}
+	],
+	"type": "module",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.mjs",
+	"types": "./dist/types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/types/index.d.ts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.cjs"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"engines": {
+		"node": ">=24"
+	},
+	"scripts": {
+		"typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json",
+		"build:types": "tsc -p tsconfig.build.json",
+		"build:browser": "esbuild src/index.ts --bundle --platform=browser --format=esm --target=es2022 --outfile=dist/index.mjs",
+		"build:node": "esbuild src/index.ts --bundle --platform=node --format=cjs --target=node24 --outfile=dist/index.cjs",
+		"build": "npm run typecheck && npm run build:types && npm run build:browser && npm run build:node",
+		"build:tests": "esbuild './tests/**/*.test.ts' --bundle --platform=node --format=esm --target=node24 --outbase=tests --outdir=build/tests",
+		"pretest": "npm run build && npm run build:tests",
+		"test": "node --test 'build/tests/**/*.test.js'"
+	},
+	"dependencies": {
+		"@serum-enterprises/json": "^3.3.0",
+		"@serum-enterprises/schema-core": "file:../Schema-Core"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6",
+		"esbuild": "^0.28.2",
+		"typescript": "^7.0.2"
+	}
+}
