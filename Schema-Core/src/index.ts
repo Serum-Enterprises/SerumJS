@@ -1,17 +1,35 @@
-export {Validator} from "./validators/Validator";
-
 export {AssertError, DefinitionError} from "./lib/errors";
 
-export {UnknownValidator} from "./validators/core/UnknownValidator";
+export {Validator, type ValidatorDefinition} from "./validators/Validator";
+
+export {Domain, type ValidatorClass} from "./Domain";
+
 export {NeverValidator} from "./validators/core/NeverValidator";
+export {UnknownValidator} from "./validators/core/UnknownValidator";
 export {IntersectValidator} from "./validators/core/IntersectValidator";
 export {UnionValidator} from "./validators/core/UnionValidator";
 
-export {NullValidator} from "./validators/json/NullValidator";
-export {BooleanValidator} from "./validators/json/BooleanValidator";
-export {NumberValidator} from "./validators/json/NumberValidator";
-export {StringValidator} from "./validators/json/StringValidator";
-export {ArrayValidator} from "./validators/json/ArrayValidator";
-export {ObjectValidator} from "./validators/json/ObjectValidator";
+import {NullValidator} from "./validators/json/NullValidator";
+import {BooleanValidator} from "./validators/json/BooleanValidator";
+import {NumberValidator} from "./validators/json/NumberValidator";
+import {StringValidator} from "./validators/json/StringValidator";
+import {ArrayValidator} from "./validators/json/ArrayValidator";
+import {ObjectValidator} from "./validators/json/ObjectValidator";
 
-export {Domain, type ValidatorClass} from "./Domain";
+export {
+	ArrayValidator,
+	BooleanValidator,
+	NullValidator,
+	NumberValidator,
+	ObjectValidator,
+	StringValidator
+};
+
+export const JSONValidators = Object.freeze({
+	Array: ArrayValidator,
+	Boolean: BooleanValidator,
+	Null: NullValidator,
+	Number: NumberValidator,
+	Object: ObjectValidator,
+	String: StringValidator
+});
